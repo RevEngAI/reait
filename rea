@@ -16,7 +16,7 @@ __author__ = "James Patrick-Evans"
 __version__ = 0.01
 
 re_conf = {
-    'apikey' : 'l1br3',  # users api key
+    'apikey' : 'l1br3', 
     'host' : 'https://api.reveng.ai'
 }
 
@@ -28,11 +28,19 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
     return r(url, headers=headers, data=data)
 
 
-def RE_delete(binary_id: str):
+def RE_delete(fpath: str):
     """
         Delete analysis results for Binary ID in command
     """
-    return reveng_req(requests.delete, f"{binary_id}")
+    bin_id = binary_id(fpath)
+    res = reveng_req(requests.delete, f"{bin_id}")
+    if res.status_code == 200:
+        print(f"[+] Success. Securely deleted {fpath} analysis")
+    elif res.status_code == 404:
+        print("[!] Error, binary analysis not found.")
+    else:
+        print(f"[!] Error deleteing binary {bin_id}. Server returned {res.status_code}.")
+    return
 
 
 def RE_analyse(fpath: str):
@@ -41,27 +49,47 @@ def RE_analyse(fpath: str):
     """
     res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read())
     if res.status_code == 200:
-        print("Successfully submitted binary for analysis")
+        print("[+] Successfully submitted binary for analysis.")
+        print(f"[+] {fpath} - {binary_id(fpath)}")
         return res
 
     if res.status_code == 400:
         if 'already exists' in json.loads(res.text)['reason']:
-            print("Binary already analysed. Please check the results")
+            print(f"[-] {fpath} already analysed. Please check the results log file for {binary_id(fpath)}")
             return True
 
     res.raise_for_status()
 
 
-def RE_embeddings():
+def RE_embeddings(fpath: str):
     """
         Fetch symbol embeddings
     """
-    res = reveng_req(requests.get, f"embeddings/{binary_id()}")
+    res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}")
+    if res.status_code == 425:
+        print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
+        return
+
     res.raise_for_status()
     embeddings = res.json()
-    with open(f"{binary_id()}.json", "w") as f:
-        json.dump(embeddings, f, indent=4)
-    return embeddings
+    json.dumps(embeddings, f, indent=4)
+
+
+def RE_logs(fpath: str):
+    """
+        Delete analysis results for Binary ID in command
+    """
+    bin_id = binary_id(fpath)
+    res = reveng_req(requests.get, f"/log/{bin_id}")
+    if res.status_code == 200:
+        print(res.text)
+        return
+    elif res.status_code == 404:
+        print(f"[!] Error, binary analysis for {bin_id} not found.")
+        return
+
+    res.raise_for_status()
+
 
 
 #def RE_nearest_symbols(embedding: np.ndarray):
