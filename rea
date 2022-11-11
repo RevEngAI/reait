@@ -1,0 +1,160 @@
+#!/usr/bin/env python
+from __future__ import print_function
+from json import dumps
+from os import system
+from tqdm import tqdm 
+from hashlib import sha256
+import os
+from argparse import ArgumentParser
+import traceback
+import requests
+import json
+from os.path import isfile
+from sys import exit
+
+__author__ = "James Patrick-Evans"
+__version__ = 0.01
+
+re_conf = {
+    'apikey' : 'l1br3',  # users api key
+    'host' : 'https://api.reveng.ai'
+}
+
+def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None):
+    url = f"{re_conf['host']}/{end_point}"
+    headers = { "Authorization": f"Bearer {re_conf['apikey']}" }
+    if ex_headers:
+        headers.update(ex_headers)
+    return r(url, headers=headers, data=data)
+
+
+def RE_delete(binary_id: str):
+    """
+        Delete analysis results for Binary ID in command
+    """
+    return reveng_req(requests.delete, f"{binary_id}")
+
+
+def RE_analyse(fpath: str):
+    """
+        Start analysis job for binary file
+    """
+    res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read())
+    if res.status_code == 200:
+        print("Successfully submitted binary for analysis")
+        return res
+
+    if res.status_code == 400:
+        if 'already exists' in json.loads(res.text)['reason']:
+            print("Binary already analysed. Please check the results")
+            return True
+
+    res.raise_for_status()
+
+
+def RE_embeddings():
+    """
+        Fetch symbol embeddings
+    """
+    res = reveng_req(requests.get, f"embeddings/{binary_id()}")
+    res.raise_for_status()
+    embeddings = res.json()
+    with open(f"{binary_id()}.json", "w") as f:
+        json.dump(embeddings, f, indent=4)
+    return embeddings
+
+
+#def RE_nearest_symbols(embedding: np.ndarray):
+def RE_nearest_symbols(embedding: list):
+    """
+        Get function name suggestions for an embedding
+    """
+    for embedding in tqdm(embeddings, desc='Fetching ANN'):
+        res = reveng_req(requests.post, "ann", data=json.dumps(embedding))
+        res.raise_for_status()
+        f_suggestions = res.json()
+        # apply names using comments
+
+        # add all name suggestions with probabilities as comments
+        for suggestion in f_suggestions:
+            name, prob = suggestion['real_name'], suggestion['distance']
+            print(f"name: {name:<40} - similarity: {distance}")
+
+
+def binary_id(path: str):
+    """Take the SHA-256 hash of binary file"""
+    hf = sha256()
+    with open(path, "rb") as f:
+        c = f.read()
+        hf.update(c)
+    return hf.hexdigest()
+
+
+def parse_config():
+    """
+        Parse ~/.reveng.ai.yaml config file
+    """     
+    if not os.path.exists("~/.reveng.ai.yaml"):
+        print("[-] No config file found.")
+        return
+
+    with open("~/.reveng.ai.yaml", "r") as file:
+        print("Parsing ~/.revengai.yaml")
+        config = yaml.safe_load(file)
+        for key in ('apikey', 'server'):
+            if key in config:
+                re_conf[key] = config[key]
+
+if __name__ == '__main__':
+    parse_config()
+    parser = ArgumentParser()
+    parser.add_argument("-b", "--binary", help="Path on binary to analyse")
+    parser.add_argument("-a", "--analyse", action='store_true', help="Analyse new binary")
+    parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
+    parser.add_argument("-e", "--embedding", help="Path of JSON file containing a BinNet embedding")
+    parser.add_argument("-m", "--model", default="BinNet", help="AI model used to generate embeddings")
+    parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
+    parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
+    parser.add_argument("-d", "--delete", action='store_true', help="Securely delete all analyses and metadata associated with binary")
+    parser.add_argument("-k", "--api-key", default='l1br3', help="RevEng.AI API key")
+    parser.add_argument("-s", "--host", default='https://api.reveng.ai', help="Analysis Host")
+
+    args = parser.parse_args()
+    if args.api_key:
+        re_conf['api_key'] = args.api_key
+    if args.host:
+        re_conf['host'] = args.host
+
+    if args.analyse or args.extract or args.logs or args.delete:
+        # verify binary is a file
+        if not os.path.isfile(args.binary):
+            print("[!] Error, please supply a valid binary file using '-b'.")
+            parser.print_help()
+            exit(-1)
+
+    if args.analyse:
+        RE_analyse(args.binary)
+
+    elif args.extract:
+        RE_embeddings(args.binary)
+
+    elif args.ann:
+        # parse embedding json file
+        if not isfile(args.embedding):
+            print("[!] Error, please supply a valid embedding JSON file using '-e'")
+            parser.print_help()
+            exit(-1)
+
+        embedding = json.loads(open(args.embedding, 'r').read())
+        RE_nearest_symbols(embedding)
+
+    elif args.logs:
+        RE_logs(args.binary)
+
+    elif args.delete:
+        RE_delete(args.binary)
+
+    else:
+        print("[!] Error, please suply an action command")
+        parser.print_help()
+
