@@ -4,6 +4,7 @@ from json import dumps
 from os import system
 from tqdm import tqdm 
 from hashlib import sha256
+from rich import print_json
 import os
 from argparse import ArgumentParser
 import traceback
@@ -20,12 +21,12 @@ re_conf = {
     'host' : 'https://api.reveng.ai'
 }
 
-def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None):
+def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None):
     url = f"{re_conf['host']}/{end_point}"
     headers = { "Authorization": f"Bearer {re_conf['apikey']}" }
     if ex_headers:
         headers.update(ex_headers)
-    return r(url, headers=headers, data=data)
+    return r(url, headers=headers, data=data, params=params)
 
 
 def RE_delete(fpath: str):
@@ -72,7 +73,7 @@ def RE_embeddings(fpath: str):
 
     res.raise_for_status()
     embeddings = res.json()
-    print(json.dumps(embeddings, indent=4))
+    print_json(data=embeddings)
 
 
 def RE_logs(fpath: str):
@@ -91,22 +92,15 @@ def RE_logs(fpath: str):
     res.raise_for_status()
 
 
-
-#def RE_nearest_symbols(embedding: np.ndarray):
-def RE_nearest_symbols(embedding: list):
+def RE_nearest_symbols(embedding: list, nns: int = 5):
     """
         Get function name suggestions for an embedding
+        :param nns: Number of nearest neighbors
     """
-    res = reveng_req(requests.post, "ann", data=json.dumps(embedding))
+    res = reveng_req(requests.post, "ann", data=json.dumps(embedding), params={'nns': nns})
     res.raise_for_status()
     f_suggestions = res.json()
-    # apply names using comments
-
-    # add all name suggestions with probabilities as comments
-    for suggestion in f_suggestions:
-        name, distance = suggestion['real_name'], suggestion['distance']
-        print(f"name: {name:<40} distance: {distance}")
-
+    print_json(data=f_suggestions)
 
 def binary_id(path: str):
     """Take the SHA-256 hash of binary file"""
@@ -144,6 +138,7 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--delete", action='store_true', help="Securely delete all analyses and metadata associated with binary")
     parser.add_argument("-k", "--api-key", default='l1br3', help="RevEng.AI API key")
     parser.add_argument("-s", "--host", default='https://api.reveng.ai', help="Analysis Host")
+    parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
 
     args = parser.parse_args()
     if args.api_key:
@@ -172,7 +167,7 @@ if __name__ == '__main__':
             exit(-1)
 
         embedding = json.loads(open(args.embedding, 'r').read())
-        RE_nearest_symbols(embedding)
+        RE_nearest_symbols(embedding, int(args.nns))
 
     elif args.logs:
         RE_logs(args.binary)
