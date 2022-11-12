@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 61.0", "tqdm", "argparse", "requests", "rich"]
+requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,3 +15,5 @@ classifiers=[
 [project.urls]
 "Homepage" = "https://github.com/RevEng-AI/reait"
 "Bug Tracker" = "https://github.com/RevEng-AI/reait/issues"
+"Organisation Homepage" = "https://reveng.ai"
+"Documentation" = "https://docs.reveng.ai"
