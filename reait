@@ -97,16 +97,15 @@ def RE_nearest_symbols(embedding: list):
     """
         Get function name suggestions for an embedding
     """
-    for embedding in tqdm(embeddings, desc='Fetching ANN'):
-        res = reveng_req(requests.post, "ann", data=json.dumps(embedding))
-        res.raise_for_status()
-        f_suggestions = res.json()
-        # apply names using comments
+    res = reveng_req(requests.post, "ann", data=json.dumps(embedding))
+    res.raise_for_status()
+    f_suggestions = res.json()
+    # apply names using comments
 
-        # add all name suggestions with probabilities as comments
-        for suggestion in f_suggestions:
-            name, prob = suggestion['real_name'], suggestion['distance']
-            print(f"name: {name:<40} - similarity: {distance}")
+    # add all name suggestions with probabilities as comments
+    for suggestion in f_suggestions:
+        name, distance = suggestion['real_name'], suggestion['distance']
+        print(f"name: {name:<40} distance: {distance}")
 
 
 def binary_id(path: str):
@@ -123,7 +122,6 @@ def parse_config():
         Parse ~/.reveng.ai.yaml config file
     """     
     if not os.path.exists("~/.reveng.ai.yaml"):
-        print("[-] No config file found.")
         return
 
     with open("~/.reveng.ai.yaml", "r") as file:

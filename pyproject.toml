@@ -1,3 +1,17 @@
 [build-system]
-requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests"]
+requires = ["setuptools >= 61.0", "tqdm", "argparse", "requests"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "reait"
+version = "0.0.1"
+readme = "README.md"
+classifiers=[
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/RevEng-AI/reait"
+"Bug Tracker" = "https://github.com/RevEng-AI/reait/issues"
