@@ -4,18 +4,18 @@ with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
-        name="rea",
+        name="reait",
         version="0.0.1",
-        scripts=['rea'],
+        scripts=['reait'],
         author="James Patrick-Evans",
-        description="A python utility to interface with RevEng.AI REST API",
+        description="RevEng.AI Toolkit",
         long_description=long_description,
         long_description_content_type="text/markdown",
-        url="https://github.com/RevEng-AI/rea",
+        url="https://github.com/RevEng-AI/reait",
         packages=setuptools.find_packages(),
         classifiers=[
             "Programming Language :: Python :: 3",
-            "License :: GPLv3",
+            "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
             "Operating System :: OS Independent"
             ],
         )

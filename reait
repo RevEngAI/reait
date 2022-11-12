@@ -72,7 +72,7 @@ def RE_embeddings(fpath: str):
 
     res.raise_for_status()
     embeddings = res.json()
-    json.dumps(embeddings, f, indent=4)
+    print(json.dumps(embeddings, indent=4))
 
 
 def RE_logs(fpath: str):
