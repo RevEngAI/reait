@@ -1,4 +1,4 @@
-# reat
+# reait
 RevEng.AI Toolkit
 
 Analyse compiled executable binaries using the RevEng.AI API.
@@ -9,7 +9,7 @@ Analyse compiled executable binaries using the RevEng.AI API.
 
 Install the latest stable version using pip.
 
-`pip install reat`
+`pip install reait`
 
 ### Latest development version
 
@@ -17,4 +17,4 @@ Install the latest stable version using pip.
 
 ## Run
 
-`reat --help`
+`reait --help`
