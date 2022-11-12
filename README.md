@@ -1,13 +1,20 @@
-# rea
-RevEng.AI Analysis Package
+# reat
+RevEng.AI Toolkit
 
-Analyse compiled C/C++ binaries using the RevEng.AI BinNet API
+Analyse compiled executable binaries using the RevEng.AI API.
+
 
 
 ## Installation
+
+Install the latest stable version using pip.
+
+`pip install reat`
+
+### Latest development version
 
 `pip install -e .`
 
 ## Run
 
-`rea --help`
+`reat --help`
