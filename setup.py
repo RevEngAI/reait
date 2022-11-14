@@ -5,10 +5,8 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
         name="reait",
-        version="0.0.1",
+        version="0.0.4",
         scripts=['reait'],
-        author="James Patrick-Evans",
-        description="RevEng.AI Toolkit",
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/RevEng-AI/reait",

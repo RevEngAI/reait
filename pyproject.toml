@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reait"
-version = "0.0.1"
+version = "0.0.4"
 readme = "README.md"
 classifiers=[
   "Programming Language :: Python :: 3",
@@ -17,6 +17,7 @@ dependencies = [
     "rich",
     "argparse"
 ]
+keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai"]
 
 [project.urls]
 "Homepage" = "https://github.com/RevEng-AI/reait"
