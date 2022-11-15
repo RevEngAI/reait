@@ -8,13 +8,13 @@ from rich import print_json
 import os
 from argparse import ArgumentParser
 import traceback
+from IPython import embed
 import requests
 import json
+import tomli
 from os.path import isfile
 from sys import exit
 
-__author__ = "James Patrick-Evans"
-__version__ = 0.01
 
 re_conf = {
     'apikey' : 'l1br3', 
@@ -113,15 +113,14 @@ def binary_id(path: str):
 
 def parse_config():
     """
-        Parse ~/.reveng.ai.yaml config file
+        Parse ~/.reait.toml config file
     """     
-    if not os.path.exists("~/.reveng.ai.yaml"):
+    if not os.path.exists(os.path.expanduser("~/.reait.toml")):
         return
 
-    with open("~/.reveng.ai.yaml", "r") as file:
-        print("Parsing ~/.revengai.yaml")
-        config = yaml.safe_load(file)
-        for key in ('apikey', 'server'):
+    with open(os.path.expanduser("~/.reait.toml"), "r") as file:
+        config = tomli.loads(file.read())
+        for key in ('apikey', 'host'):
             if key in config:
                 re_conf[key] = config[key]
 
@@ -137,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
     parser.add_argument("-d", "--delete", action='store_true', help="Securely delete all analyses and metadata associated with binary")
     parser.add_argument("-k", "--api-key", default='l1br3', help="RevEng.AI API key")
-    parser.add_argument("-s", "--host", default='https://api.reveng.ai', help="Analysis Host")
+    parser.add_argument("-s", "--host", help="Analysis Host. Defaults to https://api.reveng.ai")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
 
     args = parser.parse_args()

@@ -17,7 +17,7 @@ setuptools.setup(
             "Operating System :: OS Independent"
             ],
         install_requires=[
-                'tqdm', 'argparse', 'requests', 'rich'
+                'tqdm', 'argparse', 'requests', 'rich', 'tomli'
             ]
         )
 

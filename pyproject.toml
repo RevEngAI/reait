@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich"]
+requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich", "tomli"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -15,7 +15,8 @@ dependencies = [
     "tqdm",
     "requests",
     "rich",
-    "argparse"
+    "argparse",
+    "tomli"
 ]
 keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai"]
 
