@@ -127,7 +127,7 @@ def parse_config():
 if __name__ == '__main__':
     parse_config()
     parser = ArgumentParser()
-    parser.add_argument("-b", "--binary", help="Path on binary to analyse")
+    parser.add_argument("-b", "--binary", default="", help="Path on binary to analyse")
     parser.add_argument("-a", "--analyse", action='store_true', help="Analyse new binary")
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
     parser.add_argument("-e", "--embedding", help="Path of JSON file containing a BinNet embedding")
