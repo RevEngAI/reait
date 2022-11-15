@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.api_key:
-        re_conf['api_key'] = args.api_key
+        re_conf['apikey'] = args.api_key
     if args.host:
         re_conf['host'] = args.host
 
