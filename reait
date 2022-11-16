@@ -15,6 +15,7 @@ import tomli
 from os.path import isfile
 from sys import exit
 
+__version__ = "0.0.6"
 
 re_conf = {
     'apikey' : 'l1br3', 
@@ -124,6 +125,12 @@ def parse_config():
             if key in config:
                 re_conf[key] = config[key]
 
+def version():
+    """
+        Display program version
+    """
+    print(f"reait v{__version__}")
+
 if __name__ == '__main__':
     parse_config()
     parser = ArgumentParser()
@@ -138,8 +145,14 @@ if __name__ == '__main__':
     parser.add_argument("-k", "--api-key", default='l1br3', help="RevEng.AI API key")
     parser.add_argument("-s", "--host", help="Analysis Host. Defaults to https://api.reveng.ai")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
-
+    parser.add_argument("-v", "--version", action="store_true", help="Display version information")
     args = parser.parse_args()
+
+    # display version and exit
+    if args.version:
+        version()
+        exit(0)
+
     if args.api_key:
         re_conf['apikey'] = args.api_key
     if args.host:
