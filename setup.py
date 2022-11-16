@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
         name="reait",
-        version="0.0.6",
+        version="0.0.7",
         scripts=['reait'],
         long_description=long_description,
         long_description_content_type="text/markdown",

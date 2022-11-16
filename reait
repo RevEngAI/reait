@@ -15,7 +15,7 @@ import tomli
 from os.path import isfile
 from sys import exit
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 
 re_conf = {
     'apikey' : 'l1br3', 
@@ -149,15 +149,15 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--version", action="store_true", help="Display version information")
     args = parser.parse_args()
 
+    if args.apikey:
+        re_conf['apikey'] = args.apikey
+    if args.host:
+        re_conf['host'] = args.host
+
     # display version and exit
     if args.version:
         version()
         exit(0)
-
-    if args.api_key:
-        re_conf['apikey'] = args.api_key
-    if args.host:
-        re_conf['host'] = args.host
 
     if args.analyse or args.extract or args.logs or args.delete:
         # verify binary is a file
