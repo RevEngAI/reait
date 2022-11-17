@@ -48,6 +48,11 @@ To search for the most similar symbols found in a binary to a specific embedding
 
 This downloads embeddings from `malware.exe` and computes the cosine similarity between all symbols and `sha256_init.json`. The returned results lists the most similar symbol locations by cosine similarity score (1.0 most similar, -1.0 dissimilar).
 
+### Binary embedding
+Produce a smart fingerprint for the whole binary by calculating the arithmetic mean of all symbol embeddings.
+
+`reait -b /usr/bin/true -s`
+
 
 ## Configuration
 

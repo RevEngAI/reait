@@ -4,20 +4,20 @@ from json import dumps
 from os import system
 from tqdm import tqdm 
 from hashlib import sha256
-from rich import print_json
+from rich import print_json, print as rich_print
 from sklearn.metrics.pairwise import cosine_similarity
 import os
-from argparse import ArgumentParser
+import argparse
 import requests
-from numpy import array, vstack
+from numpy import array, vstack, mean
 from pandas import DataFrame
 import json
 import tomli
 from os.path import isfile
 from sys import exit
-# from IPython import embed
+from IPython import embed
 
-__version__ = "0.0.13"
+__version__ = "0.0.14"
 
 re_conf = {
     'apikey' : 'l1br3', 
@@ -152,12 +152,12 @@ def version():
     """
         Display program version
     """
-    print(f"reait v{__version__}")
+    rich_print(f"[bold red]reait[/bold red] [bold bright_green]v{__version__}[/bold bright_green]")
     print_json(data=re_conf)
 
 if __name__ == '__main__':
     parse_config()
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-b", "--binary", default="", help="Path on binary to analyse")
     parser.add_argument("-a", "--analyse", action='store_true', help="Analyse new binary")
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
@@ -166,11 +166,13 @@ if __name__ == '__main__':
     parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
     # parser.add_argument("-m", "--model", default="BinNet", help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
+    parser.add_argument("-s", "--summary", action='store_true', help="Average symbol embeddings in binary")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
     parser.add_argument("-d", "--delete", action='store_true', help="Securely delete all analyses and metadata associated with binary")
     parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
-    parser.add_argument("-s", "--host", help="Analysis Host. Defaults to https://api.reveng.ai")
+    parser.add_argument("-h", "--host", help="Analysis Host (https://api.reveng.ai)")
     parser.add_argument("-v", "--version", action="store_true", help="Display version information")
+    parser.add_argument("--help", action="help", default=argparse.SUPPRESS, help=argparse._('Show this help message and exit'))
     args = parser.parse_args()
 
     if args.apikey:
@@ -183,7 +185,7 @@ if __name__ == '__main__':
         version()
         exit(0)
 
-    if args.analyse or args.extract or args.logs or args.delete:
+    if args.analyse or args.extract or args.logs or args.delete or args.summary:
         # verify binary is a file
         if not os.path.isfile(args.binary):
             print("[!] Error, please supply a valid binary file using '-b'.")
@@ -196,6 +198,12 @@ if __name__ == '__main__':
     elif args.extract:
         embeddings = RE_embeddings(args.binary)
         print_json(data=embeddings)
+
+    elif args.summary:
+        # Arithetic mean of symbol embeddings
+        embeddings = RE_embeddings(args.binary)
+        b_embed = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
+        print_json(data=b_embed.tolist())
 
     elif args.ann:
         source = None
@@ -224,6 +232,6 @@ if __name__ == '__main__':
         RE_delete(args.binary)
 
     else:
-        print("[!] Error, please suply an action command")
+        print("[!] Error, please supply an action command")
         parser.print_help()
 
