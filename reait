@@ -17,7 +17,7 @@ from os.path import isfile
 from sys import exit
 # from IPython import embed
 
-__version__ = "0.0.12"
+__version__ = "0.0.13"
 
 re_conf = {
     'apikey' : 'l1br3', 
@@ -99,7 +99,7 @@ def RE_compute_distance(embedding: list, fpath_source: str, nns: int = 5):
         Comput ecosine distance between source embedding and embeddinsg from binary
     """
     embeddings = RE_embeddings(fpath_source)
-    df = pd.DataFrame(data=embeddings)
+    df = DataFrame(data=embeddings)
     np_embedding = array(embedding).reshape(1, -1)
     source_embeddings = vstack(df['embedding'].values)
     closest = cosine_similarity(source_embeddings, np_embedding).squeeze().argsort()[::-1][:nns]
