@@ -16,7 +16,10 @@ dependencies = [
     "requests",
     "rich",
     "argparse",
-    "tomli"
+    "tomli",
+    "sklearn",
+    "pandas",
+    "numpy"
 ]
 keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai", "vector", "embedding"]
 
