@@ -108,7 +108,7 @@ def RE_compute_distance(embedding: list, fpath_source: str, nns: int = 5):
     closest_df = df.iloc[closest]
     # create json similarity object
     similarities = list(zip(distances, closest_df.index.tolist()))
-    json_sims = [{'similaritiy': d[0], 'vaddr': df.iloc[v]['vaddr']} for d, v in similarities]
+    json_sims = [{'similaritiy': float(d[0]), 'vaddr': int(df.iloc[v]['vaddr'])} for d, v in similarities]
     return json_sims
 
 
