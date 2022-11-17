@@ -9,15 +9,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 import os
 from argparse import ArgumentParser
 import requests
-import numpy as np
-import pandas as pd
+from numpy import array, vstack
+from pandas import DataFrame
 import json
 import tomli
 from os.path import isfile
 from sys import exit
 # from IPython import embed
 
-__version__ = "0.0.11"
+__version__ = "0.0.12"
 
 re_conf = {
     'apikey' : 'l1br3', 
@@ -100,15 +100,15 @@ def RE_compute_distance(embedding: list, fpath_source: str, nns: int = 5):
     """
     embeddings = RE_embeddings(fpath_source)
     df = pd.DataFrame(data=embeddings)
-    np_embedding = np.array(embedding).reshape(1, -1)
-    source_embeddings = np.vstack(df['embedding'].values)
+    np_embedding = array(embedding).reshape(1, -1)
+    source_embeddings = vstack(df['embedding'].values)
     closest = cosine_similarity(source_embeddings, np_embedding).squeeze().argsort()[::-1][:nns]
     distances = cosine_similarity(source_embeddings[closest], np_embedding)
     # match closest embeddings with similarity
     closest_df = df.iloc[closest]
     # create json similarity object
     similarities = list(zip(distances, closest_df.index.tolist()))
-    json_sims = [{'similaritiy': d[0], 'vaddr': v} for d, v in similarities]
+    json_sims = [{'similaritiy': d[0], 'vaddr': df.iloc[v]['vaddr']} for d, v in similarities]
     return json_sims
 
 
