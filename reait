@@ -17,7 +17,7 @@ from os.path import isfile
 from sys import exit
 # from IPython import embed
 
-__version__ = "0.0.10"
+__version__ = "0.0.11"
 
 re_conf = {
     'apikey' : 'l1br3', 

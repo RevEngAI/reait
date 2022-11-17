@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich", "tomli", "sklearn", "pandas", "numpy"]
+requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich", "tomli", "scikit-learn", "pandas", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "reait"
-version = "0.0.10"
+version = "0.0.11"
 readme = "README.md"
 classifiers=[
   "Programming Language :: Python :: 3",
@@ -17,7 +17,7 @@ dependencies = [
     "rich",
     "argparse",
     "tomli",
-    "sklearn",
+    "scikit-learn",
     "pandas",
     "numpy"
 ]

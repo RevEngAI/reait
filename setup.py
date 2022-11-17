@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
         name="reait",
-        version="0.0.10",
+        version="0.0.11",
         scripts=['reait'],
         long_description=long_description,
         long_description_content_type="text/markdown",
@@ -17,7 +17,7 @@ setuptools.setup(
             "Operating System :: OS Independent"
             ],
         install_requires=[
-                'tqdm', 'argparse', 'requests', 'rich', 'tomli', 'sklearn', 'pandas', 'numpy'
+                'tqdm', 'argparse', 'requests', 'rich', 'tomli', 'scikit-learn', 'pandas', 'numpy'
             ]
         )
 
