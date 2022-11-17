@@ -5,17 +5,19 @@ from os import system
 from tqdm import tqdm 
 from hashlib import sha256
 from rich import print_json
+from sklearn.metrics.pairwise import cosine_similarity
 import os
 from argparse import ArgumentParser
-import traceback
-from IPython import embed
 import requests
+import numpy as np
+import pandas as pd
 import json
 import tomli
 from os.path import isfile
 from sys import exit
+# from IPython import embed
 
-__version__ = "0.0.7"
+__version__ = "0.0.9"
 
 re_conf = {
     'apikey' : 'l1br3', 
@@ -73,8 +75,7 @@ def RE_embeddings(fpath: str):
         return
 
     res.raise_for_status()
-    embeddings = res.json()
-    print_json(data=embeddings)
+    return res.json()
 
 
 def RE_logs(fpath: str):
@@ -93,12 +94,34 @@ def RE_logs(fpath: str):
     res.raise_for_status()
 
 
+def RE_compute_distance(embedding: list, fpath_source: str, nns: int = 5):
+    """
+        Comput ecosine distance between source embedding and embeddinsg from binary
+    """
+    embeddings = RE_embeddings(fpath_source)
+    df = pd.DataFrame(data=embeddings)
+    np_embedding = np.array(embedding).reshape(1, -1)
+    source_embeddings = np.vstack(df['embedding'].values)
+    closest = cosine_similarity(source_embeddings, np_embedding).squeeze().argsort()[::-1][:nns]
+    distances = cosine_similarity(source_embeddings[closest], np_embedding)
+    # match closest embeddings with similarity
+    closest_df = df.iloc[closest]
+    # create json similarity object
+    similarities = list(zip(distances, closest_df.index.tolist()))
+    json_sims = [{'similaritiy': d[0], 'vaddr': v} for d, v in similarities]
+    return json_sims
+
+
 def RE_nearest_symbols(embedding: list, nns: int = 5):
     """
         Get function name suggestions for an embedding
         :param nns: Number of nearest neighbors
+        :param source: Binary file to search embeddings from
     """
-    res = reveng_req(requests.post, "ann", data=json.dumps(embedding), params={'nns': nns})
+    params={'nns': nns}
+    if source:
+        params['source'] = source
+    res = reveng_req(requests.post, "ann", data=json.dumps(embedding), params=params)
     res.raise_for_status()
     f_suggestions = res.json()
     print_json(data=f_suggestions)
@@ -138,14 +161,15 @@ if __name__ == '__main__':
     parser.add_argument("-b", "--binary", default="", help="Path on binary to analyse")
     parser.add_argument("-a", "--analyse", action='store_true', help="Analyse new binary")
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
-    parser.add_argument("-e", "--embedding", help="Path of JSON file containing a BinNet embedding")
-    parser.add_argument("-m", "--model", default="BinNet", help="AI model used to generate embeddings")
+    parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
+    parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
+    parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
+    # parser.add_argument("-m", "--model", default="BinNet", help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
     parser.add_argument("-d", "--delete", action='store_true', help="Securely delete all analyses and metadata associated with binary")
     parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
     parser.add_argument("-s", "--host", help="Analysis Host. Defaults to https://api.reveng.ai")
-    parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
     parser.add_argument("-v", "--version", action="store_true", help="Display version information")
     args = parser.parse_args()
 
@@ -170,9 +194,11 @@ if __name__ == '__main__':
         RE_analyse(args.binary)
 
     elif args.extract:
-        RE_embeddings(args.binary)
+        embeddings = RE_embeddings(args.binary)
+        print_json(data=embeddings)
 
     elif args.ann:
+        source = None
         # parse embedding json file
         if not isfile(args.embedding):
             print("[!] Error, please supply a valid embedding JSON file using '-e'")
@@ -180,7 +206,16 @@ if __name__ == '__main__':
             exit(-1)
 
         embedding = json.loads(open(args.embedding, 'r').read())
-        RE_nearest_symbols(embedding, int(args.nns))
+
+        if args.found_in:
+            if not os.path.isfile(args.found_in):
+                print("[!] Error, --found-in flag requires a path to a binary to search from")
+                exit(-1)
+            print(f"[+] Searching for symbols similar to embedding in binary {args.found_in}")
+            res = RE_compute_distance(embedding, args.found_in, int(args.nns))
+            print_json(data=res)
+        else:
+            RE_nearest_symbols(embedding, int(args.nns))
 
     elif args.logs:
         RE_logs(args.binary)

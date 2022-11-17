@@ -41,6 +41,14 @@ To query our database of similar symbols based on an embedding, use `-n` to sear
 
 NB: A smaller distance indicates a higher degree of similarity.
 
+#### Limited Search
+To search for the most similar symbols found in a binary to a specific embedding, use the `--found-in` option with a path to the executable.
+
+`reait -n --embedding /tmp/sha256_init.json --found-in ~/malware.exe` 
+
+This downloads embeddings from `malware.exe` and computes the cosine similarity between all symbols and `sha256_init.json`. The returned results lists the most similar results by cosine similarity score (1.0 most similar, -1.0, dissimilar).
+
+
 ## Configuration
 
 `reait` reads the config file stored at `~/.reait.toml`. An example config file looks like:
