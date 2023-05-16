@@ -17,11 +17,12 @@ from os.path import isfile
 from sys import exit
 from IPython import embed
 
-__version__ = "0.0.14"
+__version__ = "0.0.15"
 
 re_conf = {
     'apikey' : 'l1br3', 
-    'host' : 'https://api.reveng.ai'
+    'host' : 'https://api.reveng.ai',
+    'model': 'binnet-0.1'
 }
 
 def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None):
@@ -94,11 +95,33 @@ def RE_logs(fpath: str):
     res.raise_for_status()
 
 
-def RE_compute_distance(embedding: list, fpath_source: str, nns: int = 5):
+def RE_cves(fpath: str):
     """
-        Comput ecosine distance between source embedding and embeddinsg from binary
+        Check for known CVEs in Binary 
     """
-    embeddings = RE_embeddings(fpath_source)
+    bin_id = binary_id(fpath)
+    res = reveng_req(requests.get, f"/cves/{bin_id}")
+    if res.status_code == 200:
+        cves = json.loads(res.text)
+        rich_print(f"[bold blue]Checking for known CVEs embedded inside [/bold blue] [bold bright_green]{fpath}[/bold bright_green]:")
+        if len(cves) == 0:
+            rich_print(f"[bold bright_green]0 CVEs found.[/bold bright_green]")
+        else:
+            rich_print(f"[bold red]Warning CVEs found![/bold red]")
+            print_json(data=cves)
+        return
+    elif res.status_code == 404:
+        print(f"[!] Error, binary analysis for {bin_id} not found.")
+        return
+
+    res.raise_for_status()
+
+
+#def RE_compute_distance(embedding: list, fpath_source: str, nns: int = 5):
+def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
+    """
+        Compute the cosine distance between source embedding and embeddinsg from binary
+    """
     df = DataFrame(data=embeddings)
     np_embedding = array(embedding).reshape(1, -1)
     source_embeddings = vstack(df['embedding'].values)
@@ -164,7 +187,9 @@ if __name__ == '__main__':
     parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
     parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
-    # parser.add_argument("-m", "--model", default="BinNet", help="AI model used to generate embeddings")
+    parser.add_argument("--from-file", help="ANN flag to limit to embeddings returned to those found in JSON embeddings file")
+    parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
+    parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
     parser.add_argument("-s", "--summary", action='store_true', help="Average symbol embeddings in binary")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
@@ -179,6 +204,8 @@ if __name__ == '__main__':
         re_conf['apikey'] = args.apikey
     if args.host:
         re_conf['host'] = args.host
+    if args.model:
+        re_conf['model'] = args.model
 
     # display version and exit
     if args.version:
@@ -220,7 +247,15 @@ if __name__ == '__main__':
                 print("[!] Error, --found-in flag requires a path to a binary to search from")
                 exit(-1)
             print(f"[+] Searching for symbols similar to embedding in binary {args.found_in}")
-            res = RE_compute_distance(embedding, args.found_in, int(args.nns))
+            embeddings = RE_embeddings(args.found_in)
+            res = RE_compute_distance(embedding, embeddings, int(args.nns))
+            print_json(data=res)
+        elif args.from_file:
+            if not os.path.isfile(args.from_file):
+                print("[!] Error, --from-file flag requires a path to a JSON embeddings file")
+                exit(-1)
+            print(f"[+] Searching for symbols similar to embedding in binary {args.from_file}")
+            res = RE_compute_distance(embedding, json.load(open(args.from_file, "r")), int(args.nns))
             print_json(data=res)
         else:
             RE_nearest_symbols(embedding, int(args.nns))
@@ -230,6 +265,9 @@ if __name__ == '__main__':
 
     elif args.delete:
         RE_delete(args.binary)
+
+    elif args.cves:
+        RE_cves(args.binary)
 
     else:
         print("[!] Error, please supply an action command")
