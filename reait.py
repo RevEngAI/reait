@@ -49,11 +49,14 @@ def RE_delete(fpath: str):
     return
 
 
-def RE_analyse(fpath: str):
+def RE_analyse(fpath: str, model: str = None):
     """
         Start analysis job for binary file
     """
-    res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read())
+    params={}
+    if model:
+        params['model'] = model
+    res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read(), params=params)
     if res.status_code == 200:
         print("[+] Successfully submitted binary for analysis.")
         print(f"[+] {fpath} - {binary_id(fpath)}")

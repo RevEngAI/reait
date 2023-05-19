@@ -6,7 +6,7 @@ with open("README.md", "r") as f:
 setuptools.setup(
         name="reait",
         version="0.0.15",
-        scripts=['reait'],
+        scripts=['reait.py'],
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/RevEng-AI/reait",
