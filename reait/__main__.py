@@ -160,12 +160,11 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
 def RE_nearest_symbols(embedding: list, nns: int = 5, collections : list = None):
     """
         Get function name suggestions for an embedding
+        :param embedding: embedding vector as python list
         :param nns: Number of nearest neighbors
-        :param source: Binary file to search embeddings from
+        :param collections: str RegEx to search through RevEng.AI collections
     """
     params={'nns': nns}
-    if source:
-        params['source'] = source
 
     if collections:
         params['collections'] = collections
@@ -204,7 +203,11 @@ def version():
     rich_print(f"[bold red]reait[/bold red] [bold bright_green]v{__version__}[/bold bright_green]")
     print_json(data=re_conf)
 
-if __name__ == '__main__':
+
+def main() -> None:
+    """
+    Tool entry
+    """
     parse_config()
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-b", "--binary", default="", help="Path of binary to analyse")
@@ -216,15 +219,15 @@ if __name__ == '__main__':
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
     parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
-    parser.add_argument("--collections", default=None, help="List of CSV collections to filter results e.g. libc")
+    parser.add_argument("--collections", default=None, help="Regex string to select RevEng.AI collections for filtering e.g., libc")
     parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
     parser.add_argument("--from-file", help="ANN flag to limit to embeddings returned to those found in JSON embeddings file")
     parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
     parser.add_argument("-C", "--sca", action="store_true", help="Perform Software Composition Anaysis to identify common libraries embedded in binary")
     parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
-    parser.add_argument("--start-address", help="Start vaddr of the function to extract embeddings for")
-    parser.add_argument("--end-address", help="End vaddr of the function to extract embeddings for")
+    parser.add_argument("--start-address", help="Start vaddr of the function to extract embeddings")
+    parser.add_argument("--end-address", help="End vaddr of the function to extract embeddings")
     parser.add_argument("-s", "--summary", action='store_true', help="Average symbol embeddings in binary")
     parser.add_argument("-S", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
@@ -247,12 +250,20 @@ if __name__ == '__main__':
         version()
         exit(0)
 
-    if args.analyse or args.extract or args.logs or args.delete or args.summary:
+    if args.A or args.analyse or args.extract or args.logs or args.delete or args.summary or args.upload:
         # verify binary is a file
         if not os.path.isfile(args.binary):
             print("[!] Error, please supply a valid binary file using '-b'.")
             parser.print_help()
             exit(-1)
+
+    if args.upload:
+        # upload binary first, them carry out actions
+        print(f"[!] RE:upload not implemented. Use analyse.")
+        exit(-1)
+
+    if args.A:
+        RE_analyse(args.binary)
 
     if args.analyse:
         RE_analyse(args.binary)
@@ -320,3 +331,6 @@ if __name__ == '__main__':
         print("[!] Error, please supply an action command")
         parser.print_help()
 
+
+if __name__ == '__main__':
+    main()

@@ -6,10 +6,10 @@ with open("README.md", "r") as f:
 setuptools.setup(
         name="reait",
         version="0.0.15",
-        scripts=['reait.py'],
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/RevEng-AI/reait",
+        author="James Patrick-Evans",
         packages=setuptools.find_packages(),
         classifiers=[
             "Programming Language :: Python :: 3",
@@ -17,7 +17,12 @@ setuptools.setup(
             "Operating System :: OS Independent"
             ],
         install_requires=[
-                'tqdm', 'argparse', 'requests', 'rich', 'tomli', 'scikit-learn', 'pandas', 'numpy', 're'
+                'tqdm', 'argparse', 'requests', 'rich', 'tomli', 'scikit-learn', 'pandas', 'numpy'
+            ],
+        entry_points={
+            'console_scripts': [
+                'reait = reait.__main__:main'
             ]
-        )
+        }
+    )
 
