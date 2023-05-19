@@ -1,5 +1,6 @@
 # reait
-RevEng.AI Toolkit
+
+## <ins>R</ins>ev<ins>E</ins>ng.<ins>AI</ins> <ins>T</ins>oolkit
 
 Analyse compiled executable binaries using the RevEng.AI API. This tool allows you to search for similar components across different compiled executable programs, identify known vulnerabilities in stripped executables, and generate "YARA-like" AI signatures for entire binary files. More details about the API can be found at [docs.reveng.ai](https://docs.reveng.ai).
 
@@ -34,8 +35,8 @@ Once an analysis is complete, you may access RevEng.AI's BinNet embeddings for a
 `reait -b /usr/bin/true -x | jq ".[] | select(.vaddr==$((0x19f0))).embedding" > embedding.json`
 
 
-### Search for similar symbols for an embedding
-To query our database of similar symbols based on an embedding, use `-n` to search using Approximate Nearest Neighbours. The `--nns` allows you to specify the number of results returned. A list of symbol names and the distance between each vector is returned. 
+### Search for similar symbols using an embedding
+To query our database of similar symbols based on an embedding, use `-n` to search using Approximate Nearest Neighbours. The `--nns` allows you to specify the number of results returned. A list of symbols with their names, distance (similarity), RevEng.AI collection set, source code filename, source code line number, and file creation timestamp is returned. 
 
 `reait -e embedding.json -n`
 
@@ -56,8 +57,10 @@ To search for most similar symbols from a set of RevEng.AI collections, use the 
 
 `reait -n --embedding my_func.json --collections "(libc.*|lib.*crypt.*)"`
 
+RevEng.AI collections are sets of pre-analysed executable objects. To create custom collection sets e.g., malware collections, please create a RevEng.AI account.
+
 ### RevEng.AI embedding models
-To use specific RevEng.AI AI models, or for training custom models, use the `-m` to specify the model. The default option is to use the latest development models. Available models are `binnet-0.1` and `dexter`.
+To use specific RevEng.AI AI models, or for training custom models, use `-m` to specify the model. The default option is to use the latest development model. Available models are `binnet-0.1` and `dexter`.
 
 `reait -b /usr/bin/true -m dexter -a`
 
@@ -65,11 +68,11 @@ To use specific RevEng.AI AI models, or for training custom models, use the `-m`
 To identify known open source software components embedded inside a binary, use the `-C` flag.
 
 #### Stripped Binary CVE Checker
-To check libraries found within a stripped binary against known vulnerabilities, use `-c` or `--cves`.
+To check for known vulnerabilities found with embedded software components, use `-c` or `--cves`.
 
 
 ### RevEng.AI Binary Signature
-To generate a function description of an entire binary file, use the `-S` flag. NB: Under development.
+To generate an AI functional description of an entire binary file, use the `-S` flag. NB: Under development.
 
 
 ### Binary embedding
