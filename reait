@@ -7,6 +7,7 @@ from hashlib import sha256
 from rich import print_json, print as rich_print
 from sklearn.metrics.pairwise import cosine_similarity
 import os
+import re
 import argparse
 import requests
 from numpy import array, vstack, mean
@@ -61,6 +62,24 @@ def RE_analyse(fpath: str):
     if res.status_code == 400:
         if 'already exists' in json.loads(res.text)['reason']:
             print(f"[-] {fpath} already analysed. Please check the results log file for {binary_id(fpath)}")
+            return True
+
+    res.raise_for_status()
+
+
+def RE_upload(fpath: str):
+    """
+        Upload binary to Server
+    """
+    res = reveng_req(requests.post, f"upload", data=open(fpath, 'rb').read())
+    if res.status_code == 200:
+        print("[+] Successfully uploaded binary to your account.")
+        print(f"[+] {fpath} - {binary_id(fpath)}")
+        return res
+
+    if res.status_code == 400:
+        if 'already exists' in json.loads(res.text)['reason']:
+            print(f"[-] {fpath} already exists. Please check the results log file for {binary_id(fpath)}")
             return True
 
     res.raise_for_status()
@@ -135,7 +154,7 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
     return json_sims
 
 
-def RE_nearest_symbols(embedding: list, nns: int = 5):
+def RE_nearest_symbols(embedding: list, nns: int = 5, collections : list = None):
     """
         Get function name suggestions for an embedding
         :param nns: Number of nearest neighbors
@@ -144,6 +163,10 @@ def RE_nearest_symbols(embedding: list, nns: int = 5):
     params={'nns': nns}
     if source:
         params['source'] = source
+
+    if collections:
+        params['collections'] = collections
+
     res = reveng_req(requests.post, "ann", data=json.dumps(embedding), params=params)
     res.raise_for_status()
     f_suggestions = res.json()
@@ -181,19 +204,28 @@ def version():
 if __name__ == '__main__':
     parse_config()
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-b", "--binary", default="", help="Path on binary to analyse")
-    parser.add_argument("-a", "--analyse", action='store_true', help="Analyse new binary")
+    parser.add_argument("-b", "--binary", default="", help="Path of binary to analyse")
+    parser.add_argument("-a", "--analyse", action='store_true', help="Perform a full analysis and generate embeddings for every symbol")
+    parser.add_argument("--no-embeddings", action='store_true', help="Only perform binary analysis. Do not generate embeddings for symbols")
+    parser.add_argument("--base-address", help="Image base of the executable image to map for remote analysis")
+    parser.add_argument("-A", action='store_true', help="Upload and Analyse a new binary")
+    parser.add_argument("-u", "--upload", action='store_true', help="Upload a new binary to remote server")
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
     parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
+    parser.add_argument("--collections", default=None, help="List of CSV collections to filter results e.g. libc")
     parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
     parser.add_argument("--from-file", help="ANN flag to limit to embeddings returned to those found in JSON embeddings file")
     parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
+    parser.add_argument("-C", "--sca", action="store_true", help="Perform Software Composition Anaysis to identify common libraries embedded in binary")
     parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
+    parser.add_argument("--start-address", help="Start vaddr of the function to extract embeddings for")
+    parser.add_argument("--end-address", help="End vaddr of the function to extract embeddings for")
     parser.add_argument("-s", "--summary", action='store_true', help="Average symbol embeddings in binary")
+    parser.add_argument("-S", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
-    parser.add_argument("-d", "--delete", action='store_true', help="Securely delete all analyses and metadata associated with binary")
+    parser.add_argument("-d", "--delete", action='store_true', help="Delete all metadata associated with binary")
     parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
     parser.add_argument("-h", "--host", help="Analysis Host (https://api.reveng.ai)")
     parser.add_argument("-v", "--version", action="store_true", help="Display version information")
@@ -242,6 +274,14 @@ if __name__ == '__main__':
 
         embedding = json.loads(open(args.embedding, 'r').read())
 
+        # check for valid regex
+        if args.collections:
+            try:
+                re.compile(args.collections)
+            except re.error as e:
+                print(f"[!] Error, invalid regex for collections - {args.collections}")
+                exit(-1)
+
         if args.found_in:
             if not os.path.isfile(args.found_in):
                 print("[!] Error, --found-in flag requires a path to a binary to search from")
@@ -258,7 +298,8 @@ if __name__ == '__main__':
             res = RE_compute_distance(embedding, json.load(open(args.from_file, "r")), int(args.nns))
             print_json(data=res)
         else:
-            RE_nearest_symbols(embedding, int(args.nns))
+            print(f"[+] Searching for similar symbols to embedding in {'all' if not args.collections else args.collections} collections.")
+            RE_nearest_symbols(embedding, int(args.nns), collections=args.collections)
 
     elif args.logs:
         RE_logs(args.binary)
@@ -268,6 +309,9 @@ if __name__ == '__main__':
 
     elif args.cves:
         RE_cves(args.binary)
+    elif args.signature:
+        print(f"[!] Error, feature not available yet")
+        exit(-1)
 
     else:
         print("[!] Error, please supply an action command")

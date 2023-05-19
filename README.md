@@ -1,7 +1,7 @@
 # reait
 RevEng.AI Toolkit
 
-Analyse compiled executable binaries using the RevEng.AI API. This tool allows you to search for similar components across different compiled executable programs. More details about the API can be found at [docs.reveng.ai](https://docs.reveng.ai).
+Analyse compiled executable binaries using the RevEng.AI API. This tool allows you to search for similar components across different compiled executable programs, identify known vulnerabilities in stripped executables, and generate "YARA-like" AI signatures for entire binary files. More details about the API can be found at [docs.reveng.ai](https://docs.reveng.ai).
 
 NB: We are in Alpha. We support GNU/Linux ELF and Windows PE executables for x86_64, and focus our support for x86_64 Linux ELF executables. 
 
@@ -34,24 +34,49 @@ Once an analysis is complete, you may access RevEng.AI's BinNet embeddings for a
 `reait -b /usr/bin/true -x | jq ".[] | select(.vaddr==$((0x19f0))).embedding" > embedding.json`
 
 
-### Search for similar symbols based on JSON embedding file
+### Search for similar symbols for an embedding
 To query our database of similar symbols based on an embedding, use `-n` to search using Approximate Nearest Neighbours. The `--nns` allows you to specify the number of results returned. A list of symbol names and the distance between each vector is returned. 
 
 `reait -e embedding.json -n`
 
 NB: A smaller distance indicates a higher degree of similarity.
 
-#### Limited Search
-To search for the most similar symbols found in a binary to a specific embedding, use the `--found-in` option with a path to the executable.
+#### Specific Search
+To search for the most similar symbols found in a specific binary, use the `--found-in` option with a path to the executable to search from.
 
 `reait -n --embedding /tmp/sha256_init.json --found-in ~/malware.exe --nns 5` 
 
 This downloads embeddings from `malware.exe` and computes the cosine similarity between all symbols and `sha256_init.json`. The returned results lists the most similar symbol locations by cosine similarity score (1.0 most similar, -1.0 dissimilar).
 
+The `--from-file` option may also be used to limit the search to a custom file containing a JSON list of embeddings.
+
+
+#### Limited Search
+To search for most similar symbols from a set of RevEng.AI collections, use the `--collections` options with a RegEx to match collection names. For example:
+
+`reait -n --embedding my_func.json --collections "(libc.*|lib.*crypt.*)"`
+
+### RevEng.AI embedding models
+To use specific RevEng.AI AI models, or for training custom models, use the `-m` to specify the model. The default option is to use the latest development models. Available models are `binnet-0.1` and `dexter`.
+
+`reait -b /usr/bin/true -m dexter -a`
+
+### Software Composition Analysis
+To identify known open source software components embedded inside a binary, use the `-C` flag.
+
+#### Stripped Binary CVE Checker
+To check libraries found within a stripped binary against known vulnerabilities, use `-c` or `--cves`.
+
+
+### RevEng.AI Binary Signature
+To generate a function description of an entire binary file, use the `-S` flag. NB: Under development.
+
+
 ### Binary embedding
-Produce a smart fingerprint for the whole binary by calculating the arithmetic mean of all symbol embeddings.
+Produce a dumb fingerprint for the whole binary by calculating the arithmetic mean of all symbol embeddings.
 
 `reait -b /usr/bin/true -s`
+
 
 
 ## Configuration
@@ -61,6 +86,7 @@ Produce a smart fingerprint for the whole binary by calculating the arithmetic m
 ```
 apikey = "l1br3"
 host = "https://api.reveng.ai"
+model = "binnet-0.1"
 ```
 
 ## Contact

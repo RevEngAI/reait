@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich", "tomli", "scikit-learn", "pandas", "numpy"]
+requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich", "tomli", "scikit-learn", "pandas", "numpy", "re"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "reait"
-version = "0.0.14"
+version = "0.0.15"
 readme = "README.md"
 classifiers=[
   "Programming Language :: Python :: 3",
@@ -19,7 +19,8 @@ dependencies = [
     "tomli",
     "scikit-learn",
     "pandas",
-    "numpy"
+    "numpy",
+    "re"
 ]
 keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai", "vector", "embedding"]
 
