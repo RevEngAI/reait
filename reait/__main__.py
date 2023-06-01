@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from json import dumps
-from os import system
-from tqdm import tqdm 
 from hashlib import sha256
 from rich import print_json, print as rich_print
 from sklearn.metrics.pairwise import cosine_similarity
