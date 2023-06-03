@@ -2,6 +2,9 @@
 from __future__ import print_function
 from hashlib import sha256
 from rich import print_json, print as rich_print
+from rich.progress import track
+from rich.console import Console
+from rich.table import Table
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 import re
@@ -24,6 +27,35 @@ def version():
     print_json(data=api.re_conf)
 
 
+def binary_similarity(fpath: str, fpaths: list):
+    """
+	Compute binary similarity between source and list of binary files
+    """
+    console = Console()
+    embeddings = api.RE_embeddings(fpath)
+    b_embed = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
+
+    b_sums = []
+    for b in track(fpaths, description='Computing Binary Similarity...'):
+        try:
+            b_embeddings = api.RE_embeddings(b)
+            b_sum = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
+            b_sums.append(b_sum)
+        except Exception as e:
+            print(e)
+            b_sums.append("Not Analysed")
+
+    closest = cosine_similarity(b_embed, b_sums)
+
+    table = Table(title="Binary Similarity to {fpath}")
+    table.add_column("Binary", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Similarity", style="cyan", no_wrap=True)
+    table.add_column("SHA3-256", style="yellow", no_wrap=True)
+
+    for binary, similarity in zip(*fpaths, closest):
+        table.add_row(os.path.basename(binary), similarity, api.binary_id(binary)
+
+
 def main() -> None:
     """
     Tool entry
@@ -43,12 +75,14 @@ def main() -> None:
     parser.add_argument("--from-file", help="ANN flag to limit to embeddings returned to those found in JSON embeddings file")
     parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
     parser.add_argument("-C", "--sca", action="store_true", help="Perform Software Composition Anaysis to identify common libraries embedded in binary")
+    parser.add_argument("-sbom", action="store_true", help="Generate SBOM for binary")
     parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
     parser.add_argument("--start-address", help="Start vaddr of the function to extract embeddings")
     parser.add_argument("--end-address", help="End vaddr of the function to extract embeddings")
-    parser.add_argument("-s", "--summary", action='store_true', help="Average symbol embeddings in binary")
-    parser.add_argument("-S", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
+    parser.add_argument("-s", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
+    parser.add_argument("-S", "--similarity", action='store_true', help="Compute similarity from a list of binaries. Option can be used with --from-file or -t flag with csv file paths. All binaries must be analysed prior to being used.")
+    parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
     parser.add_argument("-d", "--delete", action='store_true', help="Delete all metadata associated with binary")
     parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
@@ -69,7 +103,7 @@ def main() -> None:
         version()
         exit(0)
 
-    if args.A or args.analyse or args.extract or args.logs or args.delete or args.summary or args.upload:
+    if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload:
         # verify binary is a file
         if not os.path.isfile(args.binary):
             print("[!] Error, please supply a valid binary file using '-b'.")
@@ -91,11 +125,22 @@ def main() -> None:
         embeddings = api.RE_embeddings(args.binary)
         print_json(data=embeddings)
 
-    elif args.summary:
+    elif args.signature:
         # Arithetic mean of symbol embeddings
         embeddings = api.RE_embeddings(args.binary)
         b_embed = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
         print_json(data=b_embed.tolist())
+
+    elif args.similarity:
+        #compute binary similarity from list of executables
+        if args.from_file != "":
+            binaries = open(args.from_file, 'r').readlines()
+	else:
+	    if not args.to:
+		printf(f"Error, please specify --from-file or --to to compute binary similarity against")
+		exit(-1)
+	    binaries = [args.to]
+	binary_similarity(args.binary, binaries)
 
     elif args.ann:
         source = None
@@ -142,10 +187,6 @@ def main() -> None:
 
     elif args.cves:
         api.RE_cves(args.binary)
-    elif args.signature:
-        print(f"[!] Error, feature not available yet")
-        exit(-1)
-
     else:
         print("[!] Error, please supply an action command")
         parser.print_help()

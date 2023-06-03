@@ -98,6 +98,28 @@ def RE_embeddings(fpath: str):
     return res.json()
 
 
+def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr: int = None, model: str = None):
+    """
+        Fetch embedding for custom symbol range
+    """
+    params = {}
+
+    if end_vaddr:
+        params['end_vaddr']: end_vaddr
+    if base_vaddr:
+        params['base_vaddr']: base_vaddr
+    if model:
+        params['model']: model
+
+    res = reveng_req(requests.get, f"embedding/{binary_id(fpath)}/{start_vaddr}", params=params)
+    if res.status_code == 425:
+        print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
+        return
+
+    res.raise_for_status()
+    return res.json()
+
+
 def RE_logs(fpath: str):
     """
         Delete analysis results for Binary ID in command
@@ -136,7 +158,6 @@ def RE_cves(fpath: str):
     res.raise_for_status()
 
 
-#def RE_compute_distance(embedding: list, fpath_source: str, nns: int = 5):
 def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
     """
         Compute the cosine distance between source embedding and embeddinsg from binary
