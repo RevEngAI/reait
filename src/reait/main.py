@@ -5,7 +5,7 @@ from rich import print_json, print as rich_print
 from rich.progress import track
 from rich.console import Console
 from rich.table import Table
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 import os
 import re
 import argparse
@@ -19,6 +19,7 @@ from sys import exit
 from IPython import embed
 from reait import api
 from scipy.spatial import distance
+from scipy.special import expit
 import numpy as np
 
 def version():
@@ -34,15 +35,20 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95):
 	Match embeddings in fpath from a list of embeddings
 	"""
 	print(f"Matching symbols from {fpath} with confidence {confidence}")
-	sink_embed_mat = np.vstack(map(lambda x: x['embedding'], embeddings))
+	sink_embed_mat = np.vstack(list(map(lambda x: x['embedding'], embeddings)))
 	b_embeds = api.RE_embeddings(fpath)
-	source_embed_mat = np.vstack(map(lambda x: x['embedding'], b_embeds))
-	closest = cosine_similarity(source_embed_mat, sink_embed_mat)
+	source_embed_mat = np.vstack(list(map(lambda x: x['embedding'], b_embeds)))
+	closest = 1 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
+	# standard normalised transform 
+	#closest = expit((closest - closest.mean(axis=0).transpose()) / closest.std(axis=0)
 	i, j = closest.shape
 
 	for _i in track(range(i), description='Matching Symbols...'):
 		row = closest[_i, :]
-		match_index = row.argsort()[::-1][0]
+		match_index, second_match = row.argsort()[::-1][:2]
+		# match has to have cosine similarity above threshold, and second result has to be below
+		#if row[match_index] >= confidence and row[row.argsort()[::-1][1]] < confidence:
+		#if row[match_index] >= confidence and row[second_match] < confidence:
 		if row[match_index] >= confidence:
 			source_index = _i
 			sink_index = match_index
@@ -52,7 +58,7 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95):
 
 			m_confidence = row[match_index]
 
-			rich_print(f"[bold green]Found match! with {m_confidence:.03} confidence[/bold green] [blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
+			rich_print(f"[bold green]Found match![/bold green][yellow]\tConfidence: {m_confidence:.03f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
 		
 
 def binary_similarity(fpath: str, fpaths: list):
