@@ -18,6 +18,8 @@ from os.path import isfile
 from sys import exit
 from IPython import embed
 from reait import api
+from scipy.spatial import distance
+import numpy as np
 
 def version():
 	"""
@@ -26,6 +28,32 @@ def version():
 	rich_print(f"[bold red]reait[/bold red] [bold bright_green]v{api.__version__}[/bold bright_green]")
 	print_json(data=api.re_conf)
 
+
+def match(fpath: str, embeddings: list, confidence: float = 0.95):
+	"""
+	Match embeddings in fpath from a list of embeddings
+	"""
+	print(f"Matching symbols from {fpath} with confidence {confidence}")
+	sink_embed_mat = np.vstack(map(lambda x: x['embedding'], embeddings))
+	b_embeds = api.RE_embeddings(fpath)
+	source_embed_mat = np.vstack(map(lambda x: x['embedding'], b_embeds))
+	closest = cosine_similarity(source_embed_mat, sink_embed_mat)
+	i, j = closest.shape
+
+	for _i in track(range(i), description='Matching Symbols...'):
+		row = closest[_i, :]
+		match_index = row.argsort()[::-1][0]
+		if row[match_index] >= confidence:
+			source_index = _i
+			sink_index = match_index
+
+			source_symb = b_embeds[_i]
+			sink_symb = embeddings[sink_index]
+
+			m_confidence = row[match_index]
+
+			rich_print(f"[bold green]Found match! with {m_confidence:.03} confidence[/bold green] [blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
+		
 
 def binary_similarity(fpath: str, fpaths: list):
 	"""
@@ -83,6 +111,8 @@ def main() -> None:
 	parser.add_argument("-s", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
 	parser.add_argument("-S", "--similarity", action='store_true', help="Compute similarity from a list of binaries. Option can be used with --from-file or -t flag with csv file paths. All binaries must be analysed prior to being used.")
 	parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
+	parser.add_argument("-M", "--match", action='store_true', help="Match functions in binary file. Can be used with --confidence, --from-file.")
+	parser.add_argument("--confidence", default=None, help="Confidence threshold used to match symbols.")
 	parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
 	parser.add_argument("-d", "--delete", action='store_true', help="Delete all metadata associated with binary")
 	parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
@@ -103,7 +133,7 @@ def main() -> None:
 		version()
 		exit(0)
 
-	if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload:
+	if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match:
 		# verify binary is a file
 		if not os.path.isfile(args.binary):
 			print("[!] Error, please supply a valid binary file using '-b'.")
@@ -114,9 +144,6 @@ def main() -> None:
 		# upload binary first, them carry out actions
 		print(f"[!] RE:upload not implemented. Use analyse.")
 		exit(-1)
-
-	if args.A:
-		api.RE_analyse(args.binary)
 
 	if args.analyse:
 		api.RE_analyse(args.binary)
@@ -178,6 +205,29 @@ def main() -> None:
 		else:
 			print(f"[+] Searching for similar symbols to embedding in {'all' if not args.collections else args.collections} collections.")
 			api.RE_nearest_symbols(embedding, int(args.nns), collections=args.collections)
+
+
+	elif args.match:
+		if args.from_file:
+			embeddings = json.load(open(args.from_file, 'r'))
+		else:
+			print("No --from-file, matching from global symbol database (unstrip) not currently")
+			exit(-1)
+
+		confidence = 0.95
+		if args.confidence:
+			confidences = {
+				'high': 0.95,
+				'medium': 0.9,
+				'low': 0.8,
+				'all': 0.0
+			}
+			if args.confidence in confidences.keys():
+				confidence = confidences[args.confidence]
+			else:
+				confidence = float(args.confidence)
+			
+		match(args.binary, embeddings, confidence=confidence)
 
 	elif args.logs:
 		api.RE_logs(args.binary)
