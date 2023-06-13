@@ -18,7 +18,7 @@ setuptools.setup(
             "Operating System :: OS Independent"
             ],
         install_requires=[
-                'tqdm', 'argparse', 'requests', 'rich', 'tomli', 'scikit-learn', 'pandas', 'numpy'
+                'tqdm', 'argparse', 'requests', 'rich', 'tomli', 'pandas', 'numpy', "scipy"
             ],
     )
 

@@ -5,7 +5,6 @@ from rich import print_json, print as rich_print
 from rich.progress import track
 from rich.console import Console
 from rich.table import Table
-from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 import os
 import re
 import argparse
@@ -30,7 +29,7 @@ def version():
 	print_json(data=api.re_conf)
 
 
-def match(fpath: str, embeddings: list, confidence: float = 0.95):
+def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.01):
 	"""
 	Match embeddings in fpath from a list of embeddings
 	"""
@@ -38,27 +37,28 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95):
 	sink_embed_mat = np.vstack(list(map(lambda x: x['embedding'], embeddings)))
 	b_embeds = api.RE_embeddings(fpath)
 	source_embed_mat = np.vstack(list(map(lambda x: x['embedding'], b_embeds)))
-	closest = 1 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
-	# standard normalised transform 
-	#closest = expit((closest - closest.mean(axis=0).transpose()) / closest.std(axis=0)
+	# do not change cosine distance, works best in practice
+	closest = 1.0 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
 	i, j = closest.shape
 
 	for _i in track(range(i), description='Matching Symbols...'):
 		row = closest[_i, :]
 		match_index, second_match = row.argsort()[::-1][:2]
-		# match has to have cosine similarity above threshold, and second result has to be below
-		#if row[match_index] >= confidence and row[row.argsort()[::-1][1]] < confidence:
-		#if row[match_index] >= confidence and row[second_match] < confidence:
+		source_index = _i
+		sink_index = match_index
+		source_symb = b_embeds[_i]
+		sink_symb = embeddings[sink_index]
+		m_confidence = row[match_index]
+		s_confidence = row[second_match]
+		
 		if row[match_index] >= confidence:
-			source_index = _i
-			sink_index = match_index
+			rich_print(f"[bold green]Found match![/bold green][yellow]\tConfidence: {m_confidence:.05f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
+		elif (m_confidence - s_confidence) > deviation:
+			rich_print(f"[bold magenta]Possible match[/bold magenta][yellow]\tConfidence: {m_confidence:.05f}/{s_confidence:.05f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
+		else:
+			#rich_print(f"[bold red]No match for[/bold red]\t[blue]{source_symb['name']}:{source_symb['vaddr']}\t{sink_symb['name']} - {m_confidence:0.05f}[/blue]")
+			pass
 
-			source_symb = b_embeds[_i]
-			sink_symb = embeddings[sink_index]
-
-			m_confidence = row[match_index]
-
-			rich_print(f"[bold green]Found match![/bold green][yellow]\tConfidence: {m_confidence:.03f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
 		
 
 def binary_similarity(fpath: str, fpaths: list):
@@ -66,6 +66,12 @@ def binary_similarity(fpath: str, fpaths: list):
 	Compute binary similarity between source and list of binary files
 	"""
 	console = Console()
+
+	table = Table(title=f"Binary Similarity to {fpath}")
+	table.add_column("Binary", justify="right", style="cyan", no_wrap=True)
+	table.add_column("SHA3-256", style="magenta", no_wrap=True)
+	table.add_column("Similarity", style="yellow", no_wrap=True)
+
 	embeddings = api.RE_embeddings(fpath)
 	b_embed = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
 
@@ -73,21 +79,19 @@ def binary_similarity(fpath: str, fpaths: list):
 	for b in track(fpaths, description='Computing Binary Similarity...'):
 		try:
 			b_embeddings = api.RE_embeddings(b)
-			b_sum = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
+			b_sum = mean(vstack(list(map(lambda x: array(x['embedding']), b_embeddings))), axis=0)
 			b_sums.append(b_sum)
 		except Exception as e:
-			print(e)
-			b_sums.append("Not Analysed")
+			console.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
+			console.print(e)
 
-	closest = cosine_similarity(b_embed, b_sums)
+	if len(b_sums) > 0:
+			closest = 1.0 - distance.cdist(np.expand_dims(b_embed, axis=0), np.vstack(b_sums))
 
-	table = Table(title="Binary Similarity to {fpath}")
-	table.add_column("Binary", justify="right", style="cyan", no_wrap=True)
-	table.add_column("Similarity", style="cyan", no_wrap=True)
-	table.add_column("SHA3-256", style="yellow", no_wrap=True)
+			for binary, similarity in zip(fpaths, closest.tolist()[0]):
+				table.add_row(os.path.basename(binary), api.binary_id(binary), f"{similarity:.03f}")
 
-	for binary, similarity in zip(*fpaths, closest):
-		table.add_row(os.path.basename(binary), similarity, api.binary_id(binary))
+	console.print(table)
 
 
 def main() -> None:
@@ -115,10 +119,11 @@ def main() -> None:
 	parser.add_argument("--start-address", help="Start vaddr of the function to extract embeddings")
 	parser.add_argument("--end-address", help="End vaddr of the function to extract embeddings")
 	parser.add_argument("-s", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
-	parser.add_argument("-S", "--similarity", action='store_true', help="Compute similarity from a list of binaries. Option can be used with --from-file or -t flag with csv file paths. All binaries must be analysed prior to being used.")
+	parser.add_argument("-S", "--similarity", action='store_true', help="Compute similarity from a list of binaries. Option can be used with --from-file or -t flag with CSV of file paths. All binaries must be analysed prior to being used.")
 	parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
 	parser.add_argument("-M", "--match", action='store_true', help="Match functions in binary file. Can be used with --confidence, --from-file.")
-	parser.add_argument("--confidence", default=None, help="Confidence threshold used to match symbols.")
+	parser.add_argument("--confidence", default="high", help="Confidence threshold used to match symbols.")
+	parser.add_argument("--deviation", default=0.0125, help="Deviation percentage used to possible match symbols.")
 	parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
 	parser.add_argument("-d", "--delete", action='store_true', help="Delete all metadata associated with binary")
 	parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
@@ -172,7 +177,7 @@ def main() -> None:
 			if not args.to:
 				printf(f"Error, please specify --from-file or --to to compute binary similarity against")
 				exit(-1)
-			binaries = [args.to]
+			binaries = args.to.split(",")
 		binary_similarity(args.binary, binaries)
 
 	elif args.ann:
@@ -223,9 +228,9 @@ def main() -> None:
 		confidence = 0.95
 		if args.confidence:
 			confidences = {
-				'high': 0.95,
-				'medium': 0.9,
-				'low': 0.8,
+				'high': 0.99999,
+				'medium': 0.999,
+				'low': 0.99,
 				'all': 0.0
 			}
 			if args.confidence in confidences.keys():
@@ -233,7 +238,7 @@ def main() -> None:
 			else:
 				confidence = float(args.confidence)
 			
-		match(args.binary, embeddings, confidence=confidence)
+		match(args.binary, embeddings, confidence=confidence, deviation=float(args.deviation))
 
 	elif args.logs:
 		api.RE_logs(args.binary)

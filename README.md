@@ -59,6 +59,17 @@ To search for most similar symbols from a set of RevEng.AI collections, use the 
 
 RevEng.AI collections are sets of pre-analysed executable objects. To create custom collection sets e.g., malware collections, please create a RevEng.AI account.
 
+
+### Unstripping binaries
+
+Find common components between binaries, RevEng.AI collections, or global search, by using `-M, --match`.
+
+Example usage: 
+
+```
+reait -M -b 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe --from-file 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.embeddings.json --confidence high
+```
+
 ### RevEng.AI embedding models
 To use specific RevEng.AI AI models, or for training custom models, use `-m` to specify the model. The default option is to use the latest development model. Available models are `binnet-0.1` and `dexter`.
 
@@ -73,6 +84,25 @@ To check for known vulnerabilities found with embedded software components, use 
 
 ### RevEng.AI Binary Signature
 To generate an AI functional description of an entire binary file, use the `-S` flag. NB: Under development.
+
+
+Example usage:
+
+```
+reait -b 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe -S -t d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe,05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe,755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe,/usr/bin/id
+Computing Binary Similarity... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━  75% 0:00:01
+/usr/bin/id Not Analysed - 24d4f77f802fef02f2e616f7dc9b4522dc70c7bf3a993bf95ac598b0027c6b65
+400 Client Error: BAD REQUEST for url: https://api.reveng.ai/embeddings/24d4f77f802fef02f2e616f7dc9b4522dc70c7bf3a993bf95ac598b0027c6b65
+Computing Binary Similarity... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:01
+   Binary Similarity to 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe    
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃                                                               Binary ┃ SHA3-256                                                         ┃ Similarity ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe │ d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca │ 1.000      │
+│ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe │ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2 │ -0.577     │
+│ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe │ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63 │ -3.408     │
+└──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────┴────────────┘
+```
 
 
 ### Binary embedding

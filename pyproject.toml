@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich", "tomli", "scikit-learn", "pandas", "numpy"]
+requires = ["setuptools >= 40.9.0", "tqdm", "argparse", "requests", "rich", "tomli", "pandas", "numpy", "scipy"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,9 +17,9 @@ dependencies = [
     "rich",
     "argparse",
     "tomli",
-    "scikit-learn",
     "pandas",
     "numpy",
+	"scipy"
 ]
 keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai", "vector", "embedding"]
 requires-python = ">=3.7"
