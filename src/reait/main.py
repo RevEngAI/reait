@@ -121,7 +121,7 @@ def main() -> None:
 	parser.add_argument("-s", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
 	parser.add_argument("-S", "--similarity", action='store_true', help="Compute similarity from a list of binaries. Option can be used with --from-file or -t flag with CSV of file paths. All binaries must be analysed prior to being used.")
 	parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
-	parser.add_argument("-M", "--match", action='store_true', help="Match functions in binary file. Can be used with --confidence, --from-file.")
+	parser.add_argument("-M", "--match", action='store_true', help="Match functions in binary file. Can be used with --confidence, --deviation, --from-file, --found-in.")
 	parser.add_argument("--confidence", default="high", help="Confidence threshold used to match symbols.")
 	parser.add_argument("--deviation", default=0.0125, help="Deviation percentage used to possible match symbols.")
 	parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
@@ -175,7 +175,7 @@ def main() -> None:
 			binaries = open(args.from_file, 'r').readlines()
 		else:
 			if not args.to:
-				printf(f"Error, please specify --from-file or --to to compute binary similarity against")
+				print(f"Error, please specify --from-file or --to to compute binary similarity against")
 				exit(-1)
 			binaries = args.to.split(",")
 		binary_similarity(args.binary, binaries)
@@ -221,8 +221,14 @@ def main() -> None:
 	elif args.match:
 		if args.from_file:
 			embeddings = json.load(open(args.from_file, 'r'))
+		elif args.found_in:
+			if not os.path.isfile(args.found_in):
+				print("[!] Error, --found-in flag requires a path to a binary to search from")
+				exit(-1)
+			print(f"[+] Matching symbols between {args.binary} and {args.found_in}")
+			embeddings = api.RE_embeddings(args.found_in)
 		else:
-			print("No --from-file, matching from global symbol database (unstrip) not currently")
+			print("No --from-file or --found-in, matching from global symbol database (unstrip) not currently")
 			exit(-1)
 
 		confidence = 0.95
