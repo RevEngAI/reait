@@ -117,6 +117,7 @@ def main() -> None:
 	parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
 	parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
 	parser.add_argument("--start-vaddr", help="Start virtual address of the function to extract embeddings")
+	parser.add_argument("--symbol", help="Name of the symbol to extract embeddings")
 	parser.add_argument("-s", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
 	parser.add_argument("-S", "--similarity", action='store_true', help="Compute similarity from a list of binaries. Option can be used with --from-file or -t flag with CSV of file paths. All binaries must be analysed prior to being used.")
 	parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
@@ -142,6 +143,15 @@ def main() -> None:
 	if args.version:
 		version()
 		exit(0)
+
+
+	base_address = 0
+	if args.base_address:
+		if args.base_address.upper()[:2] == "0X":
+			base_address = int(args.base_address, 16)
+		else:
+			base_address = int(args.base_address)
+
 
 	if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match:
 		# verify binary is a file
@@ -191,14 +201,30 @@ def main() -> None:
 
 				embedding = json.loads(open(args.embedding, 'r').read())
 
-		elif args.start_vaddr and args.binary:
-			if args.start_vaddr.upper()[:2] == "0X":
-				vaddr = int(args.start_vaddr, 16)
+		elif (args.symbol or args.start_vaddr) and args.binary:
+			if args.start_vaddr:
+				if args.start_vaddr.upper()[:2] == "0X":
+					vaddr = int(args.start_vaddr, 16) + base_address
+				else:
+					vaddr = int(args.start_vaddr) + base_address
+
+				print(f"[+] Using symbol starting at vaddr {hex(vaddr)} from {args.binary} (image_base:{hex(base_address)})")
+				embeddings = api.RE_embeddings(args.binary)
+				matches = list(filter(lambda x: x['vaddr'] == vaddr, embeddings))
+				if len(matches) == 0:
+					print(f"[!] Error, could not find symbol at {hex(vaddr)} in {args.binary}")
+					exit(-1)
+				embedding = matches[0]['embedding']
 			else:
-				vaddr = int(args.start_vaddr)
-			print(f"[+] Using symbol starting at vaddr {hex(vaddr)} from {args.binary}")
-			embeddings = api.RE_embeddings(args.binary)
-			embedding = list(filter(lambda x: x['vaddr'] == vaddr, embeddings))[0]['embedding']
+				symb_name = args.symbol
+				print(f"[+] Using symbol {args.symbol} from {args.binary}")
+
+				embeddings = api.RE_embeddings(args.binary)
+				matches = list(filter(lambda x: x['name'] == args.symbol, embeddings))
+				if len(matches) == 0:
+					print(f"[!] Error, could not find symbol at {args.symbol} in {args.binary}")
+					exit(-1)
+				embedding = matches[0]['embedding']
 		else:
 			print("[!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr")
 			parser.print_help()
