@@ -7,7 +7,7 @@ import os
 import re
 import argparse
 import requests
-from numpy import array, vstack, mean
+from numpy import array, vstack, mean, average
 from pandas import DataFrame
 import json
 import tomli
@@ -92,10 +92,17 @@ def RE_embeddings(fpath: str):
     res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}")
     if res.status_code == 425:
         print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
-        return
 
     res.raise_for_status()
     return res.json()
+
+
+def RE_signature(embeddings):
+	"""
+		Compute binary signature from embeddings
+		:param embeddings: list of embedding objects, NB: Not numpy array of embedding values
+	"""
+	return average(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0, weights=array(list(map(lambda x: x['size'], embeddings))))
 
 
 def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr: int = None, model: str = None):
@@ -171,7 +178,7 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
     closest_df = df.iloc[closest]
     # create json similarity object
     similarities = list(zip(distances, closest_df.index.tolist()))
-    json_sims = [{'similaritiy': float(d[0]), 'vaddr': int(df.iloc[v]['vaddr'])} for d, v in similarities]
+    json_sims = [{'similaritiy': float(d[0]), 'vaddr': int(df.iloc[v]['vaddr']), 'name': str(df.iloc[v]['name']), 'size': int(df.iloc[v]['size'])} for d, v in similarities]
     return json_sims
 
 

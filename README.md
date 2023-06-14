@@ -40,6 +40,10 @@ To query our database of similar symbols based on an embedding, use `-n` to sear
 
 `reait -e embedding.json -n`
 
+The following command searches for the top 10 most similar symbols found in md5sum.gcc.og.dynamic to the symbol starting at 0x4037e0 in md5sum.clang.og.dynamic. You may need to pass `--image-base` to ensure virtual addresses are mapped correctly.
+
+`reait -b md5sum.clang.og.dynamic -n --start-vaddr 0x4037e0 --found-in md5sum.gcc.og.dynamic --nns 10`
+
 NB: A smaller distance indicates a higher degree of similarity.
 
 #### Specific Search

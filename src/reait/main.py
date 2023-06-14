@@ -9,7 +9,7 @@ import os
 import re
 import argparse
 import requests
-from numpy import array, vstack, mean
+from numpy import array, vstack, mean, average
 from pandas import DataFrame
 import json
 import tomli
@@ -73,13 +73,13 @@ def binary_similarity(fpath: str, fpaths: list):
 	table.add_column("Similarity", style="yellow", no_wrap=True)
 
 	embeddings = api.RE_embeddings(fpath)
-	b_embed = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
+	b_embed = api.RE_signature(embeddings)
 
 	b_sums = []
 	for b in track(fpaths, description='Computing Binary Similarity...'):
 		try:
 			b_embeddings = api.RE_embeddings(b)
-			b_sum = mean(vstack(list(map(lambda x: array(x['embedding']), b_embeddings))), axis=0)
+			b_sum = api.RE_signature(b_embeddings)
 			b_sums.append(b_sum)
 		except Exception as e:
 			console.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
@@ -116,8 +116,7 @@ def main() -> None:
 	parser.add_argument("-sbom", action="store_true", help="Generate SBOM for binary")
 	parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
 	parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
-	parser.add_argument("--start-address", help="Start vaddr of the function to extract embeddings")
-	parser.add_argument("--end-address", help="End vaddr of the function to extract embeddings")
+	parser.add_argument("--start-vaddr", help="Start virtual address of the function to extract embeddings")
 	parser.add_argument("-s", "--signature", action='store_true', help="Generate a RevEng.AI binary signature")
 	parser.add_argument("-S", "--similarity", action='store_true', help="Compute similarity from a list of binaries. Option can be used with --from-file or -t flag with CSV of file paths. All binaries must be analysed prior to being used.")
 	parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
@@ -166,7 +165,7 @@ def main() -> None:
 	elif args.signature:
 		# Arithetic mean of symbol embeddings
 		embeddings = api.RE_embeddings(args.binary)
-		b_embed = mean(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0)
+		b_embed = api.RE_signature(embeddings)
 		print_json(data=b_embed.tolist())
 
 	elif args.similarity:
@@ -183,12 +182,28 @@ def main() -> None:
 	elif args.ann:
 		source = None
 		# parse embedding json file
-		if not isfile(args.embedding):
-			print("[!] Error, please supply a valid embedding JSON file using '-e'")
+
+		if args.embedding:
+			if not isfile(args.embedding):
+				print("[!] Error, please supply a valid embedding JSON file using '-e'")
+				parser.print_help()
+				exit(-1)
+
+				embedding = json.loads(open(args.embedding, 'r').read())
+
+		elif args.start_vaddr and args.binary:
+			if args.start_vaddr.upper()[:2] == "0X":
+				vaddr = int(args.start_vaddr, 16)
+			else:
+				vaddr = int(args.start_vaddr)
+			print(f"[+] Using symbol starting at vaddr {hex(vaddr)} from {args.binary}")
+			embeddings = api.RE_embeddings(args.binary)
+			embedding = list(filter(lambda x: x['vaddr'] == vaddr, embeddings))[0]['embedding']
+		else:
+			print("[!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr")
 			parser.print_help()
 			exit(-1)
 
-		embedding = json.loads(open(args.embedding, 'r').read())
 
 		# check for valid regex
 		if args.collections:
