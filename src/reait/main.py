@@ -29,7 +29,7 @@ def version():
 	print_json(data=api.re_conf)
 
 
-def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.01):
+def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.1):
 	"""
 	Match embeddings in fpath from a list of embeddings
 	"""
@@ -39,6 +39,8 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: flo
 	source_embed_mat = np.vstack(list(map(lambda x: x['embedding'], b_embeds)))
 	# do not change cosine distance, works best in practice
 	closest = 1.0 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
+	# rescale to separate high end of (-1, 1.0)
+	closest = rescale_sim(closest)
 	i, j = closest.shape
 
 	for _i in track(range(i), description='Matching Symbols...'):
@@ -60,6 +62,11 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: flo
 			pass
 
 		
+def rescale_sim(x):
+	"""
+		Too many values close to 0.999, 0.99999, 0.998, rescale so small values are very low, map to hyperbolic space
+	"""
+	return np.power(x, 6)
 
 def binary_similarity(fpath: str, fpaths: list):
 	"""
@@ -89,7 +96,7 @@ def binary_similarity(fpath: str, fpaths: list):
 			closest = 1.0 - distance.cdist(np.expand_dims(b_embed, axis=0), np.vstack(b_sums), 'cosine')
 
 			for binary, similarity in zip(fpaths, closest.tolist()[0]):
-				table.add_row(os.path.basename(binary), api.binary_id(binary), f"{similarity:.05f}")
+				table.add_row(os.path.basename(binary), api.binary_id(binary), f"{rescale_sim(similarity):.05f}")
 
 	console.print(table)
 
@@ -123,7 +130,7 @@ def main() -> None:
 	parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
 	parser.add_argument("-M", "--match", action='store_true', help="Match functions in binary file. Can be used with --confidence, --deviation, --from-file, --found-in.")
 	parser.add_argument("--confidence", default="high", help="Confidence threshold used to match symbols.")
-	parser.add_argument("--deviation", default=0.0125, help="Deviation percentage used to possible match symbols.")
+	parser.add_argument("--deviation", default=0.125, help="Deviation percentage used to possible match symbols.")
 	parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
 	parser.add_argument("-d", "--delete", action='store_true', help="Delete all metadata associated with binary")
 	parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
