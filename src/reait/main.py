@@ -86,10 +86,10 @@ def binary_similarity(fpath: str, fpaths: list):
 			console.print(e)
 
 	if len(b_sums) > 0:
-			closest = 1.0 - distance.cdist(np.expand_dims(b_embed, axis=0), np.vstack(b_sums))
+			closest = 1.0 - distance.cdist(np.expand_dims(b_embed, axis=0), np.vstack(b_sums), 'cosine')
 
 			for binary, similarity in zip(fpaths, closest.tolist()[0]):
-				table.add_row(os.path.basename(binary), api.binary_id(binary), f"{similarity:.03f}")
+				table.add_row(os.path.basename(binary), api.binary_id(binary), f"{similarity:.05f}")
 
 	console.print(table)
 
