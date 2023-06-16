@@ -96,18 +96,16 @@ To generate an AI functional description of an entire binary file, use the `-S` 
 Example usage:
 
 ```
-reait -b 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe -S -t d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe,05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe,755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe,/usr/bin/id
-Computing Binary Similarity... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━  75% 0:00:01
-/usr/bin/id Not Analysed - 24d4f77f802fef02f2e616f7dc9b4522dc70c7bf3a993bf95ac598b0027c6b65
-400 Client Error: BAD REQUEST for url: https://api.reveng.ai/embeddings/24d4f77f802fef02f2e616f7dc9b4522dc70c7bf3a993bf95ac598b0027c6b65
+reait -b d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe -S -t 00062cb01088cea245cd5f3eb03f65a0e6b11a8126ce00034d87935a451cf99c.exe,438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe,755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe,05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe
 Computing Binary Similarity... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:01
-   Binary Similarity to 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe    
+                      Binary Similarity to RedlineInfoStealer/d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe                      
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
 ┃                                                               Binary ┃ SHA3-256                                                         ┃ Similarity ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
-│ d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe │ d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca │ 1.000      │
-│ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe │ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2 │ -0.577     │
-│ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe │ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63 │ -3.408     │
+│ 00062cb01088cea245cd5f3eb03f65a0e6b11a8126ce00034d87935a451cf99c.exe │ 00062cb01088cea245cd5f3eb03f65a0e6b11a8126ce00034d87935a451cf99c │ 0.99907    │
+│ 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe │ 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476 │ 1.00000    │
+│ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe │ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63 │ 0.80522    │
+│ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe │ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2 │ 0.94701    │
 └──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────┴────────────┘
 ```
 
