@@ -7,7 +7,7 @@ import os
 import re
 import argparse
 import requests
-from numpy import array, vstack, mean, average
+from numpy import array, vstack, mean, average, dot, arccos, pi
 from pandas import DataFrame
 import json
 import tomli
@@ -221,3 +221,11 @@ def parse_config():
             if key in config:
                 re_conf[key] = config[key]
 
+
+def angular_distance(x, y):
+    """
+    Compute angular distance between two embedding vectors
+    Normalised euclidean distance
+    """
+    cos = dot(x, y) / ((dot(x, x) * dot(y, y)) ** 0.5)
+    return 1.0 - arccos(cos)/pi
