@@ -97,12 +97,16 @@ def RE_embeddings(fpath: str):
     return res.json()
 
 
-def RE_signature(embeddings):
-	"""
-		Compute binary signature from embeddings
-		:param embeddings: list of embedding objects, NB: Not numpy array of embedding values
-	"""
-	return average(vstack(list(map(lambda x: array(x['embedding']), embeddings))), axis=0, weights=array(list(map(lambda x: x['size'], embeddings))))
+def RE_signature(fpath: str):
+    """
+        Fetch binary BinNet signature
+    """
+    res = reveng_req(requests.get, f"signature/{binary_id(fpath)}")
+    if res.status_code == 425:
+        print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
+
+    res.raise_for_status()
+    return res.json()
 
 
 def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr: int = None, model: str = None):

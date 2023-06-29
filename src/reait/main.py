@@ -37,7 +37,7 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: flo
     sink_embed_mat = np.vstack(list(map(lambda x: x['embedding'], embeddings)))
     b_embeds = api.RE_embeddings(fpath)
     source_embed_mat = np.vstack(list(map(lambda x: x['embedding'], b_embeds)))
-    # do not change cosine distance, works best in practice
+    # angular distance over cosine 
     #closest = 1.0 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
     closest = distance.cdist(source_embed_mat, sink_embed_mat, api.angular_distance)
     # rescale to separate high end of (-1, 1.0)
@@ -80,14 +80,12 @@ def binary_similarity(fpath: str, fpaths: list):
     table.add_column("SHA3-256", style="magenta", no_wrap=True)
     table.add_column("Similarity", style="yellow", no_wrap=True)
 
-    embeddings = api.RE_embeddings(fpath)
-    b_embed = api.RE_signature(embeddings)
+    b_embed = api.RE_signature(fpath)
 
     b_sums = []
     for b in track(fpaths, description='Computing Binary Similarity...'):
         try:
-            b_embeddings = api.RE_embeddings(b)
-            b_sum = api.RE_signature(b_embeddings)
+            b_sum = api.RE_signature(b)
             b_sums.append(b_sum)
         except Exception as e:
             console.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
@@ -183,9 +181,8 @@ def main() -> None:
 
     elif args.signature:
         # Arithetic mean of symbol embeddings
-        embeddings = api.RE_embeddings(args.binary)
-        b_embed = api.RE_signature(embeddings)
-        print_json(data=b_embed.tolist())
+        b_embed = api.RE_signature(args.binary)
+        print_json(data=b_embed)
 
     elif args.similarity:
         #compute binary similarity from list of executables
