@@ -2,7 +2,7 @@
 
 ## <ins>R</ins>ev<ins>E</ins>ng.<ins>AI</ins> <ins>T</ins>oolkit
 
-Analyse compiled executable binaries using the RevEng.AI API. This tool allows you to search for similar components across different compiled executable programs, identify known vulnerabilities in stripped executables, and generate "YARA-like" AI signatures for entire binary files. More details about the API can be found at [docs.reveng.ai](https://docs.reveng.ai).
+Analyse compiled executable binaries using the RevEng.AI API. This tool allows you to search for similar components across different compiled executable programs, identify known vulnerabilities in stripped executables, and generate "YARA++" **REAI** signatures for entire binary files. More details about the API can be found at [docs.reveng.ai](https://docs.reveng.ai).
 
 NB: We are in Alpha. We support GNU/Linux ELF and Windows PE executables for x86_64, and focus our support for x86_64 Linux ELF executables. 
 
@@ -89,11 +89,10 @@ To identify known open source software components embedded inside a binary, use 
 To check for known vulnerabilities found with embedded software components, use `-c` or `--cves`.
 
 
-### RevEng.AI Binary Signature
-To generate an AI functional description of an entire binary file, use the `-S` flag. NB: Under development.
+### REAI Signatures
+To generate an AI functional description of an entire binary file, use the `-s` flag. This will return the REAI signature of the file.
 
-
-Example usage:
+REAI signatures can be used to compute the binary similarity between entire executables with the `-S` flag. For example:
 
 ```
 reait -b d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe -S -t 00062cb01088cea245cd5f3eb03f65a0e6b11a8126ce00034d87935a451cf99c.exe,438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe,755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe,05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe
@@ -108,14 +107,6 @@ Computing Binary Similarity... ━━━━━━━━━━━━━━━━�
 │ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe │ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2 │ 0.94701    │
 └──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────┴────────────┘
 ```
-
-
-### Binary embedding
-Produce a dumb fingerprint for the whole binary by calculating the arithmetic mean of all symbol embeddings.
-
-`reait -b /usr/bin/true -s`
-
-
 
 ## Configuration
 

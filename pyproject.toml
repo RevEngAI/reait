@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reait"
-version = "0.0.15"
+version = "0.0.16"
 readme = "README.md"
 classifiers=[
   "Programming Language :: Python :: 3",
@@ -23,7 +23,7 @@ dependencies = [
 ]
 keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai", "vector", "embedding"]
 requires-python = ">=3.7"
-license = {file = "LICENSE.txt"}
+license = {file = "LICENSE"}
 authors = [
   {name = "James Patrick-Evans", email = "james@reveng.ai"},
 ]
