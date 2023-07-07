@@ -29,7 +29,33 @@ def version():
     print_json(data=api.re_conf)
 
 
-def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.1):
+def verify_binary(fpath_fmt: str):
+    try:
+        fmt     = None
+        fpath   = fpath_fmt
+
+        if ':' in fpath_fmt:
+            fpath, fmt = fpath_fmt.split(':')
+
+        if not os.path.isfile(fpath):
+            raise RuntimeError(f"File path {fpath} is not a file")
+
+        if not fmt:
+            exec_format, exec_isa = api.file_type(fpath)
+        else:
+            if '-' not in fmt:
+                raise RuntimeError('Binary type must follow format {EXEC_FORMAT}-{ISA}. Use EXEC_FORMAT raw for memory dumps e.g. raw-x86')
+
+            exec_format, exec_isa = fmt.split('-')
+
+        return fpath, exec_format, exec_isa
+
+    except Exception as e:
+        rich_print(f"Error, {e}")
+        exit(-1)
+
+
+def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.2):
     """
     Match embeddings in fpath from a list of embeddings
     """
@@ -106,7 +132,7 @@ def main() -> None:
     Tool entry
     """
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-b", "--binary", default="", help="Path of binary to analyse")
+    parser.add_argument("-b", "--binary", default="", help="Path of binary to analyse, use ./path:{exec_format} to specify executable format e.g. ./path:raw-x86_64")
     parser.add_argument("-a", "--analyse", action='store_true', help="Perform a full analysis and generate embeddings for every symbol")
     parser.add_argument("--no-embeddings", action='store_true', help="Only perform binary analysis. Do not generate embeddings for symbols")
     parser.add_argument("--base-address", help="Image base of the executable image to map for remote analysis")
@@ -130,7 +156,7 @@ def main() -> None:
     parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
     parser.add_argument("-M", "--match", action='store_true', help="Match functions in binary file. Can be used with --confidence, --deviation, --from-file, --found-in.")
     parser.add_argument("--confidence", default="high", help="Confidence threshold used to match symbols.")
-    parser.add_argument("--deviation", default=0.125, help="Deviation percentage used to possible match symbols.")
+    parser.add_argument("--deviation", default=0.2, help="Deviation in prediction confidence between outlier and next highest symbol. Use if confident symbol is present in binary but not matching.")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
     parser.add_argument("-d", "--delete", action='store_true', help="Delete all metadata associated with binary")
     parser.add_argument("-k", "--apikey", help="RevEng.AI API key")
@@ -151,7 +177,8 @@ def main() -> None:
         version()
         exit(0)
 
-
+    exec_fmt = None
+    exec_isa = None
     base_address = 0
     if args.base_address:
         if args.base_address.upper()[:2] == "0X":
@@ -160,9 +187,13 @@ def main() -> None:
             base_address = int(args.base_address)
 
 
-    if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match:
+    if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match or args.sca:
         # verify binary is a file
-        if not os.path.isfile(args.binary):
+        try:
+            fpath, exec_fmt, exec_isa = verify_binary(args.binary)
+            rich_print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
+            args.binary = fpath
+        except Exception as e:
             print("[!] Error, please supply a valid binary file using '-b'.")
             parser.print_help()
             exit(-1)
@@ -173,7 +204,7 @@ def main() -> None:
         exit(-1)
 
     if args.analyse:
-        api.RE_analyse(args.binary)
+        api.RE_analyse(args.binary, exec_fmt=exec_fmt, exec_isa=exec_isa)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary)
@@ -196,9 +227,7 @@ def main() -> None:
 
         # verify all binaries are valid files
         for b in binaries:
-            if not os.path.isfile(b):
-                print(f"Error, {b} is not a valid file path")
-                exit(-1)
+            verify_binary(b)
 
         binary_similarity(args.binary, binaries)
 
@@ -299,6 +328,10 @@ def main() -> None:
                 confidence = float(args.confidence)
             
         match(args.binary, embeddings, confidence=confidence, deviation=float(args.deviation))
+
+
+    elif args.sca:
+        api.RE_sca(args.binary)
 
     elif args.logs:
         api.RE_logs(args.binary)

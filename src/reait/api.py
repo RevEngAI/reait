@@ -14,6 +14,7 @@ import tomli
 from os.path import isfile
 from sys import exit
 from IPython import embed
+import lief
 
 __version__ = "0.0.15"
 
@@ -210,6 +211,61 @@ def binary_id(path: str):
         c = f.read()
         hf.update(c)
     return hf.hexdigest()
+
+
+def _binary_isa(lief_hdlr, exec_type):
+    """
+        Get executable file format
+    """
+    if exec_type == "elf":
+        machine_type = lief_hdlr.header.machine_type
+        if machine_type == lief.ELF.ARCH.i386:
+            return "x86"
+        elif machine_type == lief.ELF.ARCH.x86_64:
+            return "x86_64"
+
+    elif exec_type == "pe":
+        machine_type = lief_hdlr.header.machine
+        if machine_type == lief.PE.MACHINE_TYPES.I386:
+            return "x86"
+        elif machine_type == lief.PE.MACHINE_TYPES.AMD64:
+            return "x86_64"
+
+    elif exec_type == "macho":
+        machine_type = lief_hdlr.header.cpu_type
+        if machine_type == lief.MachO.CPU_TYPES.x86:
+            return "x86"
+        elif machine_type == lief.MachO.CPU_TYPES.x86_64:
+            return "x86_64"
+    
+    raise RuntimeError(f"Error, failed to determine or unsupported ISA for exec_type:{exec_type}")
+
+
+def _binary_format(lief_hdlr):
+    """
+        Get executable file format
+    """
+    if lief_hdlr.format == lief_hdlr.format.PE:
+        return "pe"
+    if lief_hdlr.format == lief_hdlr.format.ELF:
+        return "elf"
+    if lief_hdlr.format == lief_hdlr.format.MACHO:
+        return "macho"
+    
+    raise RuntimeError("Error, could not determine binary format")
+
+
+
+def file_type(fpath: str):
+    """
+        Determine ISA for binary
+    """
+    binary = lief.parse(fpath)  
+
+    # handle PE and ELF files
+    file_format = _binary_format(binary)
+    isa         = _binary_isa(binary, file_format)
+    return file_format, isa
 
 
 def parse_config():
