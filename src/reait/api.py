@@ -25,9 +25,12 @@ re_conf = {
 
 def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None):
     url = f"{re_conf['host']}/{end_point}"
-    headers = { "Authorization": f"Bearer {re_conf['apikey']}" }
+    headers = { "Authorization": f"{re_conf['apikey']}" }
     if ex_headers:
         headers.update(ex_headers)
+    print(url)
+    print(headers)
+    print(params)
     return r(url, headers=headers, data=data, params=params)
 
 
@@ -46,13 +49,17 @@ def RE_delete(fpath: str):
     return
 
 
-def RE_analyse(fpath: str, model: str = None):
+def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None):
     """
         Start analysis job for binary file
     """
-    params={}
-    if model:
-        params['model'] = model
+    filename = os.path.basename(fpath)
+    params={ 'file_name': filename }
+    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args'):
+        p_value = locals()[p_name]
+        if p_value:
+            params[p_name] = p_value
+
     res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read(), params=params)
     if res.status_code == 200:
         print("[+] Successfully submitted binary for analysis.")
@@ -60,8 +67,9 @@ def RE_analyse(fpath: str, model: str = None):
         return res
 
     if res.status_code == 400:
-        if 'already exists' in json.loads(res.text)['reason']:
-            print(f"[-] {fpath} already analysed. Please check the results log file for {binary_id(fpath)}")
+        response = json.loads(res.text)
+        if 'error' in response.keys():
+            print(f"[-] Error analysing {fpath} - {response['error']}. Please check the results log file for {binary_id(fpath)}")
             return True
 
     res.raise_for_status()

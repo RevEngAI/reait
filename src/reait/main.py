@@ -137,6 +137,11 @@ def main() -> None:
     parser.add_argument("-h", "--host", help="Analysis Host (https://api.reveng.ai)")
     parser.add_argument("-v", "--version", action="store_true", help="Display version information")
     parser.add_argument("--help", action="help", default=argparse.SUPPRESS, help=argparse._('Show this help message and exit'))
+    parser.add_argument("--isa", default=None, help="Override executable ISA. Valid values are x86, x86_64, ARMv7")
+    parser.add_argument("--exec-format", default=None, help="Override executable format. Valid values are pe, elf, macho, raw")
+    parser.add_argument("--platform", default=None, help="Override OS platform. Valid values are Windows, Linux, OSX, OpenBSD")
+    parser.add_argument("--dynamic-execution", default=False, help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
+    parser.add_argument("--cmd-line-args", default="", help="Command line arguments to pass when running binary sample in the sandbox. Only used when run with --dynamic-execution")
     args = parser.parse_args()
 
     if args.apikey:
@@ -173,7 +178,7 @@ def main() -> None:
         exit(-1)
 
     if args.analyse:
-        api.RE_analyse(args.binary)
+        api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary)
