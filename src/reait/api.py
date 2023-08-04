@@ -34,18 +34,19 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
     return r(url, headers=headers, data=data, params=params)
 
 
-def RE_delete(fpath: str):
+def RE_delete(fpath: str, model_name: str):
     """
         Delete analysis results for Binary ID in command
     """
     bin_id = binary_id(fpath)
-    res = reveng_req(requests.delete, f"{bin_id}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.delete, f"/analyse/{bin_id}", params=params)
     if res.status_code == 200:
         print(f"[+] Success. Securely deleted {fpath} analysis")
     elif res.status_code == 404:
-        print("[!] Error, binary analysis not found.")
+        print(f"[!] Error, analysis not found for {bin_id} under {model_name}.")
     else:
-        print(f"[!] Error deleteing binary {bin_id}. Server returned {res.status_code}.")
+        print(f"[!] Error deleteing binary {bin_id} under {model_name}. Server returned {res.status_code}.")
     return
 
 
@@ -93,11 +94,12 @@ def RE_upload(fpath: str):
     res.raise_for_status()
 
 
-def RE_embeddings(fpath: str):
+def RE_embeddings(fpath: str, model_name: str):
     """
         Fetch symbol embeddings
     """
-    res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}", params=params)
     if res.status_code == 425:
         print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
 
@@ -105,11 +107,12 @@ def RE_embeddings(fpath: str):
     return res.json()
 
 
-def RE_signature(fpath: str):
+def RE_signature(fpath: str, model_name: str):
     """
         Fetch binary BinNet signature
     """
-    res = reveng_req(requests.get, f"signature/{binary_id(fpath)}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"signature/{binary_id(fpath)}", params=params)
     if res.status_code == 425:
         print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
 
@@ -139,28 +142,30 @@ def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr
     return res.json()
 
 
-def RE_logs(fpath: str):
+def RE_logs(fpath: str, model_name: str):
     """
         Delete analysis results for Binary ID in command
     """
     bin_id = binary_id(fpath)
-    res = reveng_req(requests.get, f"/log/{bin_id}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"/logs/{bin_id}", params=params)
     if res.status_code == 200:
         print(res.text)
         return
     elif res.status_code == 404:
-        print(f"[!] Error, binary analysis for {bin_id} not found.")
+        print(f"[!] Error, binary analysis for {bin_id} under {model_name} not found.")
         return
 
     res.raise_for_status()
 
 
-def RE_cves(fpath: str):
+def RE_cves(fpath: str, model_name: str):
     """
         Check for known CVEs in Binary 
     """
     bin_id = binary_id(fpath)
-    res = reveng_req(requests.get, f"/cves/{bin_id}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"/cves/{bin_id}", params)
     if res.status_code == 200:
         cves = json.loads(res.text)
         rich_print(f"[bold blue]Checking for known CVEs embedded inside [/bold blue] [bold bright_green]{fpath}[/bold bright_green]:")
