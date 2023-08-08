@@ -201,11 +201,10 @@ def main() -> None:
                     #rich_print(f'[blue]Skipping non-file[/blue] {file}')
                     continue
                 try:
-                    fpath, exec_fmt, exec_isa = verify_binary(args.binary)
+                    fpath, exec_fmt, exec_isa = verify_binary(file)
                     rich_print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
-                    args.binary = fpath
                     rich_print(f'[green bold]Analysing[/green bold] {file}')
-                    api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format)
+                    api.RE_analyse(file, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format)
                 except Exception as e:
                     rich_print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
             exit(0)
