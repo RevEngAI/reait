@@ -19,6 +19,7 @@ from IPython import embed
 from reait import api
 from scipy.spatial import distance
 from scipy.special import expit
+from glob import iglob
 import numpy as np
 
 def version():
@@ -30,29 +31,24 @@ def version():
 
 
 def verify_binary(fpath_fmt: str):
-    try:
-        fmt     = None
-        fpath   = fpath_fmt
+    fmt     = None
+    fpath   = fpath_fmt
 
-        if ':' in fpath_fmt:
-            fpath, fmt = fpath_fmt.split(':')
+    if ':' in fpath_fmt:
+        fpath, fmt = fpath_fmt.split(':')
 
-        if not os.path.isfile(fpath):
-            raise RuntimeError(f"File path {fpath} is not a file")
+    if not os.path.isfile(fpath):
+        raise RuntimeError(f"File path {fpath} is not a file")
 
-        if not fmt:
-            exec_format, exec_isa = api.file_type(fpath)
-        else:
-            if '-' not in fmt:
-                raise RuntimeError('Binary type must follow format {EXEC_FORMAT}-{ISA}. Use EXEC_FORMAT raw for memory dumps e.g. raw-x86')
+    if not fmt:
+        exec_format, exec_isa = api.file_type(fpath)
+    else:
+        if '-' not in fmt:
+            raise RuntimeError('Binary type must follow format {EXEC_FORMAT}-{ISA}. Use EXEC_FORMAT raw for memory dumps e.g. raw-x86')
 
-            exec_format, exec_isa = fmt.split('-')
+        exec_format, exec_isa = fmt.split('-')
 
-        return fpath, exec_format, exec_isa
-
-    except Exception as e:
-        rich_print(f"Error, {e}")
-        exit(-1)
+    return fpath, exec_format, exec_isa
 
 
 def match(fpath: str, model_name: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.1):
@@ -133,6 +129,7 @@ def main() -> None:
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-b", "--binary", default="", help="Path of binary to analyse, use ./path:{exec_format} to specify executable format e.g. ./path:raw-x86_64")
+    parser.add_argument("-D", "--dir", default="", help="Path of directory to recursively analyse")
     parser.add_argument("-a", "--analyse", action='store_true', help="Perform a full analysis and generate embeddings for every symbol")
     parser.add_argument("--no-embeddings", action='store_true', help="Only perform binary analysis. Do not generate embeddings for symbols")
     parser.add_argument("--base-address", help="Image base of the executable image to map for remote analysis")
@@ -191,6 +188,30 @@ def main() -> None:
         else:
             base_address = int(args.base_address)
 
+
+    if args.dir:
+        if not os.path.isdir(args.dir):
+            rich_print(f'Error, {args.dir} is not a valid directory path')
+            exit(-1)
+        ## perform operation on all files inside directory
+        files = iglob(os.path.abspath(args.dir) + '/**/*', recursive=True)
+        if args.analyse:
+            for file in track(files, description='Files in directory'):
+                if not os.path.isfile(file):
+                    #rich_print(f'[blue]Skipping non-file[/blue] {file}')
+                    continue
+                try:
+                    fpath, exec_fmt, exec_isa = verify_binary(args.binary)
+                    rich_print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
+                    args.binary = fpath
+                    rich_print(f'[green bold]Analysing[/green bold] {file}')
+                    api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format)
+                except Exception as e:
+                    rich_print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
+            exit(0)
+        else:
+            rich_print(f'Error, -D only supports analyse with -a')
+            exit(-1)
 
     if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match or args.sbom:
         # verify binary is a file
