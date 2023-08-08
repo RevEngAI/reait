@@ -55,13 +55,13 @@ def verify_binary(fpath_fmt: str):
         exit(-1)
 
 
-def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.2):
+def match(fpath: str, model_name: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.1):
     """
     Match embeddings in fpath from a list of embeddings
     """
     print(f"Matching symbols from {fpath} with confidence {confidence}")
     sink_embed_mat = np.vstack(list(map(lambda x: x['embedding'], embeddings)))
-    b_embeds = api.RE_embeddings(fpath)
+    b_embeds = api.RE_embeddings(fpath, model_name)
     source_embed_mat = np.vstack(list(map(lambda x: x['embedding'], b_embeds)))
     # angular distance over cosine 
     #closest = 1.0 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
@@ -95,7 +95,7 @@ def rescale_sim(x):
     """
     return np.power(x, 5)
 
-def binary_similarity(fpath: str, fpaths: list):
+def binary_similarity(fpath: str, fpaths: list, model_name: str):
     """
     Compute binary similarity between source and list of binary files
     """
@@ -106,12 +106,12 @@ def binary_similarity(fpath: str, fpaths: list):
     table.add_column("SHA3-256", style="magenta", no_wrap=True)
     table.add_column("Similarity", style="yellow", no_wrap=True)
 
-    b_embed = api.RE_signature(fpath)
+    b_embed = api.RE_signature(fpath, model_name)
 
     b_sums = []
     for b in track(fpaths, description='Computing Binary Similarity...'):
         try:
-            b_sum = api.RE_signature(b)
+            b_sum = api.RE_signature(b, model_name)
             b_sums.append(b_sum)
         except Exception as e:
             console.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
@@ -163,6 +163,11 @@ def main() -> None:
     parser.add_argument("-h", "--host", help="Analysis Host (https://api.reveng.ai)")
     parser.add_argument("-v", "--version", action="store_true", help="Display version information")
     parser.add_argument("--help", action="help", default=argparse.SUPPRESS, help=argparse._('Show this help message and exit'))
+    parser.add_argument("--isa", default=None, help="Override executable ISA. Valid values are x86, x86_64, ARMv7")
+    parser.add_argument("--exec-format", default=None, help="Override executable format. Valid values are pe, elf, macho, raw")
+    parser.add_argument("--platform", default=None, help="Override OS platform. Valid values are Windows, Linux, OSX, OpenBSD")
+    parser.add_argument("--dynamic-execution", default=False, help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
+    parser.add_argument("--cmd-line-args", default="", help="Command line arguments to pass when running binary sample in the sandbox. Only used when run with --dynamic-execution")
     args = parser.parse_args()
 
     if args.apikey:
@@ -204,15 +209,15 @@ def main() -> None:
         exit(-1)
 
     if args.analyse:
-        api.RE_analyse(args.binary, exec_fmt=exec_fmt, exec_isa=exec_isa)
+        api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format)
 
     elif args.extract:
-        embeddings = api.RE_embeddings(args.binary)
+        embeddings = api.RE_embeddings(args.binary, args.model)
         print_json(data=embeddings)
 
     elif args.signature:
         # Arithetic mean of symbol embeddings
-        b_embed = api.RE_signature(args.binary)
+        b_embed = api.RE_signature(args.binary, args.model)
         print_json(data=b_embed)
 
     elif args.similarity:
@@ -229,7 +234,7 @@ def main() -> None:
         for b in binaries:
             verify_binary(b)
 
-        binary_similarity(args.binary, binaries)
+        binary_similarity(args.binary, binaries, args.model)
 
     elif args.ann:
         source = None
@@ -251,7 +256,7 @@ def main() -> None:
                     vaddr = int(args.start_vaddr) + base_address
 
                 print(f"[+] Using symbol starting at vaddr {hex(vaddr)} from {args.binary} (image_base:{hex(base_address)})")
-                embeddings = api.RE_embeddings(args.binary)
+                embeddings = api.RE_embeddings(args.binary, args.model)
                 matches = list(filter(lambda x: x['vaddr'] == vaddr, embeddings))
                 if len(matches) == 0:
                     print(f"[!] Error, could not find symbol at {hex(vaddr)} in {args.binary}")
@@ -261,7 +266,7 @@ def main() -> None:
                 symb_name = args.symbol
                 print(f"[+] Using symbol {args.symbol} from {args.binary}")
 
-                embeddings = api.RE_embeddings(args.binary)
+                embeddings = api.RE_embeddings(args.binary, args.model)
                 matches = list(filter(lambda x: x['name'] == args.symbol, embeddings))
                 if len(matches) == 0:
                     print(f"[!] Error, could not find symbol at {args.symbol} in {args.binary}")
@@ -286,7 +291,7 @@ def main() -> None:
                 print("[!] Error, --found-in flag requires a path to a binary to search from")
                 exit(-1)
             print(f"[+] Searching for symbols similar to embedding in binary {args.found_in}")
-            embeddings = api.RE_embeddings(args.found_in)
+            embeddings = api.RE_embeddings(args.found_in, args.model)
             res = api.RE_compute_distance(embedding, embeddings, int(args.nns))
             print_json(data=res)
         elif args.from_file:
@@ -309,7 +314,7 @@ def main() -> None:
                 print("[!] Error, --found-in flag requires a path to a binary to search from")
                 exit(-1)
             print(f"[+] Matching symbols between {args.binary} and {args.found_in}")
-            embeddings = api.RE_embeddings(args.found_in)
+            embeddings = api.RE_embeddings(args.found_in, args.model)
         else:
             print("No --from-file or --found-in, matching from global symbol database (unstrip) not currently")
             exit(-1)
@@ -334,13 +339,13 @@ def main() -> None:
         api.RE_sca(args.binary)
 
     elif args.logs:
-        api.RE_logs(args.binary)
+        api.RE_logs(args.binary, args.model)
 
     elif args.delete:
-        api.RE_delete(args.binary)
+        api.RE_delete(args.binary, args.model)
 
     elif args.cves:
-        api.RE_cves(args.binary)
+        api.RE_cves(args.binary, args.model)
     else:
         print("[!] Error, please supply an action command")
         parser.print_help()

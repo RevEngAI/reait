@@ -26,34 +26,42 @@ re_conf = {
 
 def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None):
     url = f"{re_conf['host']}/{end_point}"
-    headers = { "Authorization": f"Bearer {re_conf['apikey']}" }
+    headers = { "Authorization": f"{re_conf['apikey']}" }
     if ex_headers:
         headers.update(ex_headers)
+    print(url)
+    print(headers)
+    print(params)
     return r(url, headers=headers, data=data, params=params)
 
 
-def RE_delete(fpath: str):
+def RE_delete(fpath: str, model_name: str):
     """
         Delete analysis results for Binary ID in command
     """
     bin_id = binary_id(fpath)
-    res = reveng_req(requests.delete, f"{bin_id}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.delete, f"/analyse/{bin_id}", params=params)
     if res.status_code == 200:
         print(f"[+] Success. Securely deleted {fpath} analysis")
     elif res.status_code == 404:
-        print("[!] Error, binary analysis not found.")
+        print(f"[!] Error, analysis not found for {bin_id} under {model_name}.")
     else:
-        print(f"[!] Error deleteing binary {bin_id}. Server returned {res.status_code}.")
+        print(f"[!] Error deleteing binary {bin_id} under {model_name}. Server returned {res.status_code}.")
     return
 
 
-def RE_analyse(fpath: str, model: str = None):
+def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None):
     """
         Start analysis job for binary file
     """
-    params={}
-    if model:
-        params['model'] = model
+    filename = os.path.basename(fpath)
+    params={ 'file_name': filename }
+    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args'):
+        p_value = locals()[p_name]
+        if p_value:
+            params[p_name] = p_value
+
     res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read(), params=params)
     if res.status_code == 200:
         print("[+] Successfully submitted binary for analysis.")
@@ -61,8 +69,9 @@ def RE_analyse(fpath: str, model: str = None):
         return res
 
     if res.status_code == 400:
-        if 'already exists' in json.loads(res.text)['reason']:
-            print(f"[-] {fpath} already analysed. Please check the results log file for {binary_id(fpath)}")
+        response = json.loads(res.text)
+        if 'error' in response.keys():
+            print(f"[-] Error analysing {fpath} - {response['error']}. Please check the results log file for {binary_id(fpath)}")
             return True
 
     res.raise_for_status()
@@ -86,11 +95,12 @@ def RE_upload(fpath: str):
     res.raise_for_status()
 
 
-def RE_embeddings(fpath: str):
+def RE_embeddings(fpath: str, model_name: str):
     """
         Fetch symbol embeddings
     """
-    res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}", params=params)
     if res.status_code == 425:
         print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
 
@@ -98,11 +108,12 @@ def RE_embeddings(fpath: str):
     return res.json()
 
 
-def RE_signature(fpath: str):
+def RE_signature(fpath: str, model_name: str):
     """
         Fetch binary BinNet signature
     """
-    res = reveng_req(requests.get, f"signature/{binary_id(fpath)}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"signature/{binary_id(fpath)}", params=params)
     if res.status_code == 425:
         print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
 
@@ -132,28 +143,30 @@ def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr
     return res.json()
 
 
-def RE_logs(fpath: str):
+def RE_logs(fpath: str, model_name: str):
     """
         Delete analysis results for Binary ID in command
     """
     bin_id = binary_id(fpath)
-    res = reveng_req(requests.get, f"/log/{bin_id}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"/logs/{bin_id}", params=params)
     if res.status_code == 200:
         print(res.text)
         return
     elif res.status_code == 404:
-        print(f"[!] Error, binary analysis for {bin_id} not found.")
+        print(f"[!] Error, binary analysis for {bin_id} under {model_name} not found.")
         return
 
     res.raise_for_status()
 
 
-def RE_cves(fpath: str):
+def RE_cves(fpath: str, model_name: str):
     """
         Check for known CVEs in Binary 
     """
     bin_id = binary_id(fpath)
-    res = reveng_req(requests.get, f"/cves/{bin_id}")
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"/cves/{bin_id}", params)
     if res.status_code == 200:
         cves = json.loads(res.text)
         rich_print(f"[bold blue]Checking for known CVEs embedded inside [/bold blue] [bold bright_green]{fpath}[/bold bright_green]:")
