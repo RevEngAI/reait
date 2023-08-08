@@ -16,6 +16,13 @@ Install the latest stable version using pip.
 
 `pip install -e .`
 
+or 
+
+```
+python3 -m build .
+pip install -U dist/reait-*.whl
+```
+
 ## Using reait
 
 ### Analysing binaries
