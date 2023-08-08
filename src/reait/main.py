@@ -146,7 +146,7 @@ def main() -> None:
     parser.add_argument("--from-file", help="ANN flag to limit to embeddings returned to those found in JSON embeddings file")
     parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
     parser.add_argument("-C", "--sca", action="store_true", help="Perform Software Composition Anaysis to identify common libraries embedded in binary")
-    parser.add_argument("-sbom", action="store_true", help="Generate SBOM for binary")
+    parser.add_argument("--sbom", action="store_true", help="Generate SBOM for binary")
     parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
     parser.add_argument("--start-vaddr", help="Start virtual address of the function to extract embeddings")
@@ -192,7 +192,7 @@ def main() -> None:
             base_address = int(args.base_address)
 
 
-    if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match or args.sca:
+    if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match or args.sbom:
         # verify binary is a file
         try:
             fpath, exec_fmt, exec_isa = verify_binary(args.binary)
@@ -273,7 +273,7 @@ def main() -> None:
                     exit(-1)
                 embedding = matches[0]['embedding']
         else:
-            print("[!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr")
+            print("[!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr or --symbol (NB: -b flag is needed for both of these options).")
             parser.print_help()
             exit(-1)
 
@@ -303,7 +303,7 @@ def main() -> None:
             print_json(data=res)
         else:
             print(f"[+] Searching for similar symbols to embedding in {'all' if not args.collections else args.collections} collections.")
-            api.RE_nearest_symbols(embedding, int(args.nns), collections=args.collections)
+            api.RE_nearest_symbols(embedding, args.model, int(args.nns), collections=args.collections)
 
 
     elif args.match:
@@ -343,6 +343,9 @@ def main() -> None:
 
     elif args.delete:
         api.RE_delete(args.binary, args.model)
+
+    elif args.sbom:
+        api.RE_SBOM(args.binary, args.model)
 
     elif args.cves:
         api.RE_cves(args.binary, args.model)

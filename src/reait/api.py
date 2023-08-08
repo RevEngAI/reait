@@ -200,22 +200,37 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
     return json_sims
 
 
-def RE_nearest_symbols(embedding: list, nns: int = 5, collections : list = None):
+def RE_nearest_symbols(embedding: list, model_name, nns: int = 5, collections : list = None):
     """
         Get function name suggestions for an embedding
         :param embedding: embedding vector as python list
         :param nns: Number of nearest neighbors
         :param collections: str RegEx to search through RevEng.AI collections
     """
-    params={'nns': nns}
+    params={'nns': nns, 'model_name': model_name }
 
     if collections:
         params['collections'] = collections
 
-    res = reveng_req(requests.post, "ann", data=json.dumps(embedding), params=params)
+    res = reveng_req(requests.post, "ann/symbol", data=json.dumps(embedding), params=params)
     res.raise_for_status()
     f_suggestions = res.json()
     print_json(data=f_suggestions)
+
+
+def RE_SBOM(fpath: str, model_name: str):
+    """
+        Get Software Bill Of Materials for binary
+        :param fpath: File path for binaty to analyse
+        :param model_name: str model name of RevEng.AI AI model
+    """
+    params={'model_name': model_name }
+
+    res = reveng_req(requests.get, f"sboms/{binary_id(fpath)}", params=params)
+    res.raise_for_status()
+    sbom = res.json()
+    print_json(data=sbom)
+
 
 def binary_id(path: str):
     """Take the SHA-256 hash of binary file"""
