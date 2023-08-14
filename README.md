@@ -115,6 +115,39 @@ Computing Binary Similarity... ━━━━━━━━━━━━━━━━�
 └──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────┴────────────┘
 ```
 
+
+### Binary ANN Search
+
+To perform binary ANN search, pass in `-n` and `-s` flag at the same time. For example:
+
+```
+reait -b /usr/bin/true -s -n
+Found /usr/bin/true:elf-x86_64
+[
+  {
+    "distance": 0.0,
+    "sha_256_hash": "1d20d8b1bbc861a2e9e0216efb7945fba664a5e6ba5f6a93febd6612a92551a8"
+  },
+  {
+    "distance": 0.04410748228394201,
+    "sha_256_hash": "265cb456cf5a09ad82380cb98118fb9255a9c9407085677d597abd828a5f4b11"
+  },
+  {
+    "distance": 0.04710724400903421,
+    "sha_256_hash": "1de9c70e46b17a96ee15e88e52da260de4f2d70e167c5172c29416d16f907482"
+  },
+  {
+    "distance": 0.047961843853272956,
+    "sha_256_hash": "01bf5e0f03dfaf6324f7e00942fed88ca52845c190a7392b0d0eb5c3a91091df"
+  },
+  {
+    "distance": 0.05086539098571474,
+    "sha_256_hash": "62dd31307316ee0e910eb845f35bf548b7fd79dc9f407ef917efdf14d143842e"
+  }
+]
+```
+
+
 ## Configuration
 
 `reait` reads the config file stored at `~/.reait.toml`. An example config file looks like:

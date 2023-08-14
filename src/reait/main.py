@@ -193,13 +193,15 @@ def main() -> None:
         if not os.path.isdir(args.dir):
             rich_print(f'Error, {args.dir} is not a valid directory path')
             exit(-1)
-        ## perform operation on all files inside directory
+
         files = iglob(os.path.abspath(args.dir) + '/**/*', recursive=True)
-        if args.analyse:
-            for file in track(files, description='Files in directory'):
-                if not os.path.isfile(file):
-                    #rich_print(f'[blue]Skipping non-file[/blue] {file}')
-                    continue
+        ## perform operation on all files inside directory
+        for file in track(files, description='Files in directory'):
+            if not os.path.isfile(file):
+                #rich_print(f'[blue]Skipping non-file[/blue] {file}')
+                continue
+
+            if args.analyse:
                 try:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
                     rich_print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
@@ -207,10 +209,18 @@ def main() -> None:
                     api.RE_analyse(file, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format)
                 except Exception as e:
                     rich_print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
-            exit(0)
-        else:
-            rich_print(f'Error, -D only supports analyse with -a')
-            exit(-1)
+
+            elif args.delete:
+                try:
+                    rich_print(f'[green bold]Deleting analyses for[/green bold] {file}')
+                    api.RE_delete(args.binary, args.model)
+                except Exception as e:
+                    rich_print(f"[red bold][!] Error, could not delete analysis for [/red bold] {file}")
+            else:
+                rich_print(f'Error, -D only supports analyse or delete')
+                exit(-1)
+
+        exit(0)
 
     if args.A or args.analyse or args.extract or args.logs or args.delete or args.signature or args.similarity or args.upload or args.match or args.sbom:
         # verify binary is a file
@@ -235,7 +245,7 @@ def main() -> None:
         embeddings = api.RE_embeddings(args.binary, args.model)
         print_json(data=embeddings)
 
-    elif args.signature:
+    elif args.signature and not args.ann:
         # Arithetic mean of symbol embeddings
         b_embed = api.RE_signature(args.binary, args.model)
         print_json(data=b_embed)
@@ -292,6 +302,10 @@ def main() -> None:
                     print(f"[!] Error, could not find symbol at {args.symbol} in {args.binary}")
                     exit(-1)
                 embedding = matches[0]['embedding']
+        elif args.binary and args.signature:
+            print(f"[+] Searching ANN for binary embeddings {args.binary}")
+            api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, args.collections)
+            exit(0)
         else:
             print("[!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr or --symbol (NB: -b flag is needed for both of these options).")
             parser.print_help()
