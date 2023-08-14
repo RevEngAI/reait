@@ -163,7 +163,7 @@ def main() -> None:
     parser.add_argument("--isa", default=None, help="Override executable ISA. Valid values are x86, x86_64, ARMv7")
     parser.add_argument("--exec-format", default=None, help="Override executable format. Valid values are pe, elf, macho, raw")
     parser.add_argument("--platform", default=None, help="Override OS platform. Valid values are Windows, Linux, OSX, OpenBSD")
-    parser.add_argument("--dynamic-execution", default=False, help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
+    parser.add_argument("--dynamic-execution", default=False, action='store_strue', help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
     parser.add_argument("--cmd-line-args", default="", help="Command line arguments to pass when running binary sample in the sandbox. Only used when run with --dynamic-execution")
     args = parser.parse_args()
 
