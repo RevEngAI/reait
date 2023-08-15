@@ -215,6 +215,24 @@ def RE_nearest_symbols(embedding: list, model_name, nns: int = 5, collections : 
     print_json(data=f_suggestions)
 
 
+def RE_nearest_binaries(embedding: list, model_name, nns: int = 5, collections : list = None):
+    """
+        Get executable suggestions for a binary embedding
+        :param embedding: embedding vector as python list
+        :param nns: Number of nearest neighbors
+        :param collections: str RegEx to search through RevEng.AI collections
+    """
+    params={'nns': nns, 'model_name': model_name }
+
+    if collections:
+        params['collections'] = collections
+
+    res = reveng_req(requests.post, "ann/binary", data=json.dumps(embedding), params=params)
+    res.raise_for_status()
+    f_suggestions = res.json()
+    print_json(data=f_suggestions)
+
+
 def RE_SBOM(fpath: str, model_name: str):
     """
         Get Software Bill Of Materials for binary
