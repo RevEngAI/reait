@@ -98,7 +98,7 @@ def RE_embeddings(fpath: str, model_name: str):
     """
     params = { 'model_name': model_name }
     res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}", params=params)
-    if res.status_code == 425:
+    if res.status_code == 400:
         print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
 
     res.raise_for_status()
