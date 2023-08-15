@@ -69,7 +69,7 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
         response = json.loads(res.text)
         if 'error' in response.keys():
             print(f"[-] Error analysing {fpath} - {response['error']}. Please check the results log file for {binary_id(fpath)}")
-            return True
+            return res
 
     res.raise_for_status()
 
