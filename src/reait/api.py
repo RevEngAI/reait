@@ -179,6 +179,21 @@ def RE_cves(fpath: str, model_name: str):
 
     res.raise_for_status()
 
+def RE_status(fpath: str, model_name: str):
+    """
+        Check for known CVEs in Binary 
+    """
+    bin_id = binary_id(fpath)
+    params = { 'model_name': model_name }
+    res = reveng_req(requests.get, f"/analyse/status/{bin_id}", params)
+    if res.status_code == 200:
+        return res.json()
+    elif res.status_code == 400:
+        print(f"[!] Error, status not found for {bin_id}:{model_name} not found.")
+        return res
+
+    res.raise_for_status()
+
 
 def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
     """
