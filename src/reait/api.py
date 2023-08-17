@@ -190,7 +190,7 @@ def RE_status(fpath: str, model_name: str):
         return res.json()
     elif res.status_code == 400:
         print(f"[!] Error, status not found for {bin_id}:{model_name} not found.")
-        return res
+        return res.json()
 
     res.raise_for_status()
 
