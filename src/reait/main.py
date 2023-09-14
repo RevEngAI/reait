@@ -341,6 +341,7 @@ def main() -> None:
 
 
     elif args.match:
+        embeddings = None
         if args.from_file:
             embeddings = json.load(open(args.from_file, 'r'))
         elif args.found_in:
@@ -366,7 +367,7 @@ def main() -> None:
             else:
                 confidence = float(args.confidence)
             
-        match(args.binary, embeddings, confidence=confidence, deviation=float(args.deviation))
+        match(args.binary, args.model, embeddings, confidence=confidence, deviation=float(args.deviation))
 
 
     elif args.sca:
