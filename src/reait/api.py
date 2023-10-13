@@ -48,7 +48,7 @@ def RE_delete(fpath: str, model_name: str):
     return
 
 
-def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None, scope: str = None, tags: list = []):
+def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None, scope: str = None, tags: str = None):
     """
         Start analysis job for binary file
     """
