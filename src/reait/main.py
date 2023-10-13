@@ -165,7 +165,7 @@ def main() -> None:
     parser.add_argument("--platform", default=None, help="Override OS platform. Valid values are Windows, Linux, OSX, OpenBSD")
     parser.add_argument("--dynamic-execution", default=False, action='store_true', help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
     parser.add_argument("--cmd-line-args", default="", help="Command line arguments to pass when running binary sample in the sandbox. Only used when run with --dynamic-execution")
-    parser.add_argument("--analysis_scope", default="PRIVATE", help="Override analysis visibility (scope). Valid values are 'PUBLIC' or 'PRIVATE'[DEFAULT]")
+    parser.add_argument("--scope", default="PRIVATE", help="Override analysis visibility (scope). Valid values are 'PUBLIC' or 'PRIVATE'[DEFAULT]")
     parser.add_argument("--tags", nargs='*', default=None, help="Assign a tag to an analysis.")
     args = parser.parse_args()
 
@@ -241,7 +241,7 @@ def main() -> None:
         exit(-1)
 
     if args.analyse:
-        api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.analysis_scope, tags=args.tags)
+        api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope, tags=args.tags)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary, args.model)
