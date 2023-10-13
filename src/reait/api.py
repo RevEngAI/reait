@@ -54,11 +54,10 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
     """
     filename = os.path.basename(fpath)
     params={ 'file_name': filename }
-    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args', 'scope'):
+    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args', 'scope', 'tags'):
         p_value = locals()[p_name]
         if p_value:
             params[p_name] = p_value
-#    tags_string = '&'.join([f'tags={tag}' for tag in args.tags])
 
     res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read(), params=params)
     if res.status_code == 200:
