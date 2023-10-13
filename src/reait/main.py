@@ -165,7 +165,7 @@ def main() -> None:
     parser.add_argument("--platform", default=None, help="Override OS platform. Valid values are Windows, Linux, OSX, OpenBSD")
     parser.add_argument("--dynamic-execution", default=False, action='store_true', help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
     parser.add_argument("--cmd-line-args", default="", help="Command line arguments to pass when running binary sample in the sandbox. Only used when run with --dynamic-execution")
-    parser.add_argument("--scope", default="PRIVATE", help="Override analysis visibility (scope). Valid values are 'PUBLIC' or 'PRIVATE'[DEFAULT]")
+    parser.add_argument("--scope", default="private", help="Override analysis visibility (scope). Valid values are 'public' or 'private'[DEFAULT]")
     parser.add_argument("--tags", default=None, help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3..")
     args = parser.parse_args()
 
@@ -208,7 +208,7 @@ def main() -> None:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
                     rich_print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
                     rich_print(f'[green bold]Analysing[/green bold] {file}')
-                    api.RE_analyse(file, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format)
+                    api.RE_analyse(file, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags)
                 except Exception as e:
                     rich_print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
 
@@ -241,7 +241,7 @@ def main() -> None:
         exit(-1)
 
     if args.analyse:
-        api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope, tags=args.tags)
+        api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary, args.model)
