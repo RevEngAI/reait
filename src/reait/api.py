@@ -48,16 +48,17 @@ def RE_delete(fpath: str, model_name: str):
     return
 
 
-def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None):
+def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None, scope: str = None, tags: list = []):
     """
         Start analysis job for binary file
     """
     filename = os.path.basename(fpath)
     params={ 'file_name': filename }
-    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args'):
+    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args', 'scope'):
         p_value = locals()[p_name]
         if p_value:
             params[p_name] = p_value
+#    tags_string = '&'.join([f'tags={tag}' for tag in args.tags])
 
     res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read(), params=params)
     if res.status_code == 200:
