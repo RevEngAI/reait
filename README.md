@@ -1,5 +1,7 @@
 # reait
 
+[![Python package](https://github.com/RevEngAI/reait/actions/workflows/python-package.yml/badge.svg)](https://github.com/RevEngAI/reait/actions/workflows/python-package.yml)
+
 ## <ins>R</ins>ev<ins>E</ins>ng.<ins>AI</ins> <ins>T</ins>oolkit
 
 Analyse compiled executable binaries using the RevEng.AI API. This tool allows you to search for similar components across different compiled executable programs, identify known vulnerabilities in stripped executables, and generate "YARA++" **REAI** signatures for entire binary files. More details about the API can be found at [docs.reveng.ai](https://docs.reveng.ai).
