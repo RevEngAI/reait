@@ -281,7 +281,7 @@ def main() -> None:
                 parser.print_help()
                 exit(-1)
 
-                embedding = json.loads(open(args.embedding, 'r').read())
+            embedding = json.loads(open(args.embedding, 'r').read())
 
         elif (args.symbol or args.start_vaddr) and args.binary:
             if args.start_vaddr:
