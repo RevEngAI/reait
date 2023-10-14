@@ -16,7 +16,7 @@ from sys import exit
 from IPython import embed
 import lief
 
-__version__ = "0.0.15"
+__version__ = "0.0.18"
 
 re_conf = {
     'apikey' : 'l1br3', 

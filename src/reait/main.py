@@ -13,7 +13,7 @@ from numpy import array, vstack, mean, average
 from pandas import DataFrame
 import json
 import tomli
-from os.path import isfile
+from os.path import isfile, getsize
 from sys import exit
 from IPython import embed
 from reait import api
@@ -39,6 +39,9 @@ def verify_binary(fpath_fmt: str):
 
     if not os.path.isfile(fpath):
         raise RuntimeError(f"File path {fpath} is not a file")
+
+    if getsize(fpath) > 1024 * 1024 * 10:
+        raise RuntimeError("Refusing to analyse file over 10MB. Please use a RevEng.AI SRE integration")
 
     if not fmt:
         exec_format, exec_isa = api.file_type(fpath)

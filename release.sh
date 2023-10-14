@@ -14,6 +14,7 @@ echo "[+] Setting version $VERSION"
 echo "[?] Press enter to make the change. We will modify reait, setup.py, and pyproject.toml."
 read line
 
-perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" ./reait
+perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" ./src/reait/main.py
+perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" ./src/reait/api.py
 perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" ./setup.py
 perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/$VERSION/" ./pyproject.toml
