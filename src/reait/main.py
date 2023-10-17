@@ -26,7 +26,19 @@ def version():
     """
         Display program version
     """
-    rich_print(f"[bold red]reait[/bold red] [bold bright_green]v{api.__version__}[/bold bright_green]")
+    rich_print(f"""[bold blue] ::::::::    ::::::::
+::  ::::    :::  :::
+::::::::::::::::::::
+:::::   :::   ::::::
+   ::::::::::::::   
+   .::  :::  ::::   
+::::::  :::  :::::::
+::  :::::::::::  :::
+::  :::::  ::::  :::
+::::::::    :::::::: [/bold blue]
+  [bold red]reait[/bold red] [bold bright_green]v{api.__version__}[/bold bright_green]
+""")
+    rich_print("[yellow]Config:[/yellow]")
     print_json(data=api.re_conf)
 
 
