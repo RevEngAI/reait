@@ -48,13 +48,13 @@ def RE_delete(fpath: str, model_name: str):
     return
 
 
-def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None, scope: str = None, tags: str = None):
+def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None, file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None, scope: str = None, tags: str = None, priority: int = 0):
     """
         Start analysis job for binary file
     """
     filename = os.path.basename(fpath)
     params={ 'file_name': filename }
-    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args', 'scope', 'tags'):
+    for p_name in ('model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args', 'scope', 'tags', 'priority'):
         p_value = locals()[p_name]
         if p_value:
             params[p_name] = p_value
