@@ -181,7 +181,7 @@ def main() -> None:
     parser.add_argument("--dynamic-execution", default=False, action='store_true', help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
     parser.add_argument("--cmd-line-args", default="", help="Command line arguments to pass when running binary sample in the sandbox. Only used when run with --dynamic-execution")
     parser.add_argument("--scope", default="private", help="Override analysis visibility (scope). Valid values are 'public' or 'private'[DEFAULT]")
-    parser.add_argument("--tags", default=None, help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3..")
+    parser.add_argument("--tags", default=None, type=str, help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3..")
     parser.add_argument("--priority", default=0, type=int, help="Add priority to processing queue.")
     args = parser.parse_args()
 
@@ -191,6 +191,12 @@ def main() -> None:
         api.re_conf['host'] = args.host
     if args.model:
         api.re_conf['model'] = args.model
+
+    # validate length of string tags
+    if args.tags:
+        # don't add non-content as tags
+        if len(args.tags.strip()) == 0:
+            args.tags = None
 
     # display version and exit
     if args.version:
