@@ -212,17 +212,21 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5):
     return json_sims
 
 
-def RE_nearest_symbols(embedding: list, model_name, nns: int = 5, collections : list = None):
+def RE_nearest_symbols(embedding: list, model_name, nns: int = 5, collections : list = None, ignore_hashes: list = None):
     """
         Get function name suggestions for an embedding
         :param embedding: embedding vector as python list
         :param nns: Number of nearest neighbors
         :param collections: str RegEx to search through RevEng.AI collections
+        :param ignore_hashes: list[str] SHA 256 hash of binary file to ignore symbols from (usually the current binary)
     """
     params={'nns': nns, 'model_name': model_name }
 
     if collections:
         params['collections'] = collections
+
+    if ignore_hashes:
+        params['ignore_hashes'] = ignore_hashes
 
     res = reveng_req(requests.post, "ann/symbol", data=json.dumps(embedding), params=params)
     res.raise_for_status()
@@ -230,17 +234,21 @@ def RE_nearest_symbols(embedding: list, model_name, nns: int = 5, collections : 
     print_json(data=f_suggestions)
 
 
-def RE_nearest_binaries(embedding: list, model_name, nns: int = 5, collections : list = None):
+def RE_nearest_binaries(embedding: list, model_name, nns: int = 5, collections : list = None, ignore_hashes: list = None):
     """
         Get executable suggestions for a binary embedding
         :param embedding: embedding vector as python list
         :param nns: Number of nearest neighbors
         :param collections: str RegEx to search through RevEng.AI collections
+        :param ignore_hashes: list[str] SHA 256 hash of binary files to ignore symbols from (usually the current binary)
     """
     params={'nns': nns, 'model_name': model_name }
 
     if collections:
         params['collections'] = collections
+
+    if ignore_hashes:
+        params['ignore_hashes'] = ignore_hashes
 
     res = reveng_req(requests.post, "ann/binary", data=json.dumps(embedding), params=params)
     res.raise_for_status()

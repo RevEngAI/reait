@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from hashlib import sha256
-from rich import print_json, print as rich_print
+from rich import print_json
+from rich.console import Console
 from rich.progress import track
 from rich.console import Console
 from rich.table import Table
@@ -14,7 +15,7 @@ from pandas import DataFrame
 import json
 import tomli
 from os.path import isfile, getsize
-from sys import exit
+from sys import exit, stdout, stderr
 from IPython import embed
 from reait import api
 from scipy.spatial import distance
@@ -22,11 +23,14 @@ from scipy.special import expit
 from glob import iglob
 import numpy as np
 
+rerr = Console(file=stderr)
+rout = Console(file=stdout)
+
 def version():
     """
         Display program version
     """
-    rich_print(f"""[bold blue] ::::::::    ::::::::
+    rout.print(f"""[bold blue] ::::::::    ::::::::
 ::  ::::    :::  :::
 ::::::::::::::::::::
 :::::   :::   ::::::
@@ -38,7 +42,7 @@ def version():
 ::::::::    :::::::: [/bold blue]
   [bold red]reait[/bold red] [bold bright_green]v{api.__version__}[/bold bright_green]
 """)
-    rich_print("[yellow]Config:[/yellow]")
+    rout.print("[yellow]Config:[/yellow]")
     print_json(data=api.re_conf)
 
 
@@ -92,11 +96,11 @@ def match(fpath: str, model_name: str, embeddings: list, confidence: float = 0.9
         s_confidence = row[second_match]
         
         if row[match_index] >= confidence:
-            rich_print(f"[bold green]Found match![/bold green][yellow]\tConfidence: {m_confidence:.05f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
+            rout.print(f"[bold green]Found match![/bold green][yellow]\tConfidence: {m_confidence:.05f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
         elif (m_confidence - s_confidence) > deviation:
-            rich_print(f"[bold magenta]Possible match[/bold magenta][yellow]\tConfidence: {m_confidence:.05f}/{s_confidence:.05f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
+            rout.print(f"[bold magenta]Possible match[/bold magenta][yellow]\tConfidence: {m_confidence:.05f}/{s_confidence:.05f}[/yellow]\t[blue]{source_symb['name']}:{source_symb['vaddr']}[/blue]\t->\t[blue]{sink_symb['name']}:{sink_symb['vaddr']}")
         else:
-            #rich_print(f"[bold red]No match for[/bold red]\t[blue]{source_symb['name']}:{source_symb['vaddr']}\t{sink_symb['name']} - {m_confidence:0.05f}[/blue]")
+            rerr.print(f"[bold red]No match for[/bold red]\t[blue]{source_symb['name']}:{source_symb['vaddr']}\t{sink_symb['name']} - {m_confidence:0.05f}[/blue]")
             pass
 
         
@@ -125,8 +129,8 @@ def binary_similarity(fpath: str, fpaths: list, model_name: str):
             b_sum = api.RE_signature(b, model_name)
             b_sums.append(b_sum)
         except Exception as e:
-            console.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
-            console.print(e)
+            rerr.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
+            rerr.print(e)
 
     if len(b_sums) > 0:
             #closest = 1.0 - distance.cdist(np.expand_dims(b_embed, axis=0), np.vstack(b_sums), 'cosine')
@@ -135,7 +139,7 @@ def binary_similarity(fpath: str, fpaths: list, model_name: str):
             for binary, similarity in zip(fpaths, closest.tolist()[0]):
                 table.add_row(os.path.basename(binary), api.binary_id(binary), f"{rescale_sim(similarity):.05f}")
 
-    console.print(table)
+    rout.print(table)
 
 
 def main() -> None:
@@ -215,33 +219,33 @@ def main() -> None:
 
     if args.dir:
         if not os.path.isdir(args.dir):
-            rich_print(f'Error, {args.dir} is not a valid directory path')
+            rerr.print(f'Error, {args.dir} is not a valid directory path')
             exit(-1)
 
         files = iglob(os.path.abspath(args.dir) + '/**/*', recursive=True)
         ## perform operation on all files inside directory
         for file in track(files, description='Files in directory'):
             if not os.path.isfile(file):
-                #rich_print(f'[blue]Skipping non-file[/blue] {file}')
+                rerr.print(f'[blue]Skipping non-file[/blue] {file}')
                 continue
 
             if args.analyse:
                 try:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
-                    rich_print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
-                    rich_print(f'[green bold]Analysing[/green bold] {file}')
+                    rout.print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
+                    rout.print(f'[green bold]Analysing[/green bold] {file}')
                     api.RE_analyse(file, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
                 except Exception as e:
-                    rich_print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
+                    rerr.print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
 
             elif args.delete:
                 try:
-                    rich_print(f'[green bold]Deleting analyses for[/green bold] {file}')
+                    rout.print(f'[green bold]Deleting analyses for[/green bold] {file}')
                     api.RE_delete(args.binary, args.model)
                 except Exception as e:
-                    rich_print(f"[red bold][!] Error, could not delete analysis for [/red bold] {file}")
+                    rerr.print(f"[red bold][!] Error, could not delete analysis for [/red bold] {file}")
             else:
-                rich_print(f'Error, -D only supports analyse or delete')
+                rerr.print(f'Error, -D only supports analyse or delete')
                 exit(-1)
 
         exit(0)
@@ -250,12 +254,13 @@ def main() -> None:
         # verify binary is a file
         try:
             fpath, exec_fmt, exec_isa = verify_binary(args.binary)
-            rich_print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
+            # keep stdout to data only
+            rerr.print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
             args.binary = fpath
         except Exception as e:
-            print(e)
-            print("[!] Error, please supply a valid binary file using '-b'.")
-            parser.print_help()
+            rerr.print(f"[bold red]{str(e)}[/bold red]")
+            rerr.print("[bold red][!] Error, please supply a valid binary file using '-b'.[/bold red]")
+            #parser.print_help()
             exit(-1)
 
     if args.upload:
@@ -329,11 +334,11 @@ def main() -> None:
                 embedding = matches[0]['embedding']
         elif args.binary and args.signature:
             print(f"[+] Searching ANN for binary embeddings {args.binary}")
-            api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, args.collections)
+            api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, args.collections, ignore_hashes=[api.binary_id(args.binary)])
             exit(0)
         else:
-            print("[!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr or --symbol (NB: -b flag is needed for both of these options).")
-            parser.print_help()
+            rerr.print("[bold red][!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr or --symbol (NB: -b flag is needed for both of these options).[/bold red]")
+            #parser.print_help()
             exit(-1)
 
 
