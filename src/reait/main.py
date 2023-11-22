@@ -22,6 +22,8 @@ from scipy.spatial import distance
 from scipy.special import expit
 from glob import iglob
 import numpy as np
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from multiprocessing import cpu_count
 
 rerr = Console(file=stderr)
 rout = Console(file=stdout)
@@ -103,6 +105,40 @@ def match(fpath: str, model_name: str, embeddings: list, confidence: float = 0.9
             rerr.print(f"[bold red]No match for[/bold red]\t[blue]{source_symb['name']}:{source_symb['vaddr']}\t{sink_symb['name']} - {m_confidence:0.05f}[/blue]")
             pass
 
+
+def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collections: str = None):
+    """
+    Match embeddings in fpath from a list of embeddings
+    """
+    print(f"Matching symbols from {fpath} with confidence {confidence}")
+    b_embeds = api.RE_embeddings(fpath, model_name)
+    b_hash = api.binary_id(fpath)
+
+    with ThreadPoolExecutor(max_workers=cpu_count()) as p:
+        #print(f"Colletion: {collections}")
+        partial = lambda x: api.RE_nearest_symbols(x['embedding'], model_name, 1, collections=collections, ignore_hashes=[b_hash])
+        res = {p.submit(partial, embed): embed for embed in b_embeds}
+
+        for future in track(as_completed(res), description='Matching Symbols...'):
+            # get result from future
+            symbol = res[future]
+
+            embedding = symbol['embedding']
+            #do ANN call to match symbols, ignore functions from current file
+            f_suggestions = api.RE_nearest_symbols(embedding, model_name, 1, collections=collections, ignore_hashes=[api.binary_id(fpath)])
+
+            if len(f_suggestions) == 0:
+                #no match
+                rerr.print(f"\t[bold red]No match for[/bold red]\t[blue]{symbol['name']}:{symbol['vaddr']}[/blue]")
+                continue
+
+            matched = f_suggestions[0]
+            if matched['distance'] >= confidence:
+                rout.print(f"\t[bold green]Found match![/bold green][yellow]\tConfidence: {matched['distance']:.05f}[/yellow]\t[blue]{symbol['name']}:{symbol['vaddr']}[/blue]\t->\t[blue]{matched['name']}:{matched['sha_256_hash']}")
+                continue
+
+            rerr.print(f"\t[bold red]No match for[/bold red]\t[blue]{symbol['name']}:{symbol['vaddr']}[/blue]")
+
         
 def rescale_sim(x):
     """
@@ -148,6 +184,7 @@ def main() -> None:
     """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-b", "--binary", default="", help="Path of binary to analyse, use ./path:{exec_format} to specify executable format e.g. ./path:raw-x86_64")
+    parser.add_argument("-B", "--binary-hash", default="", help="Hex-encoded SHA-256 hash of the binary to use")
     parser.add_argument("-D", "--dir", default="", help="Path of directory to recursively analyse")
     parser.add_argument("-a", "--analyse", action='store_true', help="Perform a full analysis and generate embeddings for every symbol")
     parser.add_argument("--no-embeddings", action='store_true', help="Only perform binary analysis. Do not generate embeddings for symbols")
@@ -334,7 +371,8 @@ def main() -> None:
                 embedding = matches[0]['embedding']
         elif args.binary and args.signature:
             print(f"[+] Searching ANN for binary embeddings {args.binary}")
-            api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, args.collections, ignore_hashes=[api.binary_id(args.binary)])
+            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, args.collections, ignore_hashes=[api.binary_id(args.binary)])
+            print_json(data=b_suggestions)
             exit(0)
         else:
             rerr.print("[bold red][!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr or --symbol (NB: -b flag is needed for both of these options).[/bold red]")
@@ -367,23 +405,12 @@ def main() -> None:
             print_json(data=res)
         else:
             print(f"[+] Searching for similar symbols to embedding in {'all' if not args.collections else args.collections} collections.")
-            api.RE_nearest_symbols(embedding, args.model, int(args.nns), collections=args.collections)
+            f_suggestions = api.RE_nearest_symbols(embedding, args.model, int(args.nns), collections=args.collections)
+            print_json(data=f_suggestions)
 
 
     elif args.match:
-        embeddings = None
-        if args.from_file:
-            embeddings = json.load(open(args.from_file, 'r'))
-        elif args.found_in:
-            if not os.path.isfile(args.found_in):
-                print("[!] Error, --found-in flag requires a path to a binary to search from")
-                exit(-1)
-            print(f"[+] Matching symbols between {args.binary} and {args.found_in}")
-            embeddings = api.RE_embeddings(args.found_in, args.model)
-        else:
-            print("No --from-file or --found-in, matching from global symbol database (unstrip) not currently")
-            exit(-1)
-
+        # parse confidences
         confidence = 0.99
         if args.confidence:
             confidences = {
@@ -396,9 +423,22 @@ def main() -> None:
                 confidence = confidences[args.confidence]
             else:
                 confidence = float(args.confidence)
-            
-        match(args.binary, args.model, embeddings, confidence=confidence, deviation=float(args.deviation))
 
+        embeddings = None
+        if args.from_file:
+            embeddings = json.load(open(args.from_file, 'r'))
+        elif args.found_in:
+            if not os.path.isfile(args.found_in):
+                print("[!] Error, --found-in flag requires a path to a binary to search from")
+                exit(-1)
+            print(f"[+] Matching symbols between {args.binary} and {args.found_in}")
+            embeddings = api.RE_embeddings(args.found_in, args.model)
+        else:
+            #print("No --from-file or --found-in, matching from global symbol database (unstrip) not currently")
+            match_for_each(args.binary, args.model, confidence, args.collections)
+            exit(-1)
+
+        match(args.binary, args.model, embeddings, confidence=confidence, deviation=float(args.deviation))
 
     elif args.sca:
         api.RE_sca(args.binary)

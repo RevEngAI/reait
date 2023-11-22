@@ -231,7 +231,7 @@ def RE_nearest_symbols(embedding: list, model_name, nns: int = 5, collections : 
     res = reveng_req(requests.post, "ann/symbol", data=json.dumps(embedding), params=params)
     res.raise_for_status()
     f_suggestions = res.json()
-    print_json(data=f_suggestions)
+    return f_suggestions
 
 
 def RE_nearest_binaries(embedding: list, model_name, nns: int = 5, collections : list = None, ignore_hashes: list = None):
@@ -252,8 +252,8 @@ def RE_nearest_binaries(embedding: list, model_name, nns: int = 5, collections :
 
     res = reveng_req(requests.post, "ann/binary", data=json.dumps(embedding), params=params)
     res.raise_for_status()
-    f_suggestions = res.json()
-    print_json(data=f_suggestions)
+    b_suggestions = res.json()
+    return b_suggestions
 
 
 def RE_SBOM(fpath: str, model_name: str):
