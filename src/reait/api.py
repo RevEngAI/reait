@@ -217,13 +217,14 @@ def RE_nearest_symbols(embedding: list, model_name, nns: int = 5, collections : 
         Get function name suggestions for an embedding
         :param embedding: embedding vector as python list
         :param nns: Number of nearest neighbors
-        :param collections: str RegEx to search through RevEng.AI collections
+        :param collections: list of collections to search through
         :param ignore_hashes: list[str] SHA 256 hash of binary file to ignore symbols from (usually the current binary)
     """
     params={'nns': nns, 'model_name': model_name }
 
     if collections:
-        params['collections'] = collections
+        # api param is collection, not collections
+        params['collection'] = "|".join(collections)
 
     if ignore_hashes:
         params['ignore_hashes'] = ignore_hashes
@@ -239,13 +240,14 @@ def RE_nearest_binaries(embedding: list, model_name, nns: int = 5, collections :
         Get executable suggestions for a binary embedding
         :param embedding: embedding vector as python list
         :param nns: Number of nearest neighbors
-        :param collections: str RegEx to search through RevEng.AI collections
+        :param collections: list of collections RevEng.AI collection names to search through
         :param ignore_hashes: list[str] SHA 256 hash of binary files to ignore symbols from (usually the current binary)
     """
     params={'nns': nns, 'model_name': model_name }
 
     if collections:
-        params['collections'] = collections
+        # api param is collection, not collections
+        params['collection'] = "|".join(collections)
 
     if ignore_hashes:
         params['ignore_hashes'] = ignore_hashes

@@ -106,7 +106,7 @@ def match(fpath: str, model_name: str, embeddings: list, confidence: float = 0.9
             pass
 
 
-def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collections: str = None):
+def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collections: list = []):
     """
     Match embeddings in fpath from a list of embeddings
     """
@@ -138,6 +138,15 @@ def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collec
                 continue
 
             rerr.print(f"\t[bold red]No match for[/bold red]\t[blue]{symbol['name']}:{symbol['vaddr']}[/blue]")
+
+
+def parse_collections(collections: str):
+    """
+        Return collections as list from CSV
+    """
+    if not collections:
+        return None
+    return collections.split(',')
 
         
 def rescale_sim(x):
@@ -194,7 +203,7 @@ def main() -> None:
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
     parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
-    parser.add_argument("--collections", default=None, help="Regex string to select RevEng.AI collections for filtering e.g., libc")
+    parser.add_argument("--collections", default=None, help="Comma Seperated Value of collections to search from e.g. libxml2,libpcap. Used to select RevEng.AI collections for filtering search results")
     parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
     parser.add_argument("--from-file", help="ANN flag to limit to embeddings returned to those found in JSON embeddings file")
     parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
@@ -253,6 +262,9 @@ def main() -> None:
         else:
             base_address = int(args.base_address)
 
+    collections = None
+    if args.collections:
+        collections = parse_collections(args.collections)
 
     if args.dir:
         if not os.path.isdir(args.dir):
@@ -371,22 +383,13 @@ def main() -> None:
                 embedding = matches[0]['embedding']
         elif args.binary and args.signature:
             print(f"[+] Searching ANN for binary embeddings {args.binary}")
-            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, args.collections, ignore_hashes=[api.binary_id(args.binary)])
+            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, collections, ignore_hashes=[api.binary_id(args.binary)])
             print_json(data=b_suggestions)
             exit(0)
         else:
             rerr.print("[bold red][!] Error, please supply a valid embedding JSON file using '-e', or select a function using --start-vaddr or --symbol (NB: -b flag is needed for both of these options).[/bold red]")
             #parser.print_help()
             exit(-1)
-
-
-        # check for valid regex
-        if args.collections:
-            try:
-                re.compile(args.collections)
-            except re.error as e:
-                print(f"[!] Error, invalid regex for collections - {args.collections}")
-                exit(-1)
 
         if args.found_in:
             if not os.path.isfile(args.found_in):
@@ -405,7 +408,7 @@ def main() -> None:
             print_json(data=res)
         else:
             print(f"[+] Searching for similar symbols to embedding in {'all' if not args.collections else args.collections} collections.")
-            f_suggestions = api.RE_nearest_symbols(embedding, args.model, int(args.nns), collections=args.collections)
+            f_suggestions = api.RE_nearest_symbols(embedding, args.model, int(args.nns), collections=collections)
             print_json(data=f_suggestions)
 
 
@@ -435,7 +438,7 @@ def main() -> None:
             embeddings = api.RE_embeddings(args.found_in, args.model)
         else:
             #print("No --from-file or --found-in, matching from global symbol database (unstrip) not currently")
-            match_for_each(args.binary, args.model, confidence, args.collections)
+            match_for_each(args.binary, args.model, confidence, collections)
             exit(-1)
 
         match(args.binary, args.model, embeddings, confidence=confidence, deviation=float(args.deviation))
