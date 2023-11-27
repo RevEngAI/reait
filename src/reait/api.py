@@ -37,7 +37,7 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
 # Assumes a file has been passed, correct hash only
 # Returns the BID of the binary_id (hash)
 def re_bid_search(bin_id: str):
-    res = reveng_req(requests.GET, f"/search?search=sha_256_hash:{bin_id}")
+    res = reveng_req(requests.get, f"/search?search=sha_256_hash:{bin_id}")
 
     bid = -1
 
