@@ -44,6 +44,8 @@ def re_bid_search(bin_id: str):
     # Valid request
     if res.status_code == 200:
 
+        print(res.json['binaries'])
+
         # Check only one record is returned
         binaries_data = res.json()['binaries']
         if len(binaries_data) == 1:
