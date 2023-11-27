@@ -170,6 +170,12 @@ def RE_upload(fpath: str):
             print(f"[-] Please pass a non-empty file")
             return True
 
+        else:
+            print(f"[!] Internal Server Error")
+            return True
+
+    print(f"[!] Internal Server Error")
+
     res.raise_for_status()
 
 
