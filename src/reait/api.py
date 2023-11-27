@@ -103,19 +103,20 @@ def re_bid_search(bin_id: str):
     return bid
 
 
-def RE_delete(fpath: str, model_name: str):
+def RE_delete(fpath: str):
     """
         Delete analysis results for Binary ID in command
     """
     bin_id = binary_id(fpath)
-    params = {'model_name': model_name}
-    res = reveng_req(requests.delete, f"/analyse/{bin_id}", params=params)
+    bid = re_bid_search(bin_id)
+
+    res = reveng_req(requests.delete, f"/analyse/{bid}")
     if res.status_code == 200:
-        print(f"[+] Success. Securely deleted {fpath} analysis")
+        print(f"[+] Success. Securely deleted {bin_id} analysis")
     elif res.status_code == 404:
-        print(f"[!] Error, analysis not found for {bin_id} under {model_name}.")
+        print(f"[!] Error, analysis not found for {bin_id}.")
     else:
-        print(f"[!] Error deleteing binary {bin_id} under {model_name}. Server returned {res.status_code}.")
+        print(f"[!] Error deleting binary {bin_id} under. Server returned {res.status_code}.")
     return
 
 

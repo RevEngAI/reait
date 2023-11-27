@@ -290,7 +290,7 @@ def main() -> None:
             elif args.delete:
                 try:
                     rout.print(f'[green bold]Deleting analyses for[/green bold] {file}')
-                    api.RE_delete(args.binary, args.model)
+                    api.RE_delete(args.binary)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, could not delete analysis for [/red bold] {file}")
             else:
@@ -453,7 +453,7 @@ def main() -> None:
         api.RE_logs(args.binary)
 
     elif args.delete:
-        api.RE_delete(args.binary, args.model)
+        api.RE_delete(args.binary)
 
     elif args.sbom:
         api.RE_SBOM(args.binary)
