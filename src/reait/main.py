@@ -313,7 +313,7 @@ def main() -> None:
             exit(-1)
 
     if args.upload:
-        api.RE_analyse(args.binary)
+        api.RE_upload(args.binary)
         # upload binary first, them carry out actions
 
     if args.analyse:
