@@ -175,7 +175,7 @@ def RE_embeddings(fpath: str):
     bin_id = binary_id(fpath)
     bid = re_bid_search(bin_id)
 
-    res = reveng_req(requests.get, f"embeddings/{bid}", params=params)
+    res = reveng_req(requests.get, f"embeddings/{bid}")
     if res.status_code == 400:
         print(f"[-] Analysis for {bin_id} still in progress. Please check the logs (-l) and try again later.")
 
