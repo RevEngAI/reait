@@ -453,7 +453,7 @@ def main() -> None:
         api.RE_delete(args.binary, args.model)
 
     elif args.sbom:
-        api.RE_SBOM(args.binary, args.model)
+        api.RE_SBOM(args.binary)
 
     elif args.cves:
         api.RE_cves(args.binary, args.model)
