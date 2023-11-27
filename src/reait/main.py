@@ -78,7 +78,7 @@ def match(fpath: str, model_name: str, embeddings: list, confidence: float = 0.9
     """
     print(f"Matching symbols from {fpath} with confidence {confidence}")
     sink_embed_mat = np.vstack(list(map(lambda x: x['embedding'], embeddings)))
-    b_embeds = api.RE_embeddings(fpath, model_name)
+    b_embeds = api.RE_embeddings(fpath)
     source_embed_mat = np.vstack(list(map(lambda x: x['embedding'], b_embeds)))
     # angular distance over cosine 
     #closest = 1.0 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
@@ -111,7 +111,7 @@ def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collec
     Match embeddings in fpath from a list of embeddings
     """
     print(f"Matching symbols from {fpath} with confidence {confidence}")
-    b_embeds = api.RE_embeddings(fpath, model_name)
+    b_embeds = api.RE_embeddings(fpath)
     b_hash = api.binary_id(fpath)
 
     with ThreadPoolExecutor(max_workers=cpu_count()) as p:
@@ -321,7 +321,7 @@ def main() -> None:
         api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
 
     elif args.extract:
-        embeddings = api.RE_embeddings(args.binary, args.model)
+        embeddings = api.RE_embeddings(args.binary)
         print_json(data=embeddings)
 
     elif args.signature and not args.ann:
@@ -365,7 +365,7 @@ def main() -> None:
                     vaddr = int(args.start_vaddr) + base_address
 
                 print(f"[+] Using symbol starting at vaddr {hex(vaddr)} from {args.binary} (image_base:{hex(base_address)})")
-                embeddings = api.RE_embeddings(args.binary, args.model)
+                embeddings = api.RE_embeddings(args.binary)
                 matches = list(filter(lambda x: x['vaddr'] == vaddr, embeddings))
                 if len(matches) == 0:
                     print(f"[!] Error, could not find symbol at {hex(vaddr)} in {args.binary}")
@@ -375,7 +375,7 @@ def main() -> None:
                 symb_name = args.symbol
                 print(f"[+] Using symbol {args.symbol} from {args.binary}")
 
-                embeddings = api.RE_embeddings(args.binary, args.model)
+                embeddings = api.RE_embeddings(args.binary)
                 matches = list(filter(lambda x: x['name'] == args.symbol, embeddings))
                 if len(matches) == 0:
                     print(f"[!] Error, could not find symbol at {args.symbol} in {args.binary}")
@@ -396,7 +396,7 @@ def main() -> None:
                 print("[!] Error, --found-in flag requires a path to a binary to search from")
                 exit(-1)
             print(f"[+] Searching for symbols similar to embedding in binary {args.found_in}")
-            embeddings = api.RE_embeddings(args.found_in, args.model)
+            embeddings = api.RE_embeddings(args.found_in)
             res = api.RE_compute_distance(embedding, embeddings, int(args.nns))
             print_json(data=res)
         elif args.from_file:
@@ -435,7 +435,7 @@ def main() -> None:
                 print("[!] Error, --found-in flag requires a path to a binary to search from")
                 exit(-1)
             print(f"[+] Matching symbols between {args.binary} and {args.found_in}")
-            embeddings = api.RE_embeddings(args.found_in, args.model)
+            embeddings = api.RE_embeddings(args.found_in)
         else:
             #print("No --from-file or --found-in, matching from global symbol database (unstrip) not currently")
             match_for_each(args.binary, args.model, confidence, collections)

@@ -168,14 +168,16 @@ def RE_upload(fpath: str):
     res.raise_for_status()
 
 
-def RE_embeddings(fpath: str, model_name: str):
+def RE_embeddings(fpath: str):
     """
         Fetch symbol embeddings
     """
-    params = {'model_name': model_name}
-    res = reveng_req(requests.get, f"embeddings/{binary_id(fpath)}", params=params)
+    bin_id = binary_id(fpath)
+    bid = re_bid_search(bin_id)
+
+    res = reveng_req(requests.get, f"embeddings/{bid}", params=params)
     if res.status_code == 400:
-        print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
+        print(f"[-] Analysis for {bin_id} still in progress. Please check the logs (-l) and try again later.")
 
     res.raise_for_status()
     return res.json()
