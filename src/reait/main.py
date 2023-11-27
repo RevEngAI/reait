@@ -313,6 +313,9 @@ def main() -> None:
             exit(-1)
 
     if args.upload:
+
+        print("Enter here")
+
         api.RE_upload(args.binary)
         # upload binary first, them carry out actions
 
