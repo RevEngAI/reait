@@ -44,8 +44,6 @@ def re_bid_search(bin_id: str):
     # Valid request
     if res.status_code == 200:
 
-        print(res.json()['binaries'])
-
         # Check only one record is returned
         binaries_data = res.json()['binaries']
         if len(binaries_data) == 1:
@@ -183,14 +181,16 @@ def RE_embeddings(fpath: str, model_name: str):
     return res.json()
 
 
-def RE_signature(fpath: str, model_name: str):
+def RE_signature(fpath: str):
     """
         Fetch binary BinNet signature
     """
-    params = {'model_name': model_name}
-    res = reveng_req(requests.get, f"signature/{binary_id(fpath)}", params=params)
+    bin_id = binary_id(fpath)
+    bid = re_bid_search(bin_id)
+
+    res = reveng_req(requests.get, f"signature/{bid}")
     if res.status_code == 425:
-        print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
+        print(f"[-] Analysis for {bin_id} still in progress. Please check the logs (-l) and try again later.")
 
     res.raise_for_status()
     return res.json()

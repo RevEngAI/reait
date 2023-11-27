@@ -166,12 +166,12 @@ def binary_similarity(fpath: str, fpaths: list, model_name: str):
     table.add_column("SHA3-256", style="magenta", no_wrap=True)
     table.add_column("Similarity", style="yellow", no_wrap=True)
 
-    b_embed = api.RE_signature(fpath, model_name)
+    b_embed = api.RE_signature(fpath)
 
     b_sums = []
     for b in track(fpaths, description='Computing Binary Similarity...'):
         try:
-            b_sum = api.RE_signature(b, model_name)
+            b_sum = api.RE_signature(b)
             b_sums.append(b_sum)
         except Exception as e:
             rerr.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
@@ -326,7 +326,7 @@ def main() -> None:
 
     elif args.signature and not args.ann:
         # Arithetic mean of symbol embeddings
-        b_embed = api.RE_signature(args.binary, args.model)
+        b_embed = api.RE_signature(args.binary)
         print_json(data=b_embed)
 
     elif args.similarity:
@@ -383,7 +383,7 @@ def main() -> None:
                 embedding = matches[0]['embedding']
         elif args.binary and args.signature:
             print(f"[+] Searching ANN for binary embeddings {args.binary}")
-            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary, args.model), args.model, args.nns, collections, ignore_hashes=[api.binary_id(args.binary)])
+            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary), args.model, args.nns, collections, ignore_hashes=[api.binary_id(args.binary)])
             print_json(data=b_suggestions)
             exit(0)
         else:
@@ -447,7 +447,7 @@ def main() -> None:
         api.RE_sca(args.binary)
 
     elif args.logs:
-        api.RE_logs(args.binary, args.model)
+        api.RE_logs(args.binary)
 
     elif args.delete:
         api.RE_delete(args.binary, args.model)
@@ -456,7 +456,7 @@ def main() -> None:
         api.RE_SBOM(args.binary)
 
     elif args.cves:
-        api.RE_cves(args.binary, args.model)
+        api.RE_cves(args.binary)
     else:
         print("[!] Error, please supply an action command")
         parser.print_help()
