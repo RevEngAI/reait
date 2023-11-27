@@ -128,8 +128,9 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
     filename = os.path.basename(fpath)
     params = {'file_name': filename}
     for p_name in (
-    'model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args', 'scope',
-    'tags', 'priority'):
+            'model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args',
+            'scope',
+            'tags', 'priority'):
         p_value = locals()[p_name]
         if p_value:
             params[p_name] = p_value
@@ -163,6 +164,10 @@ def RE_upload(fpath: str):
     if res.status_code == 400:
         if 'already exists' in json.loads(res.text)['reason']:
             print(f"[-] {fpath} already exists. Please check the results log file for {binary_id(fpath)}")
+            return True
+
+        if 'non-empty' in json.loads(res.text)['reason']:
+            print(f"[-] Please pass a non-empty file")
             return True
 
     res.raise_for_status()

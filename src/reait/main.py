@@ -313,9 +313,8 @@ def main() -> None:
             exit(-1)
 
     if args.upload:
+        api.RE_analyse(args.binary)
         # upload binary first, them carry out actions
-        print(f"[!] RE:upload not implemented. Use analyse.")
-        exit(-1)
 
     if args.analyse:
         api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
