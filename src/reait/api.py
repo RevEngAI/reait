@@ -51,6 +51,7 @@ def re_bid_search(bin_id: str):
         if len(binaries_data) == 1:
 
             # Inform of match
+            binaries_data = binaries_data[0]
             binaries_details = binaries_data['binary_details']
             print(f"[+] {len(binaries_details)} matches found for hash: {bin_id}.")
 
