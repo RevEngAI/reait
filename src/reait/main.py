@@ -314,9 +314,10 @@ def main() -> None:
 
     if args.upload:
 
-        print("Enter here")
-
         api.RE_upload(args.binary)
+
+        if not args.analyse:
+            exit(0)
         # upload binary first, them carry out actions
 
     if args.analyse:
