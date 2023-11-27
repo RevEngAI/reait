@@ -215,30 +215,38 @@ def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr
     return res.json()
 
 
-def RE_logs(fpath: str, model_name: str):
+def RE_logs(fpath: str):
     """
         Delete analysis results for Binary ID in command
     """
     bin_id = binary_id(fpath)
-    params = {'model_name': model_name}
-    res = reveng_req(requests.get, f"/logs/{bin_id}", params=params)
+    bid = re_bid_search(bin_id)
+
+    if bid == -1:
+        return
+
+    res = reveng_req(requests.get, f"/logs/{bid}")
     if res.status_code == 200:
         print(res.text)
         return
     elif res.status_code == 404:
-        print(f"[!] Error, binary analysis for {bin_id} under {model_name} not found.")
+        print(f"[!] Error, binary analysis for {bin_id} not found.")
         return
 
     res.raise_for_status()
 
 
-def RE_cves(fpath: str, model_name: str):
+def RE_cves(fpath: str):
     """
         Check for known CVEs in Binary 
     """
     bin_id = binary_id(fpath)
-    params = {'model_name': model_name}
-    res = reveng_req(requests.get, f"/cves/{bin_id}", params)
+    bid = re_bid_search(bin_id)
+
+    if bid == -1:
+        return
+
+    res = reveng_req(requests.get, f"/cves/{bid}")
     if res.status_code == 200:
         cves = json.loads(res.text)
         rich_print(
@@ -256,17 +264,21 @@ def RE_cves(fpath: str, model_name: str):
     res.raise_for_status()
 
 
-def RE_status(fpath: str, model_name: str):
+def RE_status(fpath: str):
     """
         Check for known CVEs in Binary 
     """
     bin_id = binary_id(fpath)
-    params = {'model_name': model_name}
-    res = reveng_req(requests.get, f"/analyse/status/{bin_id}", params)
+    bid = re_bid_search(bin_id)
+
+    if bid == -1:
+        return
+
+    res = reveng_req(requests.get, f"/analyse/status/{bid}")
     if res.status_code == 200:
         return res.json()
     elif res.status_code == 400:
-        print(f"[!] Error, status not found for {bin_id}:{model_name} not found.")
+        print(f"[!] Error, status not found for {bin_id} not found.")
         return res.json()
 
     res.raise_for_status()
