@@ -127,7 +127,9 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
         Start analysis job for binary file
     """
     filename = os.path.basename(fpath)
-    params = {'file_name': filename}
+    bin_id = binary_id(fpath)
+    params = {'file_name': filename, "sha_256_hash": bin_id}
+
     for p_name in (
             'model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args',
             'scope',
@@ -136,7 +138,7 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
         if p_value:
             params[p_name] = p_value
 
-    res = reveng_req(requests.post, f"analyse", data=open(fpath, 'rb').read(), params=params)
+    res = reveng_req(requests.post, f"analyse", data=json.dumps(params))
     if res.status_code == 200:
         print("[+] Successfully submitted binary for analysis.")
         print(f"[+] {fpath} - {binary_id(fpath)}")
@@ -146,7 +148,7 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
         response = json.loads(res.text)
         if 'error' in response.keys():
             print(
-                f"[-] Error analysing {fpath} - {response['error']}. Please check the results log file for {binary_id(fpath)}")
+                f"[-] Error analysing {fpath} - {response['error']}.")
             return res
 
     res.raise_for_status()
