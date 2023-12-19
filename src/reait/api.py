@@ -146,7 +146,7 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
         return res
 
     if res.status_code == 400:
-        print(res)
+        print(res.text)
         response = res.json()
         #print(response)
         if 'error' in response.keys():
