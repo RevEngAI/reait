@@ -31,6 +31,9 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
     if ex_headers:
         headers.update(ex_headers)
 
+    if data is not None and isinstance(data, dict):
+        data = json.dumps(data)
+
     print(url,headers,data,params)
     return r(url, headers=headers, data=data, params=params)
 
