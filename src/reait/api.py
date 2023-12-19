@@ -120,7 +120,7 @@ def RE_delete(fpath: str):
     return
 
 
-def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_options: str = None,
+def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
                scope: str = None, tags: str = None, priority: int = 0):
     """
@@ -131,7 +131,7 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
     params = {'file_name': filename, "sha_256_hash": bin_id}
 
     for p_name in (
-            'model', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args',
+            'model_name', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args',
             'scope',
             'tags', 'priority'):
         p_value = locals()[p_name]

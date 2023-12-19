@@ -283,7 +283,7 @@ def main() -> None:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
                     rout.print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
                     rout.print(f'[green bold]Analysing[/green bold] {file}')
-                    api.RE_analyse(file, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
+                    api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
 
@@ -325,7 +325,7 @@ def main() -> None:
         # upload binary first, them carry out actions
 
     if args.analyse:
-        api.RE_analyse(args.binary, model=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
+        api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary)
