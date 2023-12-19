@@ -50,7 +50,7 @@ def re_bid_search(bin_id: str):
         if len(binaries_data) > 1:
 
             print(f"[+] {len(binaries_data)} matches found for hash: {bin_id}.")
-            if len(binaries_data['binary_details']) > 1:
+            if len(binaries_data) > 1:
 
                 options_dict = {}
                 count = 0
