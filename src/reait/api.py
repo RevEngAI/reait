@@ -138,6 +138,8 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
         if p_value:
             params[p_name] = p_value
 
+    print(params)
+
     res = reveng_req(requests.post, f"analyse", data=json.dumps(params))
     if res.status_code == 200:
         #print(res)
