@@ -47,23 +47,18 @@ def re_bid_search(bin_id: str):
 
         # Check only one record is returned
         binaries_data = res.json()['binaries']
-        if len(binaries_data) >= 1:
+        if len(binaries_data) > 1:
 
-            # Inform of match
-            binaries_data = binaries_data[0]
-            binaries_details = binaries_data['binary_details']
-            print(f"[+] {len(binaries_details)} matches found for hash: {bin_id}.")
-
-            # If multiple matches found - output to console
+            print(f"[+] {len(binaries_data)} matches found for hash: {bin_id}.")
             if len(binaries_data['binary_details']) > 1:
 
                 options_dict = {}
                 count = 0
 
-                for binary in binaries_details:
+                for binary in binaries_data:
                     print(
                         f"[+] {count} - ID: {binary['binary_id']}, Name: {binary['binary_name']}, "
-                        f"Creation: {binary['creation']}, Model: {binary['model_name']}")
+                        f"Creation: {binary['creation']}, Model: {binary['model_name']}, Owner: {binary['owner']}")
                     options_dict[count] = binary['binary_id']
                     count += 1
 
@@ -83,8 +78,8 @@ def re_bid_search(bin_id: str):
                     print("[!] Invalid option.")
 
             # Only 1 match found
-            elif len(binaries_data['binary_details']):
-                binary = binaries_data['binary_details'][0]
+            elif len(binaries_data) == 1:
+                binary = binaries_data[0]
                 bid = binary['binary_id']
 
             else:
