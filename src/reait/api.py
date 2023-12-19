@@ -25,19 +25,17 @@ re_conf = {
 }
 
 
-def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None):
+def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None, json: dict = None):
     url = f"{re_conf['host']}/{end_point}"
     headers = {"Authorization": f"{re_conf['apikey']}"}
     if ex_headers:
         headers.update(ex_headers)
 
-    if data is not None and isinstance(data, dict):
-        data = json.dumps(data)
+    if json is not None and isinstance(json, dict):
+        json = json.dumps(json)
 
-    print(isinstance(data, dict))
-
-    print(url,headers,data,params)
-    return r(url, headers=headers, data=data, params=params)
+    print(url,headers,json,data,params)
+    return r(url, headers=headers, json=json, data=data, params=params)
 
 
 # Bin_id is referred to as hash in this program - to maintain usage BID = id of a binary bin_id = hash
@@ -147,7 +145,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
 
     print(params)
 
-    res = reveng_req(requests.post, f"analyse", data=json.dumps(params))
+    res = reveng_req(requests.post, f"analyse", json=params)
     if res.status_code == 200:
         #print(res)
         print("[+] Successfully submitted binary for analysis.")
