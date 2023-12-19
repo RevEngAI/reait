@@ -47,7 +47,7 @@ def re_bid_search(bin_id: str):
 
         # Check only one record is returned
         binaries_data = res.json()['binaries']
-        if len(binaries_data) == 1:
+        if len(binaries_data) >= 1:
 
             # Inform of match
             binaries_data = binaries_data[0]
