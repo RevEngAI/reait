@@ -30,6 +30,9 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
     headers = {"Authorization": f"{re_conf['apikey']}"}
     if ex_headers:
         headers.update(ex_headers)
+
+    print(url)
+    print(data)
     return r(url, headers=headers, data=data, params=params)
 
 
