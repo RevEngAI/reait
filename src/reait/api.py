@@ -31,7 +31,6 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
     if ex_headers:
         headers.update(ex_headers)
 
-    print(url,headers,json_data,data,params)
     return r(url, headers=headers, json=json_data, data=data, params=params)
 
 
@@ -140,8 +139,6 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
         if p_value:
             params[p_name] = p_value
 
-    print(params)
-
     res = reveng_req(requests.post, f"analyse", json_data=params)
     if res.status_code == 200:
         #print(res)
@@ -152,7 +149,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     if res.status_code == 400:
         print(res.text)
         response = res.json()
-        #print(response)
+
         if 'error' in response.keys():
             print(
                 f"[-] Error analysing {fpath} - {response['error']}.")
