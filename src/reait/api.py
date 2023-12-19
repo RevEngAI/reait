@@ -140,14 +140,14 @@ def RE_analyse(fpath: str, model: str = None, isa_options: str = None, platform_
 
     res = reveng_req(requests.post, f"analyse", data=json.dumps(params))
     if res.status_code == 200:
-        print(res)
+        #print(res)
         print("[+] Successfully submitted binary for analysis.")
         print(f"[+] {fpath} - {binary_id(fpath)}")
         return res
 
     if res.status_code == 400:
         response = res.json()
-        print(response)
+        #print(response)
         if 'error' in response.keys():
             print(
                 f"[-] Error analysing {fpath} - {response['error']}.")
@@ -167,12 +167,12 @@ def RE_upload(fpath: str):
         return res
 
     if res.status_code == 400:
-        print(res)
-        if 'already exists' in json.loads(res.text)['reason']:
+        response = res.json()
+        if 'already exists' in response['reason']:
             print(f"[-] {fpath} already exists. Please check the results log file for {binary_id(fpath)}")
             return True
 
-        if 'non-empty' in json.loads(res.text)['reason']:
+        if 'non-empty' in response['reason']:
             print(f"[-] Please pass a non-empty file")
             return True
 
