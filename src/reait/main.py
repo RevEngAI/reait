@@ -312,6 +312,10 @@ def main() -> None:
             #parser.print_help()
             exit(-1)
 
+    if args.A:
+        args.upload = True
+        args.analyse = True
+
     if args.upload:
 
         api.RE_upload(args.binary)
