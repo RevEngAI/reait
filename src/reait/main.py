@@ -300,9 +300,10 @@ def main() -> None:
             if args.delete:
                 try:
                     rout.print(f'[green bold]Deleting analyses for[/green bold] {file}')
-                    api.RE_delete(args.binary)
+                    api.RE_delete(file)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, could not delete analysis for [/red bold] {file}")
+                    rerr.print(f"[yellow] {e} [/yellow]")
             if not (args.upload or args.analyse or args.delete):
                 rerr.print(f'Error, -D only supports upload, analyse, or delete')
                 exit(-1)
