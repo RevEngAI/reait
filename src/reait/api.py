@@ -85,7 +85,9 @@ def re_bid_search(bin_id: str):
             else:
                 print(f"[!] No matches found for hash: {bin_id}.")
                 return bid
-
+        elif len(binaries_data) == 1:
+            binary = binaries_data[0]
+            bid = binary['binary_id']
         else:
             print(f"[!] No matches found for hash: {bin_id}.")
             return bid
