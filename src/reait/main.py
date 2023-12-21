@@ -422,12 +422,13 @@ def main() -> None:
 
     elif args.match:
         # parse confidences
-        confidence = 0.99
+        confidence = 0.90
         if args.confidence:
             confidences = {
-                'high': 0.99,
-                'medium': 0.95,
-                'low': 0.9,
+                'high': 0.95,
+                'medium': 0.9,
+                'low': 0.7,
+                'partial': 0.5,
                 'all': 0.0
             }
             if args.confidence in confidences.keys():
