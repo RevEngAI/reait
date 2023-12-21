@@ -86,7 +86,7 @@ def re_bid_search(bin_id: str):
                 print(f"[!] No matches found for hash: {bin_id}.")
                 return bid
         elif len(binaries_data) == 1:
-            print(f"[+] Only one record exists, selecting: ID: {binaries_data[0]['binary_id']}, Name: {binaries_data[0]['binary_name']}, Creation: {binaries_data[0]['creation']}, Model: {binaries_data[0]['model_name']}, Owner: {binaries_data[0]['owner']}")
+            print(f"[+] Only one record exists, selecting - ID: {binaries_data[0]['binary_id']}, Name: {binaries_data[0]['binary_name']}, Creation: {binaries_data[0]['creation']}, Model: {binaries_data[0]['model_name']}, Owner: {binaries_data[0]['owner']}")
             binary = binaries_data[0]
             bid = binary['binary_id']
         else:
