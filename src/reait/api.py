@@ -38,7 +38,7 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
 # Assumes a file has been passed, correct hash only
 # Returns the BID of the binary_id (hash)
 def re_bid_search(bin_id: str):
-    res = reveng_req(requests.get, f"/search?search=sha_256_hash:{bin_id}")
+    res = reveng_req(requests.get, f"/search?search=sha_256_hash:{bin_id}&state=All")
 
     bid = -1
 
@@ -58,7 +58,7 @@ def re_bid_search(bin_id: str):
                 for binary in binaries_data:
                     print(
                         f"[+] {count} - ID: {binary['binary_id']}, Name: {binary['binary_name']}, "
-                        f"Creation: {binary['creation']}, Model: {binary['model_name']}, Owner: {binary['owner']}")
+                        f"Creation: {binary['creation']}, Model: {binary['model_name']}, Owner: {binary['owner']}, Status: {binary['status']}")
                     options_dict[count] = binary['binary_id']
                     count += 1
 
@@ -86,7 +86,7 @@ def re_bid_search(bin_id: str):
                 print(f"[!] No matches found for hash: {bin_id}.")
                 return bid
         elif len(binaries_data) == 1:
-            print(f"[+] Only one record exists, selecting - ID: {binaries_data[0]['binary_id']}, Name: {binaries_data[0]['binary_name']}, Creation: {binaries_data[0]['creation']}, Model: {binaries_data[0]['model_name']}, Owner: {binaries_data[0]['owner']}")
+            print(f"[+] Only one record exists, selecting - ID: {binaries_data[0]['binary_id']}, Name: {binaries_data[0]['binary_name']}, Creation: {binaries_data[0]['creation']}, Model: {binaries_data[0]['model_name']}, Owner: {binaries_data[0]['owner']}, Status: {binaries_data[0]['status']}")
             binary = binaries_data[0]
             bid = binary['binary_id']
         else:
