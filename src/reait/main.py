@@ -84,7 +84,7 @@ def match(fpath: str, model_name: str, embeddings: list, confidence: float = 0.9
     #closest = 1.0 - distance.cdist(source_embed_mat, sink_embed_mat, 'cosine')
     closest = distance.cdist(source_embed_mat, sink_embed_mat, api.angular_distance)
     # rescale to separate high end of (-1, 1.0)
-    closest = rescale_sim(closest)
+    #closest = rescale_sim(closest)
     i, j = closest.shape
 
     for _i in track(range(i), description='Matching Symbols...'):
@@ -182,7 +182,8 @@ def binary_similarity(fpath: str, fpaths: list, model_name: str):
             closest = distance.cdist(np.expand_dims(b_embed, axis=0), np.vstack(b_sums), api.angular_distance)
 
             for binary, similarity in zip(fpaths, closest.tolist()[0]):
-                table.add_row(os.path.basename(binary), api.binary_id(binary), f"{rescale_sim(similarity):.05f}")
+                #table.add_row(os.path.basename(binary), api.binary_id(binary), f"{rescale_sim(similarity):.05f}")
+                table.add_row(os.path.basename(binary), api.binary_id(binary), f"{similarity:.05f}")
 
     rout.print(table)
 
