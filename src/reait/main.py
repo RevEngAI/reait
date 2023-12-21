@@ -267,6 +267,11 @@ def main() -> None:
     if args.collections:
         collections = parse_collections(args.collections)
 
+    # auto analysis, uploads and starts analysis
+    if args.A:
+        args.upload = True
+        args.analyse = True
+
     if args.dir:
         if not os.path.isdir(args.dir):
             rerr.print(f'Error, {args.dir} is not a valid directory path')
@@ -279,6 +284,10 @@ def main() -> None:
                 rerr.print(f'[blue]Skipping non-file[/blue] {file}')
                 continue
 
+            # upload binary
+            if args.upload:
+                api.RE_upload(file)
+
             if args.analyse:
                 try:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
@@ -288,14 +297,14 @@ def main() -> None:
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
 
-            elif args.delete:
+            if args.delete:
                 try:
                     rout.print(f'[green bold]Deleting analyses for[/green bold] {file}')
                     api.RE_delete(args.binary)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, could not delete analysis for [/red bold] {file}")
-            else:
-                rerr.print(f'Error, -D only supports analyse or delete')
+            if not (args.upload or args.analyse or args.delete):
+                rerr.print(f'Error, -D only supports upload, analyse, or delete')
                 exit(-1)
 
         exit(0)
@@ -312,10 +321,6 @@ def main() -> None:
             rerr.print("[bold red][!] Error, please supply a valid binary file using '-b'.[/bold red]")
             #parser.print_help()
             exit(-1)
-
-    if args.A:
-        args.upload = True
-        args.analyse = True
 
     if args.upload:
 
