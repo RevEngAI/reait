@@ -454,7 +454,7 @@ def parse_config():
 
     with open(os.path.expanduser("~/.reait.toml"), "r") as file:
         config = tomli.loads(file.read())
-        for key in ('apikey', 'host'):
+        for key in ('apikey', 'host', 'model'):
             if key in config:
                 re_conf[key] = config[key]
 
