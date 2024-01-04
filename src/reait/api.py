@@ -21,7 +21,7 @@ __version__ = "0.0.19"
 re_conf = {
     'apikey': 'l1br3',
     'host': 'https://api.reveng.ai',
-    'model': 'binnet-0.1'
+    'model': 'binnet-0.2-x86'
 }
 
 
