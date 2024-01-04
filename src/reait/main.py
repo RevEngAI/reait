@@ -249,6 +249,10 @@ def main() -> None:
         if len(args.tags.strip()) == 0:
             args.tags = None
 
+        else:
+            # convert to list
+            args.tags = args.tags.split(',')
+
     # display version and exit
     if args.version:
         version()

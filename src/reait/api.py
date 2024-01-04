@@ -121,7 +121,7 @@ def RE_delete(fpath: str):
 
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
-               binary_scope: str = None, tags: str = None, priority: int = 0):
+               binary_scope: str = None, tags: list = None, priority: int = 0):
     """
         Start analysis job for binary file
     """
