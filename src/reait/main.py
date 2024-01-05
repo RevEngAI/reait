@@ -210,7 +210,7 @@ def main() -> None:
     parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
     parser.add_argument("-C", "--sca", action="store_true", help="Perform Software Composition Anaysis to identify common libraries embedded in binary")
     parser.add_argument("--sbom", action="store_true", help="Generate SBOM for binary")
-    parser.add_argument("-m", "--model", default="binnet-0.1", help="AI model used to generate embeddings")
+    parser.add_argument("-m", "--model", default=None, help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
     parser.add_argument("--start-vaddr", help="Start virtual address of the function to extract embeddings")
     parser.add_argument("--symbol", help="Name of the symbol to extract embeddings")
