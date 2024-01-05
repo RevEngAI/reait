@@ -234,14 +234,13 @@ def main() -> None:
     parser.add_argument("--scope", default="private", help="Override analysis visibility (scope). Valid values are 'public' or 'private'[DEFAULT]")
     parser.add_argument("--tags", default=None, type=str, help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3..")
     parser.add_argument("--priority", default=0, type=int, help="Add priority to processing queue.")
+    parser.add_argument("--verbose", default=False, action='store_true', help="Set verbose output.")
     args = parser.parse_args()
 
-    if args.apikey:
-        api.re_conf['apikey'] = args.apikey
-    if args.host:
-        api.re_conf['host'] = args.host
-    if args.model:
-        api.re_conf['model'] = args.model
+    # set re_conf args
+    for arg in ('apikey', 'host', 'model', 'verbose'):
+        if getattr(args, arg):
+            api.re_conf[arg] = getattr(args, arg)
 
     # validate length of string tags
     if args.tags:
@@ -297,7 +296,7 @@ def main() -> None:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
                     rout.print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
                     rout.print(f'[green bold]Analysing[/green bold] {file}')
-                    api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags, priority=args.priority)
+                    api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
 
@@ -336,7 +335,7 @@ def main() -> None:
         # upload binary first, them carry out actions
 
     if args.analyse:
-        api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags, priority=args.priority)
+        api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary)

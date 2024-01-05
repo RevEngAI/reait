@@ -21,7 +21,8 @@ __version__ = "0.0.19"
 re_conf = {
     'apikey': 'l1br3',
     'host': 'https://api.reveng.ai',
-    'model': 'binnet-0.2-x86'
+    'model': 'binnet-0.2-x86',
+    'verbose': False
 }
 
 
@@ -30,6 +31,14 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
     headers = {"Authorization": f"{re_conf['apikey']}"}
     if ex_headers:
         headers.update(ex_headers)
+
+    if re_conf['verbose']:
+        print(f"""Making request {url}: 
+        - headers: {headers}
+        - data: {data}
+        - json_data: {json_data}
+        - params: {params}
+        """)
 
     return r(url, headers=headers, json=json_data, data=data, params=params)
 
@@ -121,7 +130,7 @@ def RE_delete(fpath: str):
 
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
-               binary_scope: str = None, tags: list = None, priority: int = 0):
+               scope: str = None, tags: list = None, priority: int = 0):
     """
         Start analysis job for binary file
     """
@@ -131,7 +140,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
 
     for p_name in (
             'model_name', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args',
-            'binary_scope',
+            'scope',
             'tags', 'priority'):
         p_value = locals()[p_name]
         if p_value:
