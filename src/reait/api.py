@@ -13,7 +13,6 @@ import json
 import tomli
 from os.path import isfile
 from sys import exit
-from IPython import embed
 import lief
 
 __version__ = "0.0.19"

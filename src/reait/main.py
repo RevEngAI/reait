@@ -16,7 +16,6 @@ import json
 import tomli
 from os.path import isfile, getsize
 from sys import exit, stdout, stderr
-from IPython import embed
 from reait import api
 from scipy.spatial import distance
 from scipy.special import expit
