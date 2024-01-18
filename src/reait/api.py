@@ -196,7 +196,7 @@ def RE_upload(fpath: str):
     result = re_hash_check(bin_id)
 
     if result is False:
-        print(f"[!] File already exists. To upload again, use the --duplicate flag.")
+        print(f"[!] File already exists. Skipping upload...")
         return True
 
     res = reveng_req(requests.post, f"upload", data=open(fpath, 'rb').read())
