@@ -200,6 +200,7 @@ def main() -> None:
     parser.add_argument("--base-address", help="Image base of the executable image to map for remote analysis")
     parser.add_argument("-A", action='store_true', help="Upload and Analyse a new binary")
     parser.add_argument("-u", "--upload", action='store_true', help="Upload a new binary to remote server")
+    parser.add_argument("--duplicate", default=False, help="Duplicate an existing binary")
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
     parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
@@ -295,7 +296,7 @@ def main() -> None:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
                     rout.print(f'Found {fpath}:{exec_fmt}-{exec_isa}')
                     rout.print(f'[green bold]Analysing[/green bold] {file}')
-                    api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
+                    api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority, duplicate=args.duplicate)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
 
@@ -334,7 +335,7 @@ def main() -> None:
         # upload binary first, them carry out actions
 
     if args.analyse:
-        api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority)
+        api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform, dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args, file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority, duplicate=args.duplicate)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary)
