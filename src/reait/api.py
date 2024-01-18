@@ -42,6 +42,24 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
     return r(url, headers=headers, json=json_data, data=data, params=params)
 
 
+def re_hash_check(bin_id: str):
+    res = reveng_req(requests.get, f"/search?search=sha_256_hash:{bin_id}&state=All")
+
+    if res.status_code == 200:
+        binaries_data = res.json()['binaries']
+        if len(binaries_data) > 0:
+            return False
+        else:
+            return True
+    elif res.status_code == 400:
+        print(f"[!] Bad Request.")
+    else:
+        print(f"[!] Internal Server Error.")
+
+    res.raise_for_status()
+
+
+
 # Bin_id is referred to as hash in this program - to maintain usage BID = id of a binary bin_id = hash
 # Assumes a file has been passed, correct hash only
 # Returns the BID of the binary_id (hash)
@@ -129,13 +147,19 @@ def RE_delete(fpath: str):
 
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
-               scope: str = None, tags: list = None, priority: int = 0):
+               scope: str = None, tags: list = None, priority: int = 0, duplicate: bool = False):
     """
         Start analysis job for binary file
     """
     filename = os.path.basename(fpath)
     bin_id = binary_id(fpath)
     params = {'file_name': filename, "sha_256_hash": bin_id}
+
+    result = re_hash_check(bin_id)
+
+    if result is False and duplicate is False:
+        print(f"[!] Error, duplicate analysis for {bin_id}. To upload again, use the --duplicate=True flag.")
+        return
 
     for p_name in (
             'model_name', 'isa_options', 'platform_options', 'file_options', 'dynamic_execution', 'command_line_args',
