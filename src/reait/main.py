@@ -51,8 +51,8 @@ def verify_binary(fpath_fmt: str):
     fmt     = None
     fpath   = fpath_fmt
 
-    if ':' in fpath_fmt:
-        fpath, fmt = fpath_fmt.split(':')
+    #if ':' in fpath_fmt:
+    #    fpath, fmt = fpath_fmt.split(':')
 
     if not os.path.isfile(fpath):
         raise RuntimeError(f"File path {fpath} is not a file")
