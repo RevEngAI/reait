@@ -200,7 +200,7 @@ def main() -> None:
     parser.add_argument("--base-address", help="Image base of the executable image to map for remote analysis")
     parser.add_argument("-A", action='store_true', help="Upload and Analyse a new binary")
     parser.add_argument("-u", "--upload", action='store_true', help="Upload a new binary to remote server")
-    parser.add_argument("--duplicate", default=False, help="Duplicate an existing binary")
+    parser.add_argument("--duplicate", default=False, action='store_true', help="Duplicate an existing binary")
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
     parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
