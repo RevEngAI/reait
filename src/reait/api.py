@@ -43,7 +43,7 @@ def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict 
 
 
 def re_hash_check(bin_id: str):
-    res = reveng_req(requests.get, f"/search?search=sha_256_hash:{bin_id}&state=All")
+    res = reveng_req(requests.get, f"/search?search=sha_256_hash:{bin_id}&state=All&user_owned=true")
 
     if res.status_code == 200:
         binaries_data = res.json()['binaries']
@@ -158,7 +158,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     result = re_hash_check(bin_id)
 
     if result is False and duplicate is False:
-        print(f"[!] Error, duplicate analysis for {bin_id}. To upload again, use the --duplicate=True flag.")
+        print(f"[!] Error, duplicate analysis for {bin_id}. To upload again, use the --duplicate flag.")
         return
 
     for p_name in (
@@ -192,6 +192,13 @@ def RE_upload(fpath: str):
     """
         Upload binary to Server
     """
+    bin_id = binary_id(fpath)
+    result = re_hash_check(bin_id)
+
+    if result is False:
+        print(f"[!] File already exists. To upload again, use the --duplicate flag.")
+        return True
+
     res = reveng_req(requests.post, f"upload", data=open(fpath, 'rb').read())
     if res.status_code == 200:
         print("[+] Successfully uploaded binary to your account.")
