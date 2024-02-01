@@ -25,7 +25,8 @@ re_conf = {
 }
 
 
-def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None, json_data: dict = None):
+def reveng_req(r: requests.request, end_point: str, data=None, ex_headers: dict = None, params=None,
+               json_data: dict = None):
     url = f"{re_conf['host']}/{end_point}"
     headers = {"Authorization": f"{re_conf['apikey']}"}
     if ex_headers:
@@ -57,7 +58,6 @@ def re_hash_check(bin_id: str):
         print(f"[!] Internal Server Error.")
 
     res.raise_for_status()
-
 
 
 # Bin_id is referred to as hash in this program - to maintain usage BID = id of a binary bin_id = hash
@@ -112,7 +112,8 @@ def re_bid_search(bin_id: str):
                 print(f"[!] No matches found for hash: {bin_id}.")
                 return bid
         elif len(binaries_data) == 1:
-            print(f"[+] Only one record exists, selecting - ID: {binaries_data[0]['binary_id']}, Name: {binaries_data[0]['binary_name']}, Creation: {binaries_data[0]['creation']}, Model: {binaries_data[0]['model_name']}, Owner: {binaries_data[0]['owner']}, Status: {binaries_data[0]['status']}")
+            print(
+                f"[+] Only one record exists, selecting - ID: {binaries_data[0]['binary_id']}, Name: {binaries_data[0]['binary_name']}, Creation: {binaries_data[0]['creation']}, Model: {binaries_data[0]['model_name']}, Owner: {binaries_data[0]['owner']}, Status: {binaries_data[0]['status']}")
             binary = binaries_data[0]
             bid = binary['binary_id']
         else:
@@ -171,7 +172,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
 
     res = reveng_req(requests.post, f"analyse", json_data=params)
     if res.status_code == 200:
-        #print(res)
+        # print(res)
         print("[+] Successfully submitted binary for analysis.")
         print(f"[+] {fpath} - {binary_id(fpath)}")
         return res
@@ -206,14 +207,29 @@ def RE_upload(fpath: str):
         return res
 
     if res.status_code == 400:
+
         response = res.json()
-        if 'already exists' in response['reason']:
+
+        if 'error' in response.keys():
+            print(
+                f"[-] Error uploading {fpath} - {response['error']}.")
+            return True
+
+        if 'already exists' in response.get['reason']:
             print(f"[-] {fpath} already exists. Please check the results log file for {binary_id(fpath)}")
             return True
 
         if 'non-empty' in response['reason']:
             print(f"[-] Please pass a non-empty file")
             return True
+
+    if res.status_code == 413:
+        print(f"[-] File too large. Please upload files under 100MB")
+        return True
+
+    if res.status_code == 500:
+        print(f"[-] Internal Server Error. Please contact support.\nSkipping upload...")
+        return True
 
     res.raise_for_status()
 
