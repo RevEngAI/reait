@@ -123,8 +123,10 @@ def re_bid_search(bin_id: str):
     elif res.status_code == 400:
         print(f"[!] Bad Request.")
 
+        raise Exception(f"Bad Request: {res.text}")
+
     else:
-        print(f"[!] Internal Server Error.")
+        raise Exception(f"Internal Server Error")
 
     return bid
 
