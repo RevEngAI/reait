@@ -217,14 +217,6 @@ def RE_upload(fpath: str):
                 f"[-] Error uploading {fpath} - {response['error']}.")
             return True
 
-        if 'already exists' in response.get['reason']:
-            print(f"[-] {fpath} already exists. Please check the results log file for {binary_id(fpath)}")
-            return True
-
-        if 'non-empty' in response['reason']:
-            print(f"[-] Please pass a non-empty file")
-            return True
-
     if res.status_code == 413:
         print(f"[-] File too large. Please upload files under 100MB")
         return True
