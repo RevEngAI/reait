@@ -202,7 +202,7 @@ def main() -> None:
     parser.add_argument("-u", "--upload", action='store_true', help="Upload a new binary to remote server")
     parser.add_argument("--duplicate", default=False, action='store_true', help="Duplicate an existing binary")
     parser.add_argument("-n", "--ann", action='store_true', help="Fetch Approximate Nearest Neighbours (ANNs) for embedding")
-    parser.add_argument("--embedding", help="Path of JSON file containing a BinNet embedding")
+    parser.add_argument("-e", "--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch")
     parser.add_argument("--collections", default=None, help="Comma Seperated Value of collections to search from e.g. libxml2,libpcap. Used to select RevEng.AI collections for filtering search results")
     parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
