@@ -222,7 +222,7 @@ def RE_upload(fpath: str) -> Response | bool:
     bin_id = binary_id(fpath)
     result = re_hash_check(bin_id)
 
-    if result is False:
+    if result:
         print(f"[!] File already exists. Skipping upload...")
         return True
 
