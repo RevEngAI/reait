@@ -21,7 +21,7 @@ re_conf = {
     'apikey': 'l1br3',
     'host': 'https://api.reveng.ai',
     'models': 'binnet-0.2-x86',
-    'verbose': True
+    'verbose': False
 }
 
 
