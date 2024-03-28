@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
+from __future__ import print_function, annotations
+
 from hashlib import sha256
 
 from rich import print_json, print as rich_print
@@ -25,7 +26,17 @@ re_conf = {
 
 
 def reveng_req(r: request, end_point: str, data=None, ex_headers: dict = None, params=None,
-               json_data: dict = None) -> Response:
+               json_data: dict = None, timeout: int = 30) -> Response:
+    """
+    Constructs and sends a Request
+    :param r: Method for the new Request
+    :param end_point: Endpoint to add to the base URL
+    :param ex_headers: Extended HTTP headers to add
+    :param data: Dictionary, list of tuples, bytes, or file-like object to send in the body
+    :param params: Dictionary, list of tuples or bytes to send in the query string for the query string
+    :param json_data: A JSON serializable Python object to send in the body
+    :param timeout: Number of seconds to stop waiting for a Response
+    """
     url = f"{re_conf['host']}/{end_point}"
     headers = {"Authorization": f"{re_conf['apikey']}"}
 
@@ -34,13 +45,22 @@ def reveng_req(r: request, end_point: str, data=None, ex_headers: dict = None, p
 
     if re_conf['verbose']:
         print(f"""Making request {url}:
-        - headers: {headers}
-        - data: {data}
-        - json_data: {json_data}
-        - params: {params}
+          • headers: {headers}
+          • data: {data}
+          • json_data: {json_data}
+          • params: {params}
         """)
 
-    return r(url, headers=headers, json=json_data, data=data, params=params)
+    response: Response = r(url, headers=headers, json=json_data, data=data, params=params, timeout=timeout)
+
+    if re_conf['verbose']:
+        print(f"""Making response {url}:
+          • headers: {response.headers}
+          • status_code: {response.status_code}
+          • content: {response.text}
+        """)
+
+    return response
 
 
 def re_hash_check(bin_id: str) -> bool:
@@ -121,7 +141,7 @@ def re_bid_search(bin_id: str) -> int:
     return bid
 
 
-def RE_delete(fpath: str) -> any:
+def RE_delete(fpath: str) -> Response | None:
     """
     Delete analysis results for Binary ID in command
     :param fpath: File path for binary to analyse
@@ -147,7 +167,7 @@ def RE_delete(fpath: str) -> any:
 
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
-               scope: str = None, tags: list = None, priority: int = 0, duplicate: bool = False) -> any:
+               scope: str = None, tags: list = None, priority: int = 0, duplicate: bool = False) -> Response | None:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
@@ -194,7 +214,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     return res
 
 
-def RE_upload(fpath: str) -> any:
+def RE_upload(fpath: str) -> Response | bool:
     """
     Upload binary to Server
     :param fpath: File path for binary to analyse
@@ -225,7 +245,7 @@ def RE_upload(fpath: str) -> any:
     return res
 
 
-def RE_embeddings(fpath: str) -> any:
+def RE_embeddings(fpath: str) -> Response | None:
     """
     Fetch symbol embeddings
     :param fpath: File path for binary to analyse
@@ -245,7 +265,7 @@ def RE_embeddings(fpath: str) -> any:
     return res
 
 
-def RE_signature(fpath: str) -> any:
+def RE_signature(fpath: str) -> Response | None:
     """
     Fetch binary BinNet signature
     :param fpath: File path for binary to analyse
@@ -293,10 +313,11 @@ def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr
     return res
 
 
-def RE_logs(fpath: str):
+def RE_logs(fpath: str, console: bool = True) -> Response | None:
     """
     Get the logs for an analysis associated to Binary ID in command
     :param fpath: File path for binary to analyse
+    :param console: Show response in console
     """
     bin_id = binary_id(fpath)
     bid = re_bid_search(bin_id)
@@ -306,7 +327,7 @@ def RE_logs(fpath: str):
 
     res = reveng_req(requests.get, f"logs/{bid}")
 
-    if res.status_code == 200:
+    if res.status_code == 200 and console:
         print(res.text)
     elif res.status_code == 404:
         print(f"[!] Error, binary analysis for {bin_id} not found.")
@@ -315,7 +336,7 @@ def RE_logs(fpath: str):
     return res
 
 
-def RE_cves(fpath: str) -> any:
+def RE_cves(fpath: str) -> Response | None:
     """
     Check for known CVEs in Binary
     :param fpath: File path for binary to analyse
@@ -344,7 +365,7 @@ def RE_cves(fpath: str) -> any:
     return res
 
 
-def RE_status(fpath: str) -> any:
+def RE_status(fpath: str) -> Response | None:
     """
     Check for known CVEs in Binary
     :param fpath: File path for binary to analyse
@@ -434,7 +455,7 @@ def RE_nearest_binaries(embedding: list, model_name: str, nns: int = 5,
     return res
 
 
-def RE_SBOM(fpath: str) -> any:
+def RE_SBOM(fpath: str) -> Response | None:
     """
     Get Software Bill Of Materials for binary
     :param fpath: File path for binary to analyse
@@ -511,7 +532,7 @@ def _binary_format(lief_hdlr) -> str:
     raise RuntimeError("Error, could not determine binary format.")
 
 
-def file_type(fpath: str):
+def file_type(fpath: str) -> tuple[str, str]:
     """
     Determine ISA for binary
     :param fpath: File path for binary to analyse
