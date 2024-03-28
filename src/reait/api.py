@@ -21,7 +21,7 @@ re_conf = {
     'apikey': 'l1br3',
     'host': 'https://api.reveng.ai',
     'models': 'binnet-0.2-x86',
-    'verbose': False
+    'verbose': True
 }
 
 
@@ -184,7 +184,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     bin_id = binary_id(fpath)
     result = re_hash_check(bin_id)
 
-    if result is False and duplicate is False:
+    if result and duplicate is False:
         print(f"[!] Error, duplicate analysis for {bin_id}. To upload again, use the --duplicate flag.")
         return
 
