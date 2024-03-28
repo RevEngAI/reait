@@ -45,20 +45,20 @@ def reveng_req(r: request, end_point: str, data=None, ex_headers: dict = None, p
 
     if re_conf['verbose']:
         print(f"""Making request {url}:
-          • headers: {headers}
-          • data: {data}
-          • json_data: {json_data}
-          • params: {params}
-        """)
+  • headers: {headers}
+  • data: {data}
+  • json_data: {json_data}
+  • params: {params}
+  """)
 
     response: Response = r(url, headers=headers, json=json_data, data=data, params=params, timeout=timeout)
 
     if re_conf['verbose']:
         print(f"""Making response {url}:
-          • headers: {response.headers}
-          • status_code: {response.status_code}
-          • content: {response.text}
-        """)
+  • headers: {response.headers}
+  • status_code: {response.status_code}
+  • content: {response.text}
+  """)
 
     return response
 
