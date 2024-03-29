@@ -141,13 +141,14 @@ def re_bid_search(bin_id: str) -> int:
     return bid
 
 
-def RE_delete(fpath: str) -> Response | None:
+def RE_delete(fpath: str, binary_id: int = 0) -> Response | None:
     """
     Delete analysis results for Binary ID in command
     :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     """
-    bin_id = binary_id(fpath)
-    bid = re_bid_search(bin_id)
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
         return
@@ -167,7 +168,7 @@ def RE_delete(fpath: str) -> Response | None:
 
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
-               scope: str = None, tags: list = None, priority: int = 0, duplicate: bool = False) -> Response | None:
+               scope: str = None, tags: list = None, priority: int = 0, duplicate: bool = False, symbols: dict = None) -> Response | None:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
@@ -180,8 +181,9 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     :param tags: Assign tags to an analysis
     :param priority: Priority to processing queue
     :param duplicate: Duplicate an existing binary
+    :param symbols: List of functions
     """
-    bin_id = binary_id(fpath)
+    bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
 
     if result and duplicate is False:
@@ -193,7 +195,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     params = {'file_name': filename, "sha_256_hash": bin_id}
 
     for p_name in ('model_name', 'isa_options', 'platform_options', 'file_options',
-                   'dynamic_execution', 'command_line_args', 'scope', 'tags', 'priority'):
+                   'dynamic_execution', 'command_line_args', 'scope', 'tags', 'priority', 'symbols'):
         p_value = locals()[p_name]
 
         if p_value:
@@ -203,7 +205,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
 
     if res.status_code == 200:
         print("[+] Successfully submitted binary for analysis.")
-        print(f"[+] {fpath} - {binary_id(fpath)}")
+        print(f"[+] {fpath} - {re_binary_id(fpath)}")
     elif res.status_code == 400:
         response = res.json()
 
@@ -219,7 +221,7 @@ def RE_upload(fpath: str) -> Response | bool:
     Upload binary to Server
     :param fpath: File path for binary to analyse
     """
-    bin_id = binary_id(fpath)
+    bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
 
     if result:
@@ -230,7 +232,7 @@ def RE_upload(fpath: str) -> Response | bool:
 
     if res.status_code == 200:
         print("[+] Successfully uploaded binary to your account.")
-        print(f"[+] {fpath} - {binary_id(fpath)}")
+        print(f"[+] {fpath} - {re_binary_id(fpath)}")
     elif res.status_code == 400:
         response = res.json()
 
@@ -245,13 +247,14 @@ def RE_upload(fpath: str) -> Response | bool:
     return res
 
 
-def RE_embeddings(fpath: str) -> Response | None:
+def RE_embeddings(fpath: str, binary_id: int = 0) -> Response | None:
     """
     Fetch symbol embeddings
     :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     """
-    bin_id = binary_id(fpath)
-    bid = re_bid_search(bin_id)
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
         return
@@ -265,13 +268,14 @@ def RE_embeddings(fpath: str) -> Response | None:
     return res
 
 
-def RE_signature(fpath: str) -> Response | None:
+def RE_signature(fpath: str, binary_id: int = 0) -> Response | None:
     """
     Fetch binary BinNet signature
     :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     """
-    bin_id = binary_id(fpath)
-    bid = re_bid_search(bin_id)
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
         return
@@ -304,23 +308,24 @@ def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr
     if model:
         params['models']: model
 
-    res = reveng_req(requests.get, f"embedding/{binary_id(fpath)}/{start_vaddr}", params=params)
+    res = reveng_req(requests.get, f"embedding/{re_binary_id(fpath)}/{start_vaddr}", params=params)
 
     if res.status_code == 425:
-        print(f"[-] Analysis for {binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
+        print(f"[-] Analysis for {re_binary_id(fpath)} still in progress. Please check the logs (-l) and try again later.")
 
     res.raise_for_status()
     return res
 
 
-def RE_logs(fpath: str, console: bool = True) -> Response | None:
+def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response | None:
     """
     Get the logs for an analysis associated to Binary ID in command
     :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     :param console: Show response in console
     """
-    bin_id = binary_id(fpath)
-    bid = re_bid_search(bin_id)
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
         return
@@ -336,13 +341,14 @@ def RE_logs(fpath: str, console: bool = True) -> Response | None:
     return res
 
 
-def RE_cves(fpath: str) -> Response | None:
+def RE_cves(fpath: str, binary_id: int = 0) -> Response | None:
     """
     Check for known CVEs in Binary
     :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     """
-    bin_id = binary_id(fpath)
-    bid = re_bid_search(bin_id)
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
         return
@@ -365,13 +371,14 @@ def RE_cves(fpath: str) -> Response | None:
     return res
 
 
-def RE_status(fpath: str) -> Response | None:
+def RE_status(fpath: str, binary_id: int = 0) -> Response | None:
     """
     Check for known CVEs in Binary
     :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     """
-    bin_id = binary_id(fpath)
-    bid = re_bid_search(bin_id)
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
         return
@@ -455,13 +462,14 @@ def RE_nearest_binaries(embedding: list, model_name: str, nns: int = 5,
     return res
 
 
-def RE_SBOM(fpath: str) -> Response | None:
+def RE_SBOM(fpath: str, binary_id: int = 0) -> Response | None:
     """
     Get Software Bill Of Materials for binary
     :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     """
-    bin_id = binary_id(fpath)
-    bid = re_bid_search(bin_id)
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
         return
@@ -475,7 +483,7 @@ def RE_SBOM(fpath: str) -> Response | None:
     return res
 
 
-def binary_id(fpath: str) -> str:
+def re_binary_id(fpath: str) -> str:
     """
     Take the SHA-256 hash of binary file
     :param fpath: File path for binary to analyse
