@@ -111,7 +111,7 @@ def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collec
     """
     print(f"Matching symbols from {fpath} with confidence {confidence}")
     b_embeds = api.RE_embeddings(fpath)
-    b_hash = api.binary_id(fpath)
+    b_hash = api.re_binary_id(fpath)
 
     with ThreadPoolExecutor(max_workers=cpu_count()) as p:
         #print(f"Colletion: {collections}")
@@ -124,7 +124,7 @@ def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collec
 
             embedding = symbol['embedding']
             #do ANN call to match symbols, ignore functions from current file
-            f_suggestions = api.RE_nearest_symbols(embedding, model_name, 1, collections=collections, ignore_hashes=[api.binary_id(fpath)])
+            f_suggestions = api.RE_nearest_symbols(embedding, model_name, 1, collections=collections, ignore_hashes=[api.re_binary_id(fpath)])
 
             if len(f_suggestions) == 0:
                 #no match
@@ -173,7 +173,7 @@ def binary_similarity(fpath: str, fpaths: list, model_name: str):
             b_sum = api.RE_signature(b)
             b_sums.append(b_sum)
         except Exception as e:
-            rerr.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.binary_id(b)}[/green bold]")
+            rerr.print(f"\n[red bold]{b} Not Analysed[/red bold] - [green bold]{api.re_binary_id(b)}[/green bold]")
             rerr.print(e)
 
     if len(b_sums) > 0:
@@ -181,8 +181,8 @@ def binary_similarity(fpath: str, fpaths: list, model_name: str):
             closest = distance.cdist(np.expand_dims(b_embed, axis=0), np.vstack(b_sums), api.angular_distance)
 
             for binary, similarity in zip(fpaths, closest.tolist()[0]):
-                #table.add_row(os.path.basename(binary), api.binary_id(binary), f"{rescale_sim(similarity):.05f}")
-                table.add_row(os.path.basename(binary), api.binary_id(binary), f"{similarity:.05f}")
+                #table.add_row(os.path.basename(binary), api.re_binary_id(binary), f"{rescale_sim(similarity):.05f}")
+                table.add_row(os.path.basename(binary), api.re_binary_id(binary), f"{similarity:.05f}")
 
     rout.print(table)
 
@@ -400,7 +400,7 @@ def main() -> None:
                 embedding = matches[0]['embedding']
         elif args.binary and args.signature:
             print(f"[+] Searching ANN for binary embeddings {args.binary}")
-            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary), args.model, args.nns, collections, ignore_hashes=[api.binary_id(args.binary)])
+            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary), args.model, args.nns, collections, ignore_hashes=[api.re_binary_id(args.binary)])
             print_json(data=b_suggestions)
             exit(0)
         else:
