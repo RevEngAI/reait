@@ -21,7 +21,7 @@ re_conf = {
     'apikey': 'l1br3',
     'host': 'https://api.reveng.ai',
     'models': 'binnet-0.2-x86',
-    'verbose': False
+    'verbose': True
 }
 
 
@@ -413,23 +413,29 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
 
 
 def RE_nearest_symbols(embedding: list, model_name: str, nns: int = 5,
-                       collections: list = None, ignore_hashes: list = None) -> Response:
+                       collections: list = None, ignore_hashes: list = None,
+                       distance: float = 0.0, debug_enabled: bool = False) -> Response:
     """
     Get function name suggestions for an embedding
     :param embedding: Embedding vector as python list
     :param model_name: Binary model name
     :param nns: Number of nearest neighbors
     :param collections: List of collections RevEng.AI collection names to search through
-    :param ignore_hashes: List[str] SHA 256 hash of binary file to ignore symbols from (usually the current binary)
+    :param ignore_hashes: List[str] SHA-256 hash of binary file to ignore symbols from (usually the current binary)
+    :param distance: How close we want the ANN search to filter for
+    :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {'nns': nns, 'model_name': model_name}
+    params = {'nns': nns, 'model_name': model_name, 'debug_enabled': debug_enabled}
 
-    if collections:
+    if collections and len(collections) > 0:
         # api param is collection, not collections
         params['collection'] = "|".join(collections)
 
-    if ignore_hashes:
+    if ignore_hashes and len(ignore_hashes) > 0:
         params['ignore_hashes'] = ignore_hashes
+
+    if distance > 0.0:
+        params['distance'] = distance
 
     res = reveng_req(requests.post, "ann/symbol", data=json.dumps(embedding), params=params)
 
@@ -445,7 +451,7 @@ def RE_nearest_binaries(embedding: list, model_name: str, nns: int = 5,
     :param model_name: Binary model name
     :param nns: Number of nearest neighbors
     :param collections: List of collections RevEng.AI collection names to search through
-    :param ignore_hashes: List[str] SHA 256 hash of binary files to ignore symbols from (usually the current binary)
+    :param ignore_hashes: List[str] SHA-256 hash of binary files to ignore symbols from (usually the current binary)
     """
     params = {'nns': nns, 'model_name': model_name}
 
