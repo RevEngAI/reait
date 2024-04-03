@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import setuptools
 
 with open("README.md", "r") as f:
@@ -21,4 +22,3 @@ setuptools.setup(
                 'tqdm', 'argparse', 'requests', 'rich', 'tomli', 'pandas', 'numpy', "scipy", "scikit-learn"
             ],
     )
-
