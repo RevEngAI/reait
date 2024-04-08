@@ -365,7 +365,7 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response | None:
         else:
             logger.warning("Warning CVEs found!\n%s", res.text)
     elif res.status_code == 404:
-        logger.warning(" Error, binary analysis not found for %s.", bin_id)
+        logger.warning("Error, binary analysis not found for %s.", bin_id)
 
     res.raise_for_status()
     return res
@@ -499,7 +499,10 @@ def RE_functions_rename(function_id: int, new_name: str) -> Response:
     """
     res = reveng_req(requests.post, f"functions/rename/{function_id}", json_data={"new_name": new_name})
 
-    logger.info("Function %d has been renamed with %s:\n%s", function_id, new_name, res.text)
+    if res.status_code == 200:
+        logger.info("FunctionId %d has been renamed with '%s'.", function_id, new_name)
+    else:
+        logger.warning("Error, cannot rename FunctionId %d. %s", function_id, new_name, res.text)
 
     res.raise_for_status()
     return res
