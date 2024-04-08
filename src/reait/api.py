@@ -502,7 +502,7 @@ def RE_functions_rename(function_id: int, new_name: str) -> Response:
     if res.status_code == 200:
         logger.info("FunctionId %d has been renamed with '%s'.", function_id, new_name)
     else:
-        logger.warning("Error, cannot rename FunctionId %d. %s", function_id, new_name, res.text)
+        logger.warning("Error, cannot rename FunctionId %d. %s", function_id, res.text)
 
     res.raise_for_status()
     return res
