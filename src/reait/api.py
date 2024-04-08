@@ -491,6 +491,20 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response | None:
     return res
 
 
+def RE_functions_rename(function_id: int, new_name: str) -> Response:
+    """
+    Rename a function.
+    :param function_id: ID of a function
+    :param new_name: New function name
+    """
+    res = reveng_req(requests.post, f"functions/rename/{function_id}", json_data={"new_name": new_name})
+
+    logger.info("Function %d has been renamed with %s:\n%s", function_id, new_name, res.text)
+
+    res.raise_for_status()
+    return res
+
+
 def re_binary_id(fpath: str) -> str:
     """
     Take the SHA-256 hash of binary file
