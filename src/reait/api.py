@@ -164,7 +164,7 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response | None:
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
                scope: str = None, tags: list = None, priority: int = 0,
-               duplicate: bool = False, symbols: dict = None) -> Response | None:
+               duplicate: bool = False, symbols: dict = None, debug_fpath:str = None) -> Response | None:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
@@ -179,6 +179,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     :param priority: Priority to processing queue
     :param duplicate: Duplicate an existing binary
     :param symbols: List of functions
+    :param debug_fpath: File path for debug file
     """
     bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
@@ -191,6 +192,10 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     filename = basename(fpath)
 
     params = {"file_name": filename, "sha_256_hash": bin_id}
+
+    if debug_fpath:
+        debug_hash = re_binary_id(debug_fpath)
+        params["debug_hash"] = debug_hash
 
     for p_name in ("model_name", "isa_options", "platform_options", "file_options",
                    "dynamic_execution", "command_line_args", "scope", "tags", "priority", "symbols"):
@@ -242,6 +247,30 @@ def RE_upload(fpath: str) -> Response | bool:
     res.raise_for_status()
     return res
 
+def RE_upload_debug(fpath: str) -> Response | bool:
+    """
+    Upload debug binary to Server
+    :param fpath: File path for debug binary
+    """
+
+    debug_hash = re_binary_id(fpath)
+
+    res = reveng_req(requests.post, f"upload/debug", data=open(fpath, "rb").read())
+
+    if res.status_code == 200:
+        logger.info("Successfully uploaded binary to your account. %s - %s", fpath, re_binary_id(fpath))
+    elif res.status_code == 400:
+        response = res.json()
+
+        if "error" in response.keys():
+            logger.warning("Error uploading %s - %s", fpath, response["error"])
+    elif res.status_code == 413:
+        logger.warning("File too large. Please upload files under 100MB.")
+    elif res.status_code == 500:
+        logger.error("Internal Server Error. Please contact support. Skipping upload...")
+
+    res.raise_for_status()
+    return res
 
 def RE_embeddings(fpath: str, binary_id: int = 0) -> Response | None:
     """
