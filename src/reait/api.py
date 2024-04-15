@@ -15,13 +15,13 @@ import tomli
 import logging
 from lief import parse, ELF, PE, MachO
 
-__version__ = "0.0.20"
 
 re_conf = {
     "apikey": "l1br3",
     "host": "https://api.reveng.ai",
     "model": "binnet-0.2-x86"
 }
+
 
 logger = logging.getLogger("REAIT")
 

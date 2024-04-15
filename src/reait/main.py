@@ -12,7 +12,7 @@ import argparse
 import json
 from os.path import isfile
 from sys import exit, stdout, stderr
-from reait import api
+from reait import api, __version__
 from scipy.spatial import distance
 from glob import iglob
 import numpy as np
@@ -37,7 +37,7 @@ def version():
 ::  :::::::::::  :::
 ::  :::::  ::::  :::
 ::::::::    :::::::: [/bold blue]
-  [bold red]reait[/bold red] [bold bright_green]v{api.__version__}[/bold bright_green]
+  [bold red]reait[/bold red] [bold bright_green]v{__version__}[/bold bright_green]
 """)
     rout.print("[yellow]Config:[/yellow]")
     print_json(data=api.re_conf)
