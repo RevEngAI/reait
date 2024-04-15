@@ -193,7 +193,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
 
     params = {"file_name": filename, "sha_256_hash": bin_id}
 
-    if debug_fpath:
+    if debug_fpath is not None:
         debug_hash = re_binary_id(debug_fpath)
         params["debug_hash"] = debug_hash
 
