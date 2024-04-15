@@ -373,7 +373,7 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response | None:
 
 def RE_status(fpath: str, binary_id: int = 0) -> Response | None:
     """
-    Check for known CVEs in Binary
+    Get the status of an ongoing binary analysis
     :param fpath: File path for binary to analyse
     :param binary_id: ID of binary
     """
@@ -493,7 +493,7 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response | None:
 
 def RE_functions_rename(function_id: int, new_name: str) -> Response:
     """
-    Rename a function.
+    Send the new name of a function to C2
     :param function_id: ID of a function
     :param new_name: New function name
     """
@@ -527,7 +527,7 @@ def re_binary_id(fpath: str) -> str:
 
 def _binary_isa(lief_hdlr, exec_type: str) -> str:
     """
-    Get executable file format
+    Get ISA format
     """
     if exec_type == "elf":
         machine_type = lief_hdlr.header.machine_type
@@ -552,6 +552,7 @@ def _binary_isa(lief_hdlr, exec_type: str) -> str:
             return "x86_64"
 
     logger.error("Error, failed to determine or unsupported ISA for exec_type: %s.", exec_type)
+
     raise RuntimeError(f"Error, failed to determine or unsupported ISA for exec_type:{exec_type}.")
 
 
