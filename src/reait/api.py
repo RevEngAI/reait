@@ -127,10 +127,8 @@ def re_bid_search(bin_id: str) -> int:
             logger.warning("No matches found for hash: %s.", bin_id)
     elif res.status_code == 400:
         logger.warning("Bad Request: %s", res.text)
-        raise Exception(f"Bad Request: {res.text}")
     else:
         logger.error("Internal Server Error.")
-        raise Exception(f"Internal Server Error")
 
     res.raise_for_status()
     return bid
@@ -552,7 +550,6 @@ def _binary_isa(lief_hdlr, exec_type: str) -> str:
             return "x86_64"
 
     logger.error("Error, failed to determine or unsupported ISA for exec_type: %s.", exec_type)
-
     raise RuntimeError(f"Error, failed to determine or unsupported ISA for exec_type:{exec_type}.")
 
 
