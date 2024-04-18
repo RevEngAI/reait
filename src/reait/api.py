@@ -6,7 +6,7 @@ from hashlib import sha256
 
 from sklearn.metrics.pairwise import cosine_similarity
 from os.path import basename, exists, expanduser
-from requests import request, Response
+from requests import request, Response, HTTPError
 import requests
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
@@ -15,13 +15,13 @@ import tomli
 import logging
 from lief import parse, ELF, PE, MachO
 
-__version__ = "0.0.20"
 
 re_conf = {
     "apikey": "l1br3",
     "host": "https://api.reveng.ai",
     "model": "binnet-0.2-x86"
 }
+
 
 logger = logging.getLogger("REAIT")
 
@@ -127,16 +127,14 @@ def re_bid_search(bin_id: str) -> int:
             logger.warning("No matches found for hash: %s.", bin_id)
     elif res.status_code == 400:
         logger.warning("Bad Request: %s", res.text)
-        raise Exception(f"Bad Request: {res.text}")
     else:
         logger.error("Internal Server Error.")
-        raise Exception(f"Internal Server Error")
 
     res.raise_for_status()
     return bid
 
 
-def RE_delete(fpath: str, binary_id: int = 0) -> Response | None:
+def RE_delete(fpath: str, binary_id: int = 0) -> Response:
     """
     Delete analysis results for Binary ID in command
     :param fpath: File path for binary to analyse
@@ -146,7 +144,7 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response | None:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        return
+        raise HTTPError(f"No matches found for hash: {bin_id}")
 
     res = reveng_req(requests.delete, f"analyse/{bid}")
 
@@ -164,7 +162,7 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response | None:
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
                file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
                scope: str = None, tags: list = None, priority: int = 0,
-               duplicate: bool = False, symbols: dict = None) -> Response | None:
+               duplicate: bool = False, symbols: dict = None) -> Response:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
@@ -186,7 +184,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     if result and duplicate is False:
         logger.error("Error, duplicate analysis for %s. To upload again, use the --duplicate flag.",
                      bin_id)
-        return
+        raise HTTPError(f"Duplicate analysis for hash: {bin_id}")
 
     filename = basename(fpath)
 
@@ -243,7 +241,7 @@ def RE_upload(fpath: str) -> Response | bool:
     return res
 
 
-def RE_embeddings(fpath: str, binary_id: int = 0) -> Response | None:
+def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
     """
     Fetch symbol embeddings
     :param fpath: File path for binary to analyse
@@ -253,7 +251,7 @@ def RE_embeddings(fpath: str, binary_id: int = 0) -> Response | None:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        return
+        raise HTTPError(f"No matches found for hash: {bin_id}")
 
     res = reveng_req(requests.get, f"embeddings/{bid}")
 
@@ -265,7 +263,7 @@ def RE_embeddings(fpath: str, binary_id: int = 0) -> Response | None:
     return res
 
 
-def RE_signature(fpath: str, binary_id: int = 0) -> Response | None:
+def RE_signature(fpath: str, binary_id: int = 0) -> Response:
     """
     Fetch binary BinNet signature
     :param fpath: File path for binary to analyse
@@ -275,7 +273,7 @@ def RE_signature(fpath: str, binary_id: int = 0) -> Response | None:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        return
+        raise HTTPError(f"No matches found for hash: {bin_id}")
 
     res = reveng_req(requests.get, f"signature/{bid}")
 
@@ -318,7 +316,7 @@ def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr
     return res
 
 
-def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response | None:
+def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
     """
     Get the logs for an analysis associated to Binary ID in command
     :param fpath: File path for binary to analyse
@@ -329,7 +327,7 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response | 
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        return
+        raise HTTPError(f"No matches found for hash: {bin_id}")
 
     res = reveng_req(requests.get, f"logs/{bid}")
 
@@ -342,7 +340,7 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response | 
     return res
 
 
-def RE_cves(fpath: str, binary_id: int = 0) -> Response | None:
+def RE_cves(fpath: str, binary_id: int = 0) -> Response:
     """
     Check for known CVEs in Binary
     :param fpath: File path for binary to analyse
@@ -352,7 +350,7 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response | None:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        return
+        raise HTTPError(f"No matches found for hash: {bin_id}")
 
     res = reveng_req(requests.get, f"cves/{bid}")
 
@@ -365,15 +363,15 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response | None:
         else:
             logger.warning("Warning CVEs found!\n%s", res.text)
     elif res.status_code == 404:
-        logger.warning(" Error, binary analysis not found for %s.", bin_id)
+        logger.warning("Error, binary analysis not found for %s.", bin_id)
 
     res.raise_for_status()
     return res
 
 
-def RE_status(fpath: str, binary_id: int = 0) -> Response | None:
+def RE_status(fpath: str, binary_id: int = 0) -> Response:
     """
-    Check for known CVEs in Binary
+    Get the status of an ongoing binary analysis
     :param fpath: File path for binary to analyse
     :param binary_id: ID of binary
     """
@@ -381,7 +379,7 @@ def RE_status(fpath: str, binary_id: int = 0) -> Response | None:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        return
+        raise HTTPError(f"No matches found for hash: {bin_id}")
 
     res = reveng_req(requests.get, f"analyse/status/{bid}")
 
@@ -471,7 +469,7 @@ def RE_nearest_binaries(embedding: list, model_name: str, nns: int = 5,
     return res
 
 
-def RE_SBOM(fpath: str, binary_id: int = 0) -> Response | None:
+def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
     """
     Get Software Bill Of Materials for binary
     :param fpath: File path for binary to analyse
@@ -481,11 +479,28 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response | None:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        return
+        raise HTTPError(f"No matches found for hash: {bin_id}")
 
     res = reveng_req(requests.get, f"sboms/{bid}")
 
     logger.info("SBOM for %s:\n%s", fpath, res.text)
+
+    res.raise_for_status()
+    return res
+
+
+def RE_functions_rename(function_id: int, new_name: str) -> Response:
+    """
+    Send the new name of a function to C2
+    :param function_id: ID of a function
+    :param new_name: New function name
+    """
+    res = reveng_req(requests.post, f"functions/rename/{function_id}", json_data={"new_name": new_name})
+
+    if res.status_code == 200:
+        logger.info("FunctionId %d has been renamed with '%s'.", function_id, new_name)
+    else:
+        logger.warning("Error, cannot rename FunctionId %d. %s", function_id, res.text)
 
     res.raise_for_status()
     return res
@@ -510,7 +525,7 @@ def re_binary_id(fpath: str) -> str:
 
 def _binary_isa(lief_hdlr, exec_type: str) -> str:
     """
-    Get executable file format
+    Get ISA format
     """
     if exec_type == "elf":
         machine_type = lief_hdlr.header.machine_type
@@ -571,15 +586,13 @@ def parse_config() -> None:
     """
     Parse ~/.reait.toml config file
     """
-    if not exists(expanduser("~/.reait.toml")):
-        return
+    if exists(expanduser("~/.reait.toml")):
+        with open(expanduser("~/.reait.toml"), "r") as file:
+            config = tomli.loads(file.read())
 
-    with open(expanduser("~/.reait.toml"), "r") as file:
-        config = tomli.loads(file.read())
-
-        for key in ("apikey", "host", "model"):
-            if key in config:
-                re_conf[key] = config[key]
+            for key in ("apikey", "host", "model"):
+                if key in config:
+                    re_conf[key] = config[key]
 
 
 def angular_distance(x, y) -> float:

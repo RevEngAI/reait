@@ -12,7 +12,7 @@ import argparse
 import json
 from os.path import isfile
 from sys import exit, stdout, stderr
-from reait import api
+from reait import api, __version__
 from scipy.spatial import distance
 from glob import iglob
 import numpy as np
@@ -37,7 +37,7 @@ def version():
 ::  :::::::::::  :::
 ::  :::::  ::::  :::
 ::::::::    :::::::: [/bold blue]
-  [bold red]reait[/bold red] [bold bright_green]v{api.__version__}[/bold bright_green]
+  [bold red]reait[/bold red] [bold bright_green]v{__version__}[/bold bright_green]
 """)
     rout.print("[yellow]Config:[/yellow]")
     print_json(data=api.re_conf)
@@ -252,7 +252,7 @@ def main() -> None:
                         help="Enable dynamic execution in sandbox during analysis. Analysis will include any auto unpacked malware samples")
     parser.add_argument("--cmd-line-args", default="",
                         help="Command line arguments to pass when running binary sample in the sandbox. Only used when run with --dynamic-execution")
-    parser.add_argument("--scope", default="private",
+    parser.add_argument("--scope", default="private", choices=["public", "private"],
                         help="Override analysis visibility (scope). Valid values are 'public' or 'private'[DEFAULT]")
     parser.add_argument("--tags", default=None, type=str,
                         help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3..")

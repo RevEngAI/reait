@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import setuptools
 
+from reait import __version__
+
 with open("README.md", "r") as f:
     long_description = f.read()
 
 setuptools.setup(
         name="reait",
-        version="0.0.19",
+        version=__version__,
         long_description=long_description,
         long_description_content_type="text/markdown",
         url="https://github.com/RevEng-AI/reait",
