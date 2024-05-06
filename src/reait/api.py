@@ -285,8 +285,8 @@ def RE_signature(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
-def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None, base_vaddr: int = None,
-                 model: str = None) -> Response:
+def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None,
+                 base_vaddr: int = None, model: str = None) -> Response:
     """
     Fetch embedding for custom symbol range
     :param fpath: File path for binary to analyse
@@ -413,8 +413,8 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
     return json_sims
 
 
-def RE_nearest_symbols(embedding: list, model_name: str, nns: int = 5,
-                       collections: list = None, ignore_hashes: list = None,
+def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
+                       collections: list[str] = None, ignore_hashes: list[str] = None,
                        distance: float = 0.0, debug_enabled: bool = False) -> Response:
     """
     Get function name suggestions for an embedding
@@ -444,8 +444,40 @@ def RE_nearest_symbols(embedding: list, model_name: str, nns: int = 5,
     return res
 
 
-def RE_nearest_binaries(embedding: list, model_name: str, nns: int = 5,
-                        collections: list = None, ignore_hashes: list = None) -> Response:
+def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int = 5,
+                             collections: list[str] = None, ignore_hashes: list[str] = None,
+                             distance: float = 0.0, debug_enabled: bool = False) -> Response:
+    """
+    Get nearest functions to a passed function ids
+    :param function_ids: List of function ids
+    :param model_name: Binary model name
+    :param nns: Number of nearest neighbors
+    :param collections: List of collections RevEng.AI collection names to search through
+    :param ignore_hashes: List[str] SHA-256 hash of binary file to ignore symbols from (usually the current binary)
+    :param distance: How close we want the ANN search to filter for
+    :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
+    """
+    params = {"nns": nns, "model_name": model_name, "debug_enabled": debug_enabled}
+
+    if collections and len(collections) > 0:
+        # api param is collection, not collections
+        params["collection"] = "|".join(collections)
+
+    if ignore_hashes and len(ignore_hashes) > 0:
+        params["ignore_hashes"] = ignore_hashes
+
+    if distance > 0.0:
+        params["distance"] = distance
+
+    res = reveng_req(requests.post, "ann/symbol_batch",
+                     json_data={"function_ids": function_ids}, params=params)
+
+    res.raise_for_status()
+    return res
+
+
+def RE_nearest_binaries(embedding: list[float], model_name: str, nns: int = 5,
+                        collections: list[str] = None, ignore_hashes: list[str] = None) -> Response:
     """
     Get executable suggestions for a binary embedding
     :param embedding: Embedding vector as python list
