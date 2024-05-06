@@ -26,8 +26,8 @@ re_conf = {
 logger = logging.getLogger("REAIT")
 
 
-def reveng_req(r: request, end_point: str, data=None, ex_headers: dict = None, params=None,
-               json_data: dict = None, timeout: int = 30) -> Response:
+def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict = None,
+               params: dict = None, json_data: dict = None, timeout: int = 30) -> Response:
     """
     Constructs and sends a Request
     :param r: Method for the new Request
