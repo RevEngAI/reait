@@ -2,23 +2,25 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, annotations
 
+import json
+import tomli
+import logging
+import requests
+
 from hashlib import sha256
 
 from sklearn.metrics.pairwise import cosine_similarity
 from os.path import basename, exists, expanduser
 from requests import request, Response, HTTPError
-import requests
+from io import BytesIO
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
-import json
-import tomli
-import logging
 from lief import parse, ELF, PE, MachO
 
 
 re_conf = {
     "apikey": "l1br3",
-    "host": "https://api.reveng.ai",
+    "host": "http://api.local",
     "model": "binnet-0.2-x86"
 }
 
@@ -27,7 +29,7 @@ logger = logging.getLogger("REAIT")
 
 
 def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict = None,
-               params: dict = None, json_data: dict = None, timeout: int = 30) -> Response:
+               params: dict = None, json_data: dict = None, timeout: int = 30, files: dict = None) -> Response:
     """
     Constructs and sends a Request
     :param r: Method for the new Request
@@ -37,17 +39,18 @@ def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict =
     :param params: Dictionary, list of tuples or bytes to send in the query string for the query string
     :param json_data: A JSON serializable Python object to send in the body
     :param timeout: Number of seconds to stop waiting for a Response
+    :param files: Dictionary of files to send to the specified URL
     """
-    url = f"{re_conf['host']}/{end_point}"
+    url = f"{re_conf['host']}/{end_point if end_point[0] != '/' else end_point[1:]}"
     headers = {"Authorization": re_conf["apikey"]}
 
     if ex_headers:
         headers.update(ex_headers)
 
-    logger.debug("Making request %s:\n  - headers: %s\n  - data: %s\n  - json_data: %s\n  - params: %s",
-                 url, headers, data, json_data, params)
+    logger.debug("Making request %s:\n  - headers: %s\n  - data: %s\n  - json_data: %s\n  - params: %s\n  - files: %s",
+                 url, headers, data, json_data, params, files)
 
-    response: Response = r(url, headers=headers, json=json_data, data=data, params=params, timeout=timeout)
+    response: Response = r(url, headers=headers, json=json_data, data=data, params=params, timeout=timeout, files=files)
 
     logger.debug("Making response %s:\n  - headers: %s\n  - status_code: %d\n  - content: %s",
                  url, response.headers, response.status_code, response.text)
@@ -57,17 +60,14 @@ def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict =
 
 def re_hash_check(bin_id: str) -> bool:
     status = False
-    res = reveng_req(requests.get, f"search?search=sha_256_hash:{bin_id}&state=All&user_owned=true")
+    res = reveng_req(requests.get, "v1/search", json_data={"sha_256_hash": bin_id})
 
     if res.status_code == 200:
-        binaries_data = res.json()["binaries"]
+        binaries_data = list(filter(lambda binary: binary is not None, res.json()["query_results"]))
         status = len(binaries_data) > 0
-    elif res.status_code == 400:
-        logger.warning("Bad Request: %s", res.text)
     else:
-        logger.error("Internal Server Error.")
+        logger.warning("Bad Request: %s", res.text)
 
-    res.raise_for_status()
     return status
 
 
@@ -75,14 +75,14 @@ def re_hash_check(bin_id: str) -> bool:
 # Assumes a file has been passed, correct hash only
 # Returns the BID of the binary_id (hash)
 def re_bid_search(bin_id: str) -> int:
-    res = reveng_req(requests.get, f"search?search=sha_256_hash:{bin_id}&state=All")
+    res = reveng_req(requests.get, "v1/search", json_data={"sha_256_hash": bin_id})
 
     bid = -1
 
     # Valid request
     if res.status_code == 200:
         # Check only one record is returned
-        binaries_data = res.json()["binaries"]
+        binaries_data = list(filter(lambda binary: binary is not None, res.json()["query_results"]))
 
         if len(binaries_data) > 1:
             logger.info("%d matches found for hash: %s.", len(binaries_data), bin_id)
@@ -91,9 +91,9 @@ def re_bid_search(bin_id: str) -> int:
                 options_dict = {}
 
                 for idx, binary in enumerate(binaries_data):
-                    logger.info("[%d] - ID: {}, Name: %s, Creation: %s, Model: %s, Owner: %s, Status: %s",
+                    logger.info("[%d] - ID: %d, Name: %s, Creation: %s, Model: %s, Status: %s",
                                 idx, binary["binary_id"], binary["binary_name"], binary["creation"],
-                                binary["model_name"], binary["owner"], binary["status"])
+                                binary["model_name"], binary["status"])
 
                     options_dict[idx] = binary["binary_id"]
 
@@ -119,10 +119,8 @@ def re_bid_search(bin_id: str) -> int:
             binary = binaries_data[0]
             bid = binary["binary_id"]
 
-            logger.info("Only one record exists, selecting - ID: %d, Name: %s, "
-                        "Creation: %s, Model: %s, Owner: %s, Status: %s",
-                        bid, binary["binary_name"], binary["creation"],
-                        binary["model_name"], binary["owner"], binary["status"])
+            logger.info("Only one record exists, selecting - ID: %d, Name: %s, Creation: %s, Model: %s, Status: %s",
+                        bid, binary["binary_name"], binary["creation"], binary["model_name"], binary["status"])
         else:
             logger.warning("No matches found for hash: %s.", bin_id)
     elif res.status_code == 400:
@@ -144,7 +142,8 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        raise HTTPError(f"No matches found for hash: {bin_id}")
+        err_msg = f"No matches found for hash: {bin_id}"
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     res = reveng_req(requests.delete, f"analyse/{bid}")
 
@@ -159,24 +158,26 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
-def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, platform_options: str = None,
-               file_options: str = None, dynamic_execution: bool = False, command_line_args: str = None,
-               scope: str = None, tags: list = None, priority: int = 0,
-               duplicate: bool = False, symbols: dict = None) -> Response:
+def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options: str = None,
+               platform_options: str = None, file_options: str = None, dynamic_execution: bool = False,
+               command_line_args: str = None, binary_scope: str = None, tags: list = None, priority: int = 0,
+               duplicate: bool = False, symbols: dict = None, debug_hash: str = None) -> Response:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
+    :param binary_size: Binary size in bytes
     :param model_name: Binary model name
     :param isa_options: Executable ISA
     :param file_options: File options
     :param platform_options: OS platform
     :param dynamic_execution: Enable dynamic execution in sandbox during analysis
     :param command_line_args: Command line arguments to pass when running binary sample in the sandbox
-    :param scope: Analysis visibility
+    :param binary_scope: Analysis visibility
     :param tags: Assign tags to an analysis
     :param priority: Priority to processing queue
     :param duplicate: Duplicate an existing binary
-    :param symbols: List of functions
+    :param symbols: JSON object containing the base address and the list of functions
+    :param debug_hash: Debug hash
     """
     bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
@@ -184,20 +185,22 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     if result and duplicate is False:
         logger.error("Error, duplicate analysis for %s. To upload again, use the --duplicate flag.",
                      bin_id)
-        raise HTTPError(f"Duplicate analysis for hash: {bin_id}")
+        err_msg = f"Duplicate analysis for hash: {bin_id}"
+        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
 
     filename = basename(fpath)
 
-    params = {"file_name": filename, "sha_256_hash": bin_id}
+    params = {"file_name": filename, "size_in_bytes": binary_size, "sha_256_hash": bin_id}
 
     for p_name in ("model_name", "isa_options", "platform_options", "file_options",
-                   "dynamic_execution", "command_line_args", "scope", "tags", "priority", "symbols"):
+                   "dynamic_execution", "command_line_args", "binary_scope", "tags",
+                   "priority", "symbols", "debug_hash"):
         p_value = locals()[p_name]
 
         if p_value:
             params[p_name] = p_value
 
-    res = reveng_req(requests.post, f"analyse", json_data=params)
+    res = reveng_req(requests.post, f"v1/analyse", json_data=params)
 
     if res.status_code == 200:
         logger.info("Successfully submitted binary for analysis. %s - %s", fpath, re_binary_id(fpath))
@@ -211,7 +214,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None, plat
     return res
 
 
-def RE_upload(fpath: str) -> Response | bool:
+def RE_upload(fpath: str) -> Response:
     """
     Upload binary to Server
     :param fpath: File path for binary to analyse
@@ -220,22 +223,27 @@ def RE_upload(fpath: str) -> Response | bool:
     result = re_hash_check(bin_id)
 
     if result:
-        logger.info("File %s - %s already exists. Skipping upload...", basename(fpath), re_binary_id(fpath))
-        return True
+        logger.info("File %s - %s already uploaded. Skipping upload...", basename(fpath), bin_id)
 
-    res = reveng_req(requests.post, f"upload", data=open(fpath, "rb").read())
+        res = Response()
+        res.status_code = 200
+        res.raw = BytesIO('{0}"success": true,'
+                          '"message": "File already uploaded!",'
+                          '"sha_256_hash": "{1}"{2}'.format("{", bin_id, "}").encode())
+    else:
+        res = reveng_req(requests.post, f"v1/upload", files={"file": open(fpath, "rb")})
 
-    if res.status_code == 200:
-        logger.info("Successfully uploaded binary to your account. %s - %s", fpath, re_binary_id(fpath))
-    elif res.status_code == 400:
-        response = res.json()
+        if res.status_code == 200:
+            logger.info("Successfully uploaded binary to your account. %s - %s", fpath, re_binary_id(fpath))
+        elif res.status_code == 400:
+            response = res.json()
 
-        if "error" in response.keys():
-            logger.warning("Error uploading %s - %s", fpath, response["error"])
-    elif res.status_code == 413:
-        logger.warning("File too large. Please upload files under 100MB.")
-    elif res.status_code == 500:
-        logger.error("Internal Server Error. Please contact support. Skipping upload...")
+            if "error" in response.keys():
+                logger.warning("Error uploading %s - %s", fpath, response["error"])
+        elif res.status_code == 413:
+            logger.warning("File too large. Please upload files under 100MB.")
+        elif res.status_code == 500:
+            logger.error("Internal Server Error. Please contact support. Skipping upload...")
 
     res.raise_for_status()
     return res
@@ -251,7 +259,8 @@ def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        raise HTTPError(f"No matches found for hash: {bin_id}")
+        err_msg = f"No matches found for hash: {bin_id}"
+        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
 
     res = reveng_req(requests.get, f"embeddings/{bid}")
 
@@ -273,7 +282,8 @@ def RE_signature(fpath: str, binary_id: int = 0) -> Response:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        raise HTTPError(f"No matches found for hash: {bin_id}")
+        err_msg = f"No matches found for hash: {bin_id}"
+        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
 
     res = reveng_req(requests.get, f"signature/{bid}")
 
@@ -327,9 +337,10 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        raise HTTPError(f"No matches found for hash: {bin_id}")
+        err_msg = f"No matches found for hash: {bin_id}"
+        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
 
-    res = reveng_req(requests.get, f"logs/{bid}")
+    res = reveng_req(requests.get, f"v1/logs/{bid}")
 
     if res.status_code == 200 and console:
         logger.info("Logs found for %s:\n%s", bin_id, res.text)
@@ -350,7 +361,8 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        raise HTTPError(f"No matches found for hash: {bin_id}")
+        err_msg = f"No matches found for hash: {bin_id}"
+        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
 
     res = reveng_req(requests.get, f"cves/{bid}")
 
@@ -379,9 +391,10 @@ def RE_status(fpath: str, binary_id: int = 0) -> Response:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        raise HTTPError(f"No matches found for hash: {bin_id}")
+        err_msg = f"No matches found for hash: {bin_id}"
+        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
 
-    res = reveng_req(requests.get, f"analyse/status/{bid}")
+    res = reveng_req(requests.get, f"v1/analyse/status/{bid}")
 
     if res.status_code == 400:
         logger.warning(" Error, status not found for %s.", bin_id)
@@ -415,7 +428,7 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
 
 def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
                        collections: list[str] = None, ignore_hashes: list[str] = None,
-                       distance: float = 0.0, debug_enabled: bool = False) -> Response:
+                       distance: float = 0.1, debug_enabled: bool = False) -> Response:
     """
     Get function name suggestions for an embedding
     :param embedding: Embedding vector as python list
@@ -426,7 +439,7 @@ def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {"nns": nns, "model_name": model_name, "debug_enabled": debug_enabled}
+    params = {"result_per_function": nns, "model_name": model_name, "debug_mode": debug_enabled}
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
@@ -435,10 +448,10 @@ def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
     if ignore_hashes and len(ignore_hashes) > 0:
         params["ignore_hashes"] = ignore_hashes
 
-    if distance > 0.0:
+    if distance > 0.1:
         params["distance"] = distance
 
-    res = reveng_req(requests.post, "ann/symbol", data=json.dumps(embedding), params=params)
+    res = reveng_req(requests.post, "v1/ann/symbol", data=json.dumps(embedding), params=params)
 
     res.raise_for_status()
     return res
@@ -446,7 +459,7 @@ def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
 
 def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int = 5,
                              collections: list[str] = None, ignore_hashes: list[str] = None,
-                             distance: float = 0.0, debug_enabled: bool = False) -> Response:
+                             distance: float = 0.1, debug_enabled: bool = False) -> Response:
     """
     Get nearest functions to a passed function ids
     :param function_ids: List of function ids
@@ -457,7 +470,7 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {"nns": nns, "model_name": model_name, "debug_enabled": debug_enabled}
+    params = {"result_per_function": nns, "model_name": model_name, "debug_mode": debug_enabled}
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
@@ -466,10 +479,10 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     if ignore_hashes and len(ignore_hashes) > 0:
         params["ignore_hashes"] = ignore_hashes
 
-    if distance > 0.0:
+    if distance > 0.1:
         params["distance"] = distance
 
-    res = reveng_req(requests.post, "ann/symbol_batch",
+    res = reveng_req(requests.post, "v1/ann/symbol_batch",
                      json_data={"function_ids": function_ids}, params=params)
 
     res.raise_for_status()
@@ -511,7 +524,8 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
     if bid == -1:
-        raise HTTPError(f"No matches found for hash: {bin_id}")
+        err_msg = f"No matches found for hash: {bin_id}"
+        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
 
     res = reveng_req(requests.get, f"sboms/{bid}")
 
@@ -533,6 +547,16 @@ def RE_functions_rename(function_id: int, new_name: str) -> Response:
         logger.info("FunctionId %d has been renamed with '%s'.", function_id, new_name)
     else:
         logger.warning("Error, cannot rename FunctionId %d. %s", function_id, res.text)
+
+    res.raise_for_status()
+    return res
+
+
+def RE_settings() -> Response:
+    """
+    Get the configuration settings
+    """
+    res = reveng_req(requests.get, "v1/config")
 
     res.raise_for_status()
     return res
