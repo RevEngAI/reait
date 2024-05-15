@@ -7,7 +7,6 @@ from hashlib import sha256
 from sklearn.metrics.pairwise import cosine_similarity
 from os.path import basename, exists, expanduser
 from requests import request, Response, HTTPError
-from io import BytesIO
 import requests
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
@@ -226,7 +225,7 @@ def RE_upload(fpath: str) -> Response:
 
         res = Response()
         res.status_code = 200
-        res.raw = ByteIO('{0}"sha_256_hash": "{1}"{2}'.format("{", bin_id, "}").encode())
+        res._content = '{0}"sha_256_hash": "{1}"{2}'.format("{", bin_id, "}").encode()
     else:
         res = reveng_req(requests.post, f"upload", data=open(fpath, "rb").read())
 
