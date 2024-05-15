@@ -204,10 +204,8 @@ def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options
     if res.status_code == 200:
         logger.info("Successfully submitted binary for analysis. %s - %s", fpath, bin_id)
     elif res.status_code == 400:
-        response = res.json()
-
-        if "error" in response.keys():
-            logger.warning("Error analysing %s - %s", fpath, response["error"])
+        if "error" in res.json().keys():
+            logger.warning("Error analysing %s - %s", fpath, res.json()["error"])
 
     res.raise_for_status()
     return res
@@ -235,12 +233,10 @@ def RE_upload(fpath: str) -> Response:
         if res.status_code == 200:
             logger.info("Successfully uploaded binary to your account. %s - %s", fpath, bin_id)
         elif res.status_code == 400:
-            response = res.json()
-
-            if "error" in response.keys():
-                logger.warning("Error uploading %s - %s", fpath, response["error"])
+            if "error" in res.json().keys():
+                logger.warning("Error uploading %s - %s", fpath, res.json()["error"])
         elif res.status_code == 413:
-            logger.warning("File too large. Please upload files under 100MB.")
+            logger.warning("File too large. Please upload files under 10MB.")
         elif res.status_code == 500:
             logger.error("Internal Server Error. Please contact support. Skipping upload...")
 
