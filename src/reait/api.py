@@ -12,7 +12,6 @@ from hashlib import sha256
 from sklearn.metrics.pairwise import cosine_similarity
 from os.path import basename, exists, expanduser
 from requests import request, Response, HTTPError
-import requests
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
 from lief import parse, ELF, PE, MachO
@@ -148,9 +147,9 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
     res = reveng_req(requests.delete, f"analyse/{bid}")
 
     if res.status_code == 200:
-        logger.info("Securely deleted %s analysis.", bin_id)
+        logger.info("Securely deleted analysis ID %d - %s.", bid, bin_id)
     elif res.status_code == 404:
-        logger.warning("Error analysis not found for %s.", bin_id)
+        logger.warning("Error analysis not found for ID %d - %s.", bid, bin_id)
     else:
         logger.error("Error deleting binary %s under. Server returned %d.", bin_id, res.status_code)
 
@@ -227,13 +226,9 @@ def RE_upload(fpath: str) -> Response:
 
         res = Response()
         res.status_code = 200
-<<<<<<< HEAD
         res._content = ('{0}"success": true,'
                         '"message": "File already uploaded!",'
                         '"sha_256_hash": "{1}"{2}').format("{", bin_id, "}").encode()
-=======
-        res._content = '{0}"sha_256_hash": "{1}"{2}'.format("{", bin_id, "}").encode()
->>>>>>> 02cc9f9 (fix compilation issue)
     else:
         res = reveng_req(requests.post, f"v1/upload", files={"file": open(fpath, "rb")})
 
