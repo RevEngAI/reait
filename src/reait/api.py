@@ -13,6 +13,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from os.path import basename, exists, expanduser
 from requests import request, Response, HTTPError
 from io import BytesIO
+import requests
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
 from lief import parse, ELF, PE, MachO
@@ -20,7 +21,7 @@ from lief import parse, ELF, PE, MachO
 
 re_conf = {
     "apikey": "l1br3",
-    "host": "http://api.local",
+    "host": "http://api.reveng.ai",
     "model": "binnet-0.2-x86"
 }
 
@@ -47,13 +48,13 @@ def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict =
     if ex_headers:
         headers.update(ex_headers)
 
-    logger.debug("Making request %s:\n  - headers: %s\n  - data: %s\n  - json_data: %s\n  - params: %s\n  - files: %s",
-                 url, headers, data, json_data, params, files)
+    logger.debug("Making %s request %s:\n  - headers: %s\n  - data: %s\n  - json_data: %s\n  - params: %s\n  - files: %s",
+                 r.__name__.upper(), url, headers, data, json_data, params, files)
 
     response: Response = r(url, headers=headers, json=json_data, data=data, params=params, timeout=timeout, files=files)
 
-    logger.debug("Making response %s:\n  - headers: %s\n  - status_code: %d\n  - content: %s",
-                 url, response.headers, response.status_code, response.text)
+    logger.debug("Making %s response %s:\n  - headers: %s\n  - status_code: %d\n  - content: %s",
+                 r.__name__.upper(), url, response.headers, response.status_code, response.text)
 
     return response
 
@@ -97,9 +98,9 @@ def re_bid_search(bin_id: str) -> int:
 
                     options_dict[idx] = binary["binary_id"]
 
-                user_input = input("[+] Please enter the option you want to use for this operation:")
-
                 try:
+                    user_input = input("[+] Please enter the option you want to use for this operation:")
+
                     option_number = int(user_input)
 
                     bid = options_dict.get(option_number, -1)
@@ -107,8 +108,8 @@ def re_bid_search(bin_id: str) -> int:
                     if bid == -1:
                         logger.warning("Invalid option.")
                 except Exception:
-                    bid = -1
-                    logger.warning("Invalid option.")
+                    bid = options_dict[0]
+                    logger.warning("Select last analysis - ID %d.", bid)
             # Only 1 match found
             elif len(binaries_data) == 1:
                 binary = binaries_data[0]
@@ -186,7 +187,7 @@ def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options
         logger.error("Error, duplicate analysis for %s. To upload again, use the --duplicate flag.",
                      bin_id)
         err_msg = f"Duplicate analysis for hash: {bin_id}"
-        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     filename = basename(fpath)
 
@@ -203,7 +204,7 @@ def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options
     res = reveng_req(requests.post, f"v1/analyse", json_data=params)
 
     if res.status_code == 200:
-        logger.info("Successfully submitted binary for analysis. %s - %s", fpath, re_binary_id(fpath))
+        logger.info("Successfully submitted binary for analysis. %s - %s", fpath, bin_id)
     elif res.status_code == 400:
         response = res.json()
 
@@ -223,18 +224,18 @@ def RE_upload(fpath: str) -> Response:
     result = re_hash_check(bin_id)
 
     if result:
-        logger.info("File %s - %s already uploaded. Skipping upload...", basename(fpath), bin_id)
+        logger.info("File %s - %s already uploaded. Skipping upload...", fpath, bin_id)
 
         res = Response()
         res.status_code = 200
-        res.raw = BytesIO('{0}"success": true,'
-                          '"message": "File already uploaded!",'
-                          '"sha_256_hash": "{1}"{2}'.format("{", bin_id, "}").encode())
+        res._content = ('{0}"success": true,'
+                        '"message": "File already uploaded!",'
+                        '"sha_256_hash": "{1}"{2}').format("{", bin_id, "}").encode()
     else:
         res = reveng_req(requests.post, f"v1/upload", files={"file": open(fpath, "rb")})
 
         if res.status_code == 200:
-            logger.info("Successfully uploaded binary to your account. %s - %s", fpath, re_binary_id(fpath))
+            logger.info("Successfully uploaded binary to your account. %s - %s", fpath, bin_id)
         elif res.status_code == 400:
             response = res.json()
 
@@ -260,7 +261,7 @@ def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
 
     if bid == -1:
         err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     res = reveng_req(requests.get, f"embeddings/{bid}")
 
@@ -283,7 +284,7 @@ def RE_signature(fpath: str, binary_id: int = 0) -> Response:
 
     if bid == -1:
         err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     res = reveng_req(requests.get, f"signature/{bid}")
 
@@ -338,7 +339,7 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
 
     if bid == -1:
         err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     res = reveng_req(requests.get, f"v1/logs/{bid}")
 
@@ -362,7 +363,7 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response:
 
     if bid == -1:
         err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     res = reveng_req(requests.get, f"cves/{bid}")
 
@@ -392,7 +393,7 @@ def RE_status(fpath: str, binary_id: int = 0) -> Response:
 
     if bid == -1:
         err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     res = reveng_req(requests.get, f"v1/analyse/status/{bid}")
 
@@ -525,7 +526,7 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
 
     if bid == -1:
         err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response=json.loads({"error": err_msg}))
+        raise HTTPError(err_msg, response={"error": err_msg})
 
     res = reveng_req(requests.get, f"sboms/{bid}")
 
