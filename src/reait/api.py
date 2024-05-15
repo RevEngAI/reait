@@ -477,7 +477,7 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     if distance > 0.1:
         params["distance"] = distance
 
-    res = reveng_req(requests.post, "v1/ann/symbol_batch",
+    res = reveng_req(requests.post, "v1/ann/symbol/batch",
                      json_data={"function_ids": function_ids}, params=params)
 
     res.raise_for_status()
@@ -536,7 +536,7 @@ def RE_functions_rename(function_id: int, new_name: str) -> Response:
     :param function_id: ID of a function
     :param new_name: New function name
     """
-    res = reveng_req(requests.post, f"functions/rename/{function_id}", json_data={"new_name": new_name})
+    res = reveng_req(requests.post, f"v1/functions/rename/{function_id}", json_data={"new_name": new_name})
 
     if res.status_code == 200:
         logger.info("FunctionId %d has been renamed with '%s'.", function_id, new_name)
