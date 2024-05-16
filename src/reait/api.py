@@ -446,7 +446,7 @@ def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
     if distance > 0.1:
         params["distance"] = distance
 
-    res = reveng_req(requests.post, "v1/ann/symbol", data=json.dumps(embedding), params=params)
+    res = reveng_req(requests.post, f"v1/ann/symbol/{bid}", json_data=params)
 
     res.raise_for_status()
     return res
@@ -465,7 +465,7 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {"result_per_function": nns, "model_name": model_name, "debug_mode": debug_enabled}
+    params = {"function_id_list": function_ids, "nns": nns, "debug": debug_enabled}
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
@@ -477,8 +477,7 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     if distance > 0.1:
         params["distance"] = distance
 
-    res = reveng_req(requests.post, "v1/ann/symbol/batch",
-                     json_data={"function_ids": function_ids}, params=params)
+    res = reveng_req(requests.post, "v1/ann/symbol/batch", json_data=params)
 
     res.raise_for_status()
     return res
