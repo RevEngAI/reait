@@ -27,6 +27,18 @@ re_conf = {
 logger = logging.getLogger("REAIT")
 
 
+class ReaitError(HTTPError):
+    def __init__(self, reason: str, end_point: str = None):
+        response = Response()
+
+        response.reason = reason
+        response.status_code = 404
+        response._content = b'{"success": false, "error": "' + reason.encode() + b'"}'
+        response.url = f"{re_conf['host']}/{end_point if end_point[0] != '/' else end_point[1:]}" if end_point else None
+
+        super().__init__(reason, response=response)
+
+
 def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict = None,
                params: dict = None, json_data: dict = None, timeout: int = 30, files: dict = None) -> Response:
     """
@@ -140,11 +152,12 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    if bid == -1:
-        err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+    end_point = f"analyse/{bid}"
 
-    res = reveng_req(requests.delete, f"analyse/{bid}")
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res = reveng_req(requests.delete, end_point)
 
     if res.status_code == 200:
         logger.info("Securely deleted analysis ID %d - %s.", bid, bin_id)
@@ -181,11 +194,12 @@ def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options
     bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
 
+    end_point = "v1/analyse"
+
     if result and duplicate is False:
         logger.error("Error, duplicate analysis for %s. To upload again, use the --duplicate flag.",
                      bin_id)
-        err_msg = f"Duplicate analysis for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+        raise ReaitError(f"Duplicate analysis for hash: {bin_id}", end_point)
 
     filename = basename(fpath)
 
@@ -199,7 +213,7 @@ def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options
         if p_value:
             params[p_name] = p_value
 
-    res = reveng_req(requests.post, f"v1/analyse", json_data=params)
+    res = reveng_req(requests.post, end_point, json_data=params)
 
     if res.status_code == 200:
         logger.info("Successfully submitted binary for analysis. %s - %s", fpath, bin_id)
@@ -253,11 +267,12 @@ def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    if bid == -1:
-        err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+    end_point = f"embeddings/{bid}"
 
-    res = reveng_req(requests.get, f"embeddings/{bid}")
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res = reveng_req(requests.get, end_point)
 
     if res.status_code == 400:
         logger.warning("Analysis for %s still in progress. Please check the logs (-l) and try again later.",
@@ -276,11 +291,12 @@ def RE_signature(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    if bid == -1:
-        err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+    end_point = f"signature/{bid}"
 
-    res = reveng_req(requests.get, f"signature/{bid}")
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res = reveng_req(requests.get, end_point)
 
     if res.status_code == 425:
         logger.warning("Analysis for %s still in progress. Please check the logs (-l) and try again later.",
@@ -331,11 +347,12 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    if bid == -1:
-        err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+    end_point = f"v1/logs/{bid}"
 
-    res = reveng_req(requests.get, f"v1/logs/{bid}")
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res = reveng_req(requests.get, end_point)
 
     if res.status_code == 200 and console:
         logger.info("Logs found for %s:\n%s", bin_id, res.text)
@@ -355,11 +372,12 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    if bid == -1:
-        err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+    end_point = f"cves/{bid}"
 
-    res = reveng_req(requests.get, f"cves/{bid}")
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res = reveng_req(requests.get, end_point)
 
     if res.status_code == 200:
         cves = json.loads(res.text)
@@ -385,11 +403,12 @@ def RE_status(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    if bid == -1:
-        err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+    end_point = f"v1/analyse/status/{bid}"
 
-    res = reveng_req(requests.get, f"v1/analyse/status/{bid}")
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res = reveng_req(requests.get, end_point)
 
     if res.status_code == 400:
         logger.warning(" Error, status not found for %s.", bin_id)
@@ -517,11 +536,12 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    if bid == -1:
-        err_msg = f"No matches found for hash: {bin_id}"
-        raise HTTPError(err_msg, response={"error": err_msg})
+    end_point = f"sboms/{bid}"
 
-    res = reveng_req(requests.get, f"sboms/{bid}")
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res = reveng_req(requests.get, end_point)
 
     logger.info("SBOM for %s:\n%s", fpath, res.text)
 
