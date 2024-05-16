@@ -576,6 +576,18 @@ def RE_settings() -> Response:
     return res
 
 
+def RE_health() -> None:
+    """
+    Health check & verify access to the API
+    """
+    res: Response = reveng_req(requests.get, "/")
+
+    if res.json()["success"]:
+        logger.info(res.json()["message"])
+    else:
+        logger.warning(res.json()["error"])
+
+
 def re_binary_id(fpath: str) -> str:
     """
     Take the SHA-256 hash of binary file
