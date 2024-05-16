@@ -484,7 +484,7 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {"function_id_list": function_ids, "nns": nns, "debug": debug_enabled}
+    params = {"function_id_list": function_ids, "nns": nns, "debug": debug_enabled, "distance": distance}
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
@@ -492,9 +492,6 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
 
     if ignore_hashes and len(ignore_hashes) > 0:
         params["ignore_hashes"] = ignore_hashes
-
-    if distance > 0.1:
-        params["distance"] = distance
 
     res = reveng_req(requests.post, "v1/ann/symbol/batch", json_data=params)
 
@@ -576,16 +573,19 @@ def RE_settings() -> Response:
     return res
 
 
-def RE_health() -> None:
+def RE_health() -> bool:
     """
     Health check & verify access to the API
     """
-    res: Response = reveng_req(requests.get, "/")
+    res = reveng_req(requests.get, "/")
 
-    if res.json()["success"]:
+    success = res.json()["success"]
+
+    if success:
         logger.info(res.json()["message"])
     else:
         logger.warning(res.json()["error"])
+    return success
 
 
 def re_binary_id(fpath: str) -> str:
