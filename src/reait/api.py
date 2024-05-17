@@ -484,7 +484,10 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {"function_id_list": function_ids, "nns": nns, "debug": debug_enabled, "distance": distance}
+    params = {"function_id_list": function_ids,
+              "result_per_function": nns,
+              "debug_mode": debug_enabled,
+              "distance": distance}
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
