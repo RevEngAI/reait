@@ -190,7 +190,8 @@ def RE_analyse(fpath: str,
                tags: list = None,
                priority: int = 0,
                duplicate: bool = False,
-               symbols: dict = None) -> Response:
+               symbols: dict = None,
+               debug_fpath: str = None) -> Response:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
@@ -222,7 +223,7 @@ def RE_analyse(fpath: str,
     params = {"file_name": filename, "sha_256_hash": bin_id}
 
     if debug_fpath is not None:
-        debug_hash = re_binary_id(debug_fpath)
+        debug_hash = RE_upload_debug(debug_fpath)
         params["debug_hash"] = debug_hash
 
     for p_name in ("model_name", "isa_options", "platform_options",
@@ -316,7 +317,7 @@ def RE_upload_debug(fpath: str) -> Response | bool:
         )
 
     res.raise_for_status()
-    return res
+    return debug_hash
 
 
 def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
