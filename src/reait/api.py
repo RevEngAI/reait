@@ -10,7 +10,8 @@ import requests
 from hashlib import sha256
 
 from sklearn.metrics.pairwise import cosine_similarity
-from os.path import basename, exists, expanduser
+from os import access, R_OK
+from os.path import basename, isfile, expanduser
 from requests import request, Response, HTTPError
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
@@ -20,7 +21,7 @@ from lief import parse, ELF, PE, MachO
 re_conf = {
     "apikey": "l1br3",
     "host": "http://api.reveng.ai",
-    "model": "binnet-0.2-x86"
+    "model": "binnet-0.2-x86",
 }
 
 
@@ -152,7 +153,7 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    end_point = f"analyse/{bid}"
+    end_point = f"v1/analyse/{bid}"
 
     if bid == -1:
         raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
@@ -238,11 +239,12 @@ def RE_upload(fpath: str) -> Response:
 
         res = Response()
         res.status_code = 200
+        res.url = f"{re_conf['host']}/v1/upload"
         res._content = ('{0}"success": true,'
                         '"message": "File already uploaded!",'
                         '"sha_256_hash": "{1}"{2}').format("{", bin_id, "}").encode()
     else:
-        res = reveng_req(requests.post, f"v1/upload", files={"file": open(fpath, "rb")})
+        res = reveng_req(requests.post, "v1/upload", files={"file": open(fpath, "rb")})
 
         if res.status_code == 200:
             logger.info("Successfully uploaded binary to your account. %s - %s", fpath, bin_id)
@@ -440,20 +442,21 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
     return json_sims
 
 
-def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
+def RE_nearest_symbols(embedding: list[float], nns: int = 5,
                        collections: list[str] = None, ignore_hashes: list[str] = None,
                        distance: float = 0.1, debug_enabled: bool = False) -> Response:
     """
     Get function name suggestions for an embedding
     :param embedding: Embedding vector as python list
-    :param model_name: Binary model name
     :param nns: Number of nearest neighbors
     :param collections: List of collections RevEng.AI collection names to search through
     :param ignore_hashes: List[str] SHA-256 hash of binary file to ignore symbols from (usually the current binary)
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {"result_per_function": nns, "model_name": model_name, "debug_mode": debug_enabled}
+    params = {"result_per_function": nns,
+              "debug_mode": debug_enabled,
+              "distance": distance,}
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
@@ -462,22 +465,18 @@ def RE_nearest_symbols(embedding: list[float], model_name: str, nns: int = 5,
     if ignore_hashes and len(ignore_hashes) > 0:
         params["ignore_hashes"] = ignore_hashes
 
-    if distance > 0.1:
-        params["distance"] = distance
-
     res = reveng_req(requests.post, f"v1/ann/symbol/{bid}", json_data=params)
 
     res.raise_for_status()
     return res
 
 
-def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int = 5,
+def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5,
                              collections: list[str] = None, ignore_hashes: list[str] = None,
                              distance: float = 0.1, debug_enabled: bool = False) -> Response:
     """
     Get nearest functions to a passed function ids
     :param function_ids: List of function ids
-    :param model_name: Binary model name
     :param nns: Number of nearest neighbors
     :param collections: List of collections RevEng.AI collection names to search through
     :param ignore_hashes: List[str] SHA-256 hash of binary file to ignore symbols from (usually the current binary)
@@ -487,7 +486,7 @@ def RE_nearest_symbols_batch(function_ids: list[int], model_name: str, nns: int 
     params = {"function_id_list": function_ids,
               "result_per_function": nns,
               "debug_mode": debug_enabled,
-              "distance": distance}
+              "distance": distance,}
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
@@ -596,16 +595,18 @@ def re_binary_id(fpath: str) -> str:
     Take the SHA-256 hash of binary file
     :param fpath: File path for binary to analyse
     """
-    if not fpath or not exists(fpath):
-        return "undefined"
+    if isfile(fpath) and access(fpath, R_OK):
+        hf = sha256()
 
-    hf = sha256()
+        with open(fpath, "rb") as fd:
+            c = fd.read()
+            hf.update(c)
 
-    with open(fpath, "rb") as f:
-        c = f.read()
-        hf.update(c)
+        return hf.hexdigest()
+    else:
+        logger.error("File %s doesn't exist or isn't readable", fpath)
 
-    return hf.hexdigest()
+    return "undefined"
 
 
 def _binary_isa(lief_hdlr, exec_type: str) -> str:
@@ -671,13 +672,17 @@ def parse_config() -> None:
     """
     Parse ~/.reait.toml config file
     """
-    if exists(expanduser("~/.reait.toml")):
-        with open(expanduser("~/.reait.toml"), "r") as file:
-            config = tomli.loads(file.read())
+    fpath = expanduser("~/.reait.toml")
 
-            for key in ("apikey", "host", "model"):
+    if isfile(fpath) and access(fpath, R_OK):
+        with open(fpath, "r") as fd:
+            config = tomli.loads(fd.read())
+
+            for key in ("apikey", "host", "model",):
                 if key in config:
                     re_conf[key] = config[key]
+    else:
+        logger.info("File %s doesn't exist or isn't readable", fpath)
 
 
 def angular_distance(x, y) -> float:
