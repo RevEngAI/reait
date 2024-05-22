@@ -10,7 +10,7 @@ from rich.table import Table
 import os
 import argparse
 import json
-from os.path import isfile
+from os.path import isfile, getsize
 from sys import exit, stdout, stderr
 from reait import api, __version__
 from scipy.spatial import distance
@@ -58,11 +58,10 @@ def verify_binary(fpath_fmt: str):
 
     if not fmt:
         exec_format, exec_isa = api.file_type(fpath)
+    elif '-' not in fmt:
+        raise RuntimeError(
+            'Binary type must follow format {EXEC_FORMAT}-{ISA}. Use EXEC_FORMAT raw for memory dumps e.g. raw-x86')
     else:
-        if '-' not in fmt:
-            raise RuntimeError(
-                'Binary type must follow format {EXEC_FORMAT}-{ISA}. Use EXEC_FORMAT raw for memory dumps e.g. raw-x86')
-
         exec_format, exec_isa = fmt.split('-')
 
     return fpath, exec_format, exec_isa
@@ -117,8 +116,7 @@ def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collec
 
     with ThreadPoolExecutor(max_workers=cpu_count()) as p:
         # print(f"Collections: {collections}")
-        partial = lambda x: api.RE_nearest_symbols(x['embedding'], model_name, 1, collections=collections,
-                                                   ignore_hashes=[b_hash]).json()
+        partial = lambda x: api.RE_embeddings(fpath).json()
         res = {p.submit(partial, embed): embed for embed in b_embeds}
 
         for future in track(as_completed(res), description='Matching Symbols...'):
@@ -127,8 +125,8 @@ def match_for_each(fpath: str, model_name: str, confidence: float = 0.95, collec
 
             embedding = symbol['embedding']
             # do ANN call to match symbols, ignore functions from current file
-            f_suggestions = api.RE_nearest_symbols(embedding, model_name, 1, collections=collections,
-                                                   ignore_hashes=[api.re_binary_id(fpath)]).json()
+            f_suggestions = api.RE_nearest_functions(fpath, nns=1, collections=collections,
+                                                     ignore_hashes=[api.re_binary_id(fpath)]).json()
 
             if len(f_suggestions) == 0:
                 # no match
@@ -155,7 +153,8 @@ def parse_collections(collections: str):
 
 def rescale_sim(x):
     """
-        Too many values close to 0.999, 0.99999, 0.998, rescale so small values are very low, high values separated, map to hyperbolic space
+    Too many values close to 0.999, 0.99999, 0.998, rescale so small values are very low,
+    high values separated, map to hyperbolic space
     """
     return np.power(x, 5)
 
@@ -323,8 +322,8 @@ def main() -> None:
                     rout.print(f'[green bold]Analysing[/green bold] {file}')
                     api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform,
                                    dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args,
-                                   file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags,
-                                   priority=args.priority, duplicate=args.duplicate)
+                                   file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags,
+                                   priority=args.priority, duplicate=args.duplicate, binary_size=getsize(fpath))
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
 
@@ -365,8 +364,8 @@ def main() -> None:
     if args.analyse:
         api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform,
                        dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args,
-                       file_options=args.exec_format, scope=args.scope.upper(), tags=args.tags, priority=args.priority,
-                       duplicate=args.duplicate)
+                       file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags,
+                       priority=args.priority, duplicate=args.duplicate, binary_size=getsize(args.binary))
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary).json()
@@ -426,10 +425,11 @@ def main() -> None:
                     print(f"[!] Error, could not find symbol at {args.symbol} in {args.binary}")
                     exit(-1)
                 embedding = matches[0]['embedding']
-        elif args.binary and args.signature:
+        elif args.binary:
             print(f"[+] Searching ANN for binary embeddings {args.binary}")
-            b_suggestions = api.RE_nearest_binaries(api.RE_signature(args.binary).json(), args.model, args.nns,
-                                                    collections, ignore_hashes=[api.re_binary_id(args.binary)])
+            b_suggestions = api.RE_nearest_functions(args.binary, nns=args.nns,
+                                                     collections=collections,
+                                                     ignore_hashes=[api.re_binary_id(args.binary)]).json()
             print_json(data=b_suggestions)
             exit(0)
         else:
@@ -453,12 +453,6 @@ def main() -> None:
             print(f"[+] Searching for symbols similar to embedding in binary {args.from_file}")
             res = api.RE_compute_distance(embedding, json.load(open(args.from_file, "r")), int(args.nns))
             print_json(data=res)
-        else:
-            print(f"[+] Searching for similar symbols to embedding in "
-                  f"{'all' if not args.collections else args.collections} collections.")
-            f_suggestions = api.RE_nearest_symbols(embedding["embedding"], args.model, int(args.nns),
-                                                   collections=collections).json()
-            print_json(data=f_suggestions)
 
     elif args.match:
         # parse confidences

@@ -41,7 +41,7 @@ class ReaitError(HTTPError):
 
 
 def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict = None,
-               params: dict = None, json_data: dict = None, timeout: int = 30, files: dict = None) -> Response:
+               params: dict = None, json_data: dict = None, timeout: int = 60, files: dict = None) -> Response:
     """
     Constructs and sends a Request
     :param r: Method for the new Request
@@ -269,7 +269,7 @@ def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
 
-    end_point = f"embeddings/{bid}"
+    end_point = f"v1/embeddings/binary/{bid}"
 
     if bid == -1:
         raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
@@ -299,37 +299,6 @@ def RE_signature(fpath: str, binary_id: int = 0) -> Response:
         raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
 
     res = reveng_req(requests.get, end_point)
-
-    if res.status_code == 425:
-        logger.warning("Analysis for %s still in progress. Please check the logs (-l) and try again later.",
-                       bin_id)
-
-    res.raise_for_status()
-    return res
-
-
-def RE_embedding(fpath: str, start_vaddr: int, end_vaddr: int = None,
-                 base_vaddr: int = None, model: str = None) -> Response:
-    """
-    Fetch embedding for custom symbol range
-    :param fpath: File path for binary to analyse
-    :param start_vaddr: Start virtual address of the function to extract embeddings
-    :param end_vaddr: End virtual address of the function to extract embeddings
-    :param base_vaddr: Base address of the binary
-    :param model: Binary model name
-    """
-    params = {}
-
-    if end_vaddr:
-        params["end_vaddr"] = end_vaddr
-    if base_vaddr:
-        params["base_vaddr"] = base_vaddr
-    if model:
-        params["models"] = model
-
-    bin_id = re_binary_id(fpath)
-
-    res = reveng_req(requests.get, f"embedding/{bin_id}/{start_vaddr}", params=params)
 
     if res.status_code == 425:
         logger.warning("Analysis for %s still in progress. Please check the logs (-l) and try again later.",
@@ -442,35 +411,6 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
     return json_sims
 
 
-def RE_nearest_symbols(embedding: list[float], nns: int = 5,
-                       collections: list[str] = None, ignore_hashes: list[str] = None,
-                       distance: float = 0.1, debug_enabled: bool = False) -> Response:
-    """
-    Get function name suggestions for an embedding
-    :param embedding: Embedding vector as python list
-    :param nns: Number of nearest neighbors
-    :param collections: List of collections RevEng.AI collection names to search through
-    :param ignore_hashes: List[str] SHA-256 hash of binary file to ignore symbols from (usually the current binary)
-    :param distance: How close we want the ANN search to filter for
-    :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
-    """
-    params = {"result_per_function": nns,
-              "debug_mode": debug_enabled,
-              "distance": distance,}
-
-    if collections and len(collections) > 0:
-        # api param is collection, not collections
-        params["collection"] = "|".join(collections)
-
-    if ignore_hashes and len(ignore_hashes) > 0:
-        params["ignore_hashes"] = ignore_hashes
-
-    res = reveng_req(requests.post, f"v1/ann/symbol/{bid}", json_data=params)
-
-    res.raise_for_status()
-    return res
-
-
 def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5,
                              collections: list[str] = None, ignore_hashes: list[str] = None,
                              distance: float = 0.1, debug_enabled: bool = False) -> Response:
@@ -501,17 +441,30 @@ def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5,
     return res
 
 
-def RE_nearest_binaries(embedding: list[float], model_name: str, nns: int = 5,
-                        collections: list[str] = None, ignore_hashes: list[str] = None) -> Response:
+def RE_nearest_functions(fpath: str, binary_id: int = 0, nns: int = 5,
+                         collections: list[str] = None, ignore_hashes: list[str] = None,
+                         distance: float = 0.1, debug_enabled: bool = False) -> Response:
     """
-    Get executable suggestions for a binary embedding
-    :param embedding: Embedding vector as python list
-    :param model_name: Binary model name
+    Get the nearest functions
+    :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
     :param nns: Number of nearest neighbors
     :param collections: List of collections RevEng.AI collection names to search through
     :param ignore_hashes: List[str] SHA-256 hash of binary files to ignore symbols from (usually the current binary)
+    :param distance: How close we want the ANN search to filter for
+    :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
-    params = {"nns": nns, "model_name": model_name}
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
+
+    end_point = f"v1/ann/symbol/{bid}"
+
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    params = {"result_per_function": nns,
+              "debug_mode": debug_enabled,
+              "distance": distance, }
 
     if collections and len(collections) > 0:
         # api param is collection, not collections
@@ -520,7 +473,7 @@ def RE_nearest_binaries(embedding: list[float], model_name: str, nns: int = 5,
     if ignore_hashes and len(ignore_hashes) > 0:
         params["ignore_hashes"] = ignore_hashes
 
-    res = reveng_req(requests.post, "ann/binary", data=json.dumps(embedding), params=params)
+    res = reveng_req(requests.post, end_point, json_data=params)
 
     res.raise_for_status()
     return res
