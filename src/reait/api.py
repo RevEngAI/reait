@@ -548,7 +548,7 @@ def re_binary_id(fpath: str) -> str:
     Take the SHA-256 hash of binary file
     :param fpath: File path for binary to analyse
     """
-    if isfile(fpath) and access(fpath, R_OK):
+    if fpath and isfile(fpath) and access(fpath, R_OK):
         hf = sha256()
 
         with open(fpath, "rb") as fd:
