@@ -8,6 +8,7 @@ import logging
 import requests
 
 from hashlib import sha256
+from datetime import datetime
 
 from sklearn.metrics.pairwise import cosine_similarity
 from os import access, R_OK
@@ -71,12 +72,10 @@ def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict =
 
 
 def re_hash_check(bin_id: str) -> bool:
-    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha_256_hash": bin_id})
+    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha256_hash": bin_id})
 
     if res.ok:
-        binaries = list(filter(lambda binary: binary is not None, res.json()["query_results"]))
-
-        return any(binary["sha_256_hash"] == bin_id for binary in binaries)
+        return any(binary["sha_256_hash"] == bin_id for binary in res.json()["query_results"])
     else:
         logger.warning("Bad Request: %s", res.text)
 
@@ -87,58 +86,50 @@ def re_hash_check(bin_id: str) -> bool:
 # Assumes a file has been passed, correct hash only
 # Returns the BID of the binary_id (hash)
 def re_bid_search(bin_id: str) -> int:
-    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha_256_hash": bin_id})
+    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha256_hash": bin_id})
 
     bid = -1
 
-    # Valid request
     if res.ok:
+        binaries = res.json()["query_results"]
+
         # Check only one record is returned
-        binaries = list(filter(lambda binary: binary is not None, res.json()["query_results"]))
-
-        if len(binaries) > 1:
-            logger.info("%d matches found for hash: %s.", len(binaries), bin_id)
-
-            if len(binaries) > 1:
-                options_dict = {}
-
-                for idx, binary in enumerate(binaries):
-                    logger.info("[%d] - ID: %d, Name: %s, Creation: %s, Model: %s, Status: %s",
-                                idx, binary["binary_id"], binary["binary_name"], binary["creation"],
-                                binary["model_name"], binary["status"])
-
-                    options_dict[idx] = binary["binary_id"]
-
-                try:
-                    user_input = input("[+] Please enter the option you want to use for this operation:")
-
-                    option_number = int(user_input)
-
-                    bid = options_dict.get(option_number, -1)
-
-                    if bid == -1:
-                        logger.warning("Invalid option.")
-                except Exception:
-                    bid = options_dict[0]
-                    logger.warning("Select last analysis - ID %d.", bid)
-            # Only 1 match found
-            elif len(binaries) == 1:
-                binary = binaries[0]
-                bid = binary["binary_id"]
-            else:
-                logger.warning("No matches found for hash: %s.", bin_id)
-        elif len(binaries) == 1:
+        if len(binaries) == 1:
             binary = binaries[0]
             bid = binary["binary_id"]
 
             logger.info("Only one record exists, selecting - ID: %d, Name: %s, Creation: %s, Model: %s, Status: %s",
                         bid, binary["binary_name"], binary["creation"], binary["model_name"], binary["status"])
+        elif len(binaries) > 1:
+            binaries.sort(key=lambda binary: datetime.fromisoformat(binary["creation"]).timestamp(), reverse=True)
+
+            logger.info("%d matches found for hash: %s", len(binaries), bin_id)
+
+            options_dict = {}
+
+            for idx, binary in enumerate(binaries):
+                logger.info("[%d] - ID: %d, Name: %s, Creation: %s, Model: %s, Status: %s",
+                            idx, binary["binary_id"], binary["binary_name"], binary["creation"],
+                            binary["model_name"], binary["status"])
+
+                options_dict[idx] = binary["binary_id"]
+
+            try:
+                user_input = input("[+] Please enter the option you want to use for this operation:")
+
+                option_number = int(user_input)
+
+                bid = options_dict.get(option_number, -1)
+
+                if bid == -1:
+                    logger.warning("Invalid option.")
+            except Exception:
+                bid = options_dict[0]
+                logger.warning("Select the most recent analysis - ID: %d", bid)
         else:
-            logger.warning("No matches found for hash: %s.", bin_id)
-    elif res.status_code == 400:
-        logger.warning("Bad Request: %s", res.text)
+            logger.warning("No matches found for hash: %s", bin_id)
     else:
-        logger.error("Internal Server Error.")
+        logger.warning("Bad Request: %s", res.text)
 
     res.raise_for_status()
     return bid
