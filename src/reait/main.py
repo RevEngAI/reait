@@ -214,6 +214,7 @@ def main() -> None:
                         help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3..")
     parser.add_argument("--priority", default=0, type=int, help="Add priority to processing queue.")
     parser.add_argument("--verbose", default=False, action='store_true', help="Set verbose output.")
+    parser.add_argument("--debug", default=None, help="Debug file path to write pass with analysis")
     args = parser.parse_args()
 
     # set re_conf args
@@ -280,7 +281,7 @@ def main() -> None:
                     api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform,
                                    dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args,
                                    file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags,
-                                   priority=args.priority, duplicate=args.duplicate)
+                                   priority=args.priority, duplicate=args.duplicate, debug_fpath=args.debug)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, binary exec type could not be verified[/red bold] {file}")
                     rerr.print(f"[yellow] {e} [/yellow]")

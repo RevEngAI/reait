@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function, annotations
 
@@ -166,7 +165,7 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
 def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
                platform_options: str = None, file_options: str = None, dynamic_execution: bool = False,
                command_line_args: str = None, binary_scope: str = None, tags: list = None, priority: int = 0,
-               duplicate: bool = False, symbols: dict = None, debug_hash: str = None) -> Response:
+               duplicate: bool = False, symbols: dict = None, debug_fpath: str = None) -> Response:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
@@ -181,7 +180,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
     :param priority: Priority to processing queue
     :param duplicate: Duplicate an existing binary
     :param symbols: JSON object containing the base address and the list of functions
-    :param debug_hash: Debug hash
+    :param debug_hash: File path for debug file
     """
     bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
@@ -197,9 +196,17 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
 
     params = {"file_name": filename, "size_in_bytes": getsize(fpath), "sha_256_hash": bin_id}
 
+    if debug_fpath and isfile(debug_fpath) and access(debug_fpath, R_OK):
+        try:
+            debug = RE_upload(debug_fpath).json()
+            
+            if debug["success"]:
+                params["debug_hash"] = debug["sha_256_hash"]
+        except HTTPError:
+            pass
+    
     for p_name in ("model_name", "isa_options", "platform_options", "file_options",
-                   "dynamic_execution", "command_line_args", "binary_scope", "tags",
-                   "priority", "symbols", "debug_hash"):
+                   "dynamic_execution", "command_line_args", "binary_scope", "tags", "priority", "symbols"):
         p_value = locals()[p_name]
 
         if p_value:
@@ -248,7 +255,7 @@ def RE_upload(fpath: str) -> Response:
             logger.error("Internal Server Error. Please contact support. Skipping upload...")
 
     res.raise_for_status()
-    return res
+    return debug_hash
 
 
 def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
@@ -375,8 +382,11 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
 
     # create json similarity object
     similarities = list(zip(distances, closest_df.index.tolist()))
-    json_sims = [{"similaritiy": float(d[0]), "vaddr": int(df.iloc[v]["vaddr"]), "name": str(df.iloc[v]["name"]),
-                  "size": int(df.iloc[v]["size"])} for d, v in similarities]
+    json_sims = [{"similaritiy": float(d[0]),
+                  "vaddr": int(df.iloc[v]["vaddr"]),
+                  "name": str(df.iloc[v]["name"]),
+                  "size": int(df.iloc[v]["size"])
+                 } for d, v in similarities]
     return json_sims
 
 
@@ -614,5 +624,5 @@ def angular_distance(x, y) -> float:
     Compute angular distance between two embedding vectors
     Normalised euclidian distance
     """
-    cos = dot(x, y) / ((dot(x, x) * dot(y, y)) ** 0.5)
+    cos = dot(x, y) / ((dot(x, x) * dot(y, y))**0.5)
     return 1.0 - arccos(cos) / pi
