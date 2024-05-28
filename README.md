@@ -9,7 +9,6 @@ Analyse compiled executable binaries using the RevEng.AI API. This tool allows y
 NB: We are in Alpha. We support GNU/Linux ELF and Windows PE executables for x86_64, and focus our support for x86_64 Linux ELF executables. 
 
 ## Installation
-
 Install the latest stable version using `pip3`.
 
 ```shell
@@ -17,7 +16,6 @@ pip3 install reait
 ```
 
 ### Latest development version
-
 ```shell
 pip3 install -e .
 ```
@@ -52,7 +50,6 @@ reait -b /usr/bin/true -x > embeddings.json
 ```shell
 reait -b /usr/bin/true -x | jq ".[] | select(.vaddr==$((0x19F0))).embedding" > embedding.json
 ```
-
 
 ### Search for similar symbols using an embedding
 To query our database of similar symbols based on an embedding, use `-n` to search using Approximate Nearest Neighbours. The `--nns` allows you to specify the number of results returned. A list of symbols with their names, distance (similarity), RevEng.AI collection set, source code filename, source code line number, and file creation timestamp is returned. 
@@ -116,32 +113,8 @@ reait -b /usr/bin/true -m dexter -a
 ### Software Composition Analysis
 To identify known open source software components embedded inside a binary, use the `-C` flag.
 
-#### Stripped Binary CVE Checker
-To check for known vulnerabilities found with embedded software components, use `-c` or `--cves`.
-
-
-### REAI Signatures
-To generate an AI functional description of an entire binary file, use the `-s` flag. This will return the REAI signature of the file.
-
-REAI signatures can be used to compute the binary similarity between entire executables with the `-S` flag. For example:
-
-```shell
-reait -b d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe -S -t 00062cb01088cea245cd5f3eb03f65a0e6b11a8126ce00034d87935a451cf99c.exe,438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe,755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe,05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe
-Computing Binary Similarity... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:01
-                      Binary Similarity to RedlineInfoStealer/d24ccf73aabca4192d33a07b4a238c8d40ac97a550c2e65b8074f03455a981ca.exe                      
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
-┃                                                               Binary ┃ SHA3-256                                                         ┃ Similarity ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
-│ 00062cb01088cea245cd5f3eb03f65a0e6b11a8126ce00034d87935a451cf99c.exe │ 00062cb01088cea245cd5f3eb03f65a0e6b11a8126ce00034d87935a451cf99c │ 0.99907    │
-│ 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476.exe │ 438d64bb831555caadaa92a32c9d62e255001bc8d524721c885f37d750ec3476 │ 1.00000    │
-│ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63.exe │ 755a4b2ec15da6bb01248b2dfbad206c340ba937eae9c35f04f6cedfe5e99d63 │ 0.80522    │
-│ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2.exe │ 05ff897f430fec0ac17f14c89181c76961993506e5875f2987e9ead13bec58c2 │ 0.94701    │
-└──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────┴────────────┘
-```
-
 
 ### Binary ANN Search
-
 To perform binary ANN search, pass in `-n` and `-s` flag at the same time. For example:
 
 ```shell
@@ -173,7 +146,6 @@ Found /usr/bin/true:elf-x86_64
 
 
 ## Configuration
-
 `reait` reads the config file stored at `~/.reait.toml`. An example config file looks like:
 
 ```shell
