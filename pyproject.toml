@@ -39,7 +39,5 @@ maintainers = [
 "Organisation Homepage" = "https://reveng.ai"
 "Documentation" = "https://docs.reveng.ai"
 
-
-
 [project.scripts]
 reait = "reait.main:main"
