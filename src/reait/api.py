@@ -180,7 +180,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
     :param priority: Priority to processing queue
     :param duplicate: Duplicate an existing binary
     :param symbols: JSON object containing the base address and the list of functions
-    :param debug_hash: File path for debug file
+    :param debug_fpath: File path for debug file
     """
     bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
