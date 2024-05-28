@@ -194,19 +194,19 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
 
     filename = basename(fpath)
 
-    params = {"file_name": filename, "size_in_bytes": getsize(fpath), "sha_256_hash": bin_id}
+    params = {"file_name": filename, "size_in_bytes": getsize(fpath), "sha_256_hash": bin_id,}
 
     if debug_fpath and isfile(debug_fpath) and access(debug_fpath, R_OK):
         try:
             debug = RE_upload(debug_fpath).json()
-            
+
             if debug["success"]:
                 params["debug_hash"] = debug["sha_256_hash"]
         except HTTPError:
             pass
     
     for p_name in ("model_name", "isa_options", "platform_options", "file_options",
-                   "dynamic_execution", "command_line_args", "binary_scope", "tags", "priority", "symbols"):
+                   "dynamic_execution", "command_line_args", "binary_scope", "tags", "priority", "symbols",):
         p_value = locals()[p_name]
 
         if p_value:
