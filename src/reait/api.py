@@ -255,7 +255,7 @@ def RE_upload(fpath: str) -> Response:
             logger.error("Internal Server Error. Please contact support. Skipping upload...")
 
     res.raise_for_status()
-    return debug_hash
+    return res
 
 
 def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
