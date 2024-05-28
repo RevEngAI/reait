@@ -10,6 +10,7 @@ import requests
 from hashlib import sha256
 from datetime import datetime
 
+from warnings import deprecated
 from sklearn.metrics.pairwise import cosine_similarity
 from os import access, R_OK
 from os.path import basename, isfile, expanduser, getsize
@@ -274,30 +275,6 @@ def RE_embeddings(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
-def RE_signature(fpath: str, binary_id: int = 0) -> Response:
-    """
-    Fetch binary BinNet signature
-    :param fpath: File path for binary to analyse
-    :param binary_id: ID of binary
-    """
-    bin_id = re_binary_id(fpath)
-    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
-
-    end_point = f"signature/{bid}"
-
-    if bid == -1:
-        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
-
-    res: Response = reveng_req(requests.get, end_point)
-
-    if res.status_code == 425:
-        logger.warning("Analysis for %s still in progress. Please check the logs (-l) and try again later.",
-                       bin_id)
-
-    res.raise_for_status()
-    return res
-
-
 def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
     """
     Get the logs for an analysis associated to Binary ID in command
@@ -324,6 +301,7 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
     return res
 
 
+@deprecated("Usupported API")
 def RE_cves(fpath: str, binary_id: int = 0) -> Response:
     """
     Check for known CVEs in Binary
@@ -378,6 +356,7 @@ def RE_status(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
+@deprecated("Usupported API")
 def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list:
     """
     Compute the cosine distance between source embedding and embedding from binary
@@ -469,6 +448,7 @@ def RE_nearest_functions(fpath: str, binary_id: int = 0, nns: int = 5,
     return res
 
 
+@deprecated("Usupported API")
 def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
     """
     Get Software Bill Of Materials for binary
@@ -548,7 +528,7 @@ def re_binary_id(fpath: str) -> str:
 
         return hf.hexdigest()
     else:
-        logger.error("File %s doesn't exist or isn't readable", fpath)
+        logger.error("File '%s' doesn't exist or isn't readable", fpath)
 
     return "undefined"
 
