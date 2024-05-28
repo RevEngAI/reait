@@ -12,7 +12,7 @@ from datetime import datetime
 
 from sklearn.metrics.pairwise import cosine_similarity
 from os import access, R_OK
-from os.path import basename, isfile, expanduser
+from os.path import basename, isfile, expanduser, getsize
 from requests import request, Response, HTTPError
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
@@ -162,14 +162,13 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
-def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options: str = None,
+def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
                platform_options: str = None, file_options: str = None, dynamic_execution: bool = False,
                command_line_args: str = None, binary_scope: str = None, tags: list = None, priority: int = 0,
                duplicate: bool = False, symbols: dict = None, debug_hash: str = None) -> Response:
     """
     Start analysis job for binary file
     :param fpath: File path for binary to analyse
-    :param binary_size: Binary size in bytes
     :param model_name: Binary model name
     :param isa_options: Executable ISA
     :param file_options: File options
@@ -195,7 +194,9 @@ def RE_analyse(fpath: str, binary_size: int, model_name: str = None, isa_options
 
     filename = basename(fpath)
 
-    params = {"file_name": filename, "size_in_bytes": binary_size, "sha_256_hash": bin_id}
+    getsize(fpath)
+
+    params = {"file_name": filename, "size_in_bytes": getsize(fpath), "sha_256_hash": bin_id}
 
     for p_name in ("model_name", "isa_options", "platform_options", "file_options",
                    "dynamic_execution", "command_line_args", "binary_scope", "tags",
