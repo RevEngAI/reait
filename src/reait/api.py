@@ -194,8 +194,6 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
 
     filename = basename(fpath)
 
-    getsize(fpath)
-
     params = {"file_name": filename, "size_in_bytes": getsize(fpath), "sha_256_hash": bin_id}
 
     for p_name in ("model_name", "isa_options", "platform_options", "file_options",
