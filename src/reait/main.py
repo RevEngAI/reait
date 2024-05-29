@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import logging
+from typing import Optional
 
 from rich import print_json
 from rich.progress import track
@@ -22,7 +23,7 @@ rerr = Console(file=stderr)
 rout = Console(file=stdout)
 
 
-def version():
+def version() -> None:
     """
         Display program version
     """
@@ -40,16 +41,17 @@ def version():
 """)
     rout.print("[yellow]Config:[/yellow]")
     print_json(data=api.re_conf)
+    exit(0)
 
 
-def verify_binary(fpath_fmt: str):
+def verify_binary(fpath_fmt: str) -> tuple[str, str, str]:
     fpath = fpath_fmt
 
     # if ':' in fpath_fmt:
     #    fpath, fmt = fpath_fmt.split(':')
 
-    if not os.path.isfile(fpath):
-        raise RuntimeError(f"File path {fpath} is not a file")
+    if not os.path.isfile(fpath) and not os.access(fpath, os.R_OK):
+        raise RuntimeError(f"File path {fpath} is not a file or not accessible")
 
     # if getsize(fpath) > 1024 * 1024 * 10:
     #    raise RuntimeError("Refusing to analyse file over 10MB. Please use a RevEng.AI SRE integration")
@@ -59,7 +61,7 @@ def verify_binary(fpath_fmt: str):
     return fpath, exec_format, exec_isa
 
 
-def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.1):
+def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: float = 0.1) -> None:
     """
     Match embeddings in fpath from a list of embeddings
     """
@@ -102,7 +104,7 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: flo
             pass
 
 
-def match_for_each(fpath: str, confidence: float = 0.95, collections=None):
+def match_for_each(fpath: str, confidence: float = 0.95, collections=None) -> None:
     """
     Match embeddings in fpath from a list of embeddings
     """
@@ -142,7 +144,7 @@ def match_for_each(fpath: str, confidence: float = 0.95, collections=None):
             rerr.print(f"\t[bold red]No match for[/bold red]\t[blue]{symbol['name']}:{symbol['vaddr']}[/blue]")
 
 
-def parse_collections(collections: str):
+def parse_collections(collections: str) -> Optional[list[str]]:
     """
     Return collections as list from CSV
     """
@@ -183,6 +185,8 @@ def main() -> None:
     parser.add_argument("--found-in", help="ANN flag to limit to embeddings returned to those found in specific binary")
     parser.add_argument("--from-file",
                         help="ANN flag to limit to embeddings returned to those found in JSON embeddings file")
+    parser.add_argument("-c", "--cves", action="store_true", help="Check for CVEs found inside binary")
+    parser.add_argument("--sbom", action="store_true", help="Generate SBOM for binary")
     parser.add_argument("-m", "--model", default=None, help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action='store_true', help="Fetch embeddings for binary")
     parser.add_argument("--start-vaddr", help="Start virtual address of the function to extract embeddings")
@@ -219,7 +223,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # set re_conf args
-    for arg in ('apikey', 'host', 'model'):
+    for arg in ('apikey', 'host', 'model',):
         if getattr(args, arg):
             api.re_conf[arg] = getattr(args, arg)
 
@@ -238,16 +242,6 @@ def main() -> None:
     # display version and exit
     if args.version:
         version()
-        exit(0)
-
-    exec_fmt = None
-    exec_isa = None
-    base_address = 0
-    if args.base_address:
-        if args.base_address.upper()[:2] == "0X":
-            base_address = int(args.base_address, 16)
-        else:
-            base_address = int(args.base_address)
 
     collections = None
     if args.collections:
@@ -299,7 +293,7 @@ def main() -> None:
 
         exit(0)
 
-    if args.A or args.analyse or args.extract or args.logs or args.delete or args.upload or args.match:
+    if args.analyse or args.extract or args.logs or args.delete or args.upload or args.match or args.cves or args.sbom:
         # verify binary is a file
         try:
             fpath, exec_fmt, exec_isa = verify_binary(args.binary)
@@ -323,7 +317,7 @@ def main() -> None:
         api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform,
                        dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args,
                        file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags,
-                       priority=args.priority, duplicate=args.duplicate)
+                       priority=args.priority, duplicate=args.duplicate, debug_fpath=args.debug)
 
     elif args.extract:
         embeddings = api.RE_embeddings(args.binary).json()
@@ -365,6 +359,12 @@ def main() -> None:
 
     elif args.delete:
         api.RE_delete(args.binary)
+
+    elif args.sbom:
+        api.RE_SBOM(args.binary)
+
+    elif args.cves:
+        api.RE_cves(args.binary)
 
     else:
         print("[!] Error, please supply an action command")
