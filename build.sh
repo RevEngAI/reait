@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 python3 -m build .
 
 #bundle into executable
