@@ -9,7 +9,6 @@ import requests
 from hashlib import sha256
 from datetime import datetime
 
-from warnings import deprecated
 from sklearn.metrics.pairwise import cosine_similarity
 from os import access, R_OK
 from os.path import basename, isfile, expanduser, getsize
@@ -308,7 +307,6 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
     return res
 
 
-@deprecated("Unplanned API")
 def RE_cves(fpath: str, binary_id: int = 0) -> Response:
     """
     Check for known CVEs in Binary
@@ -363,7 +361,6 @@ def RE_status(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
-@deprecated("Unplanned API")
 def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list:
     """
     Compute the cosine distance between source embedding and embedding from binary
@@ -458,7 +455,6 @@ def RE_nearest_functions(fpath: str, binary_id: int = 0, nns: int = 5,
     return res
 
 
-@deprecated("Unplanned API")
 def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
     """
     Get Software Bill Of Materials for binary
