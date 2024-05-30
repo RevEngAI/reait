@@ -71,7 +71,7 @@ def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict =
 
 
 def re_hash_check(bin_id: str) -> bool:
-    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha256_hash": bin_id})
+    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha_256_hash": bin_id})
 
     if res.ok:
         return any(binary["sha_256_hash"] == bin_id for binary in res.json()["query_results"])
@@ -85,7 +85,7 @@ def re_hash_check(bin_id: str) -> bool:
 # Assumes a file has been passed, correct hash only
 # Returns the BID of the binary_id (hash)
 def re_bid_search(bin_id: str) -> int:
-    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha256_hash": bin_id})
+    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha_256_hash": bin_id})
 
     bid = -1
 
@@ -387,15 +387,13 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
     return json_sims
 
 
-def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5,
-                             collections: list[str] = None, ignore_hashes: list[str] = None,
+def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5, collections: list[str] = None,
                              distance: float = 0.1, debug_enabled: bool = False) -> Response:
     """
     Get nearest functions to a passed function ids
     :param function_ids: List of function ids
     :param nns: Number of nearest neighbors
     :param collections: List of collections RevEng.AI collection names to search through
-    :param ignore_hashes: List[str] SHA-256 hash of binary file to ignore symbols from (usually the current binary)
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
@@ -404,12 +402,9 @@ def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5,
               "debug_mode": debug_enabled,
               "distance": distance,}
 
-    if collections and len(collections) > 0:
+    if collections:
         # api param is collection, not collections
-        params["collection"] = "|".join(collections)
-
-    if ignore_hashes and len(ignore_hashes) > 0:
-        params["ignore_hashes"] = ignore_hashes
+        params["collection"] = collections
 
     res: Response = reveng_req(requests.post, "v1/ann/symbol/batch", json_data=params)
 
@@ -418,15 +413,12 @@ def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5,
 
 
 def RE_nearest_functions(fpath: str, binary_id: int = 0, nns: int = 5,
-                         collections: list[str] = None, ignore_hashes: list[str] = None,
                          distance: float = 0.1, debug_enabled: bool = False) -> Response:
     """
     Get the nearest functions
     :param fpath: File path for binary to analyse
     :param binary_id: ID of binary
     :param nns: Number of nearest neighbors
-    :param collections: List of collections RevEng.AI collection names to search through
-    :param ignore_hashes: List[str] SHA-256 hash of binary files to ignore symbols from (usually the current binary)
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
@@ -441,13 +433,6 @@ def RE_nearest_functions(fpath: str, binary_id: int = 0, nns: int = 5,
     params = {"result_per_function": nns,
               "debug_mode": debug_enabled,
               "distance": distance, }
-
-    if collections and len(collections) > 0:
-        # api param is collection, not collections
-        params["collection"] = "|".join(collections)
-
-    if ignore_hashes and len(ignore_hashes) > 0:
-        params["ignore_hashes"] = ignore_hashes
 
     res: Response = reveng_req(requests.post, end_point, json_data=params)
 

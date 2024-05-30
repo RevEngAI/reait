@@ -124,8 +124,7 @@ def match_for_each(fpath: str, confidence: float = 0.95, collections=None) -> No
 
             embedding = symbol['embedding']
             # do ANN call to match symbols, ignore functions from current file
-            f_suggestions = api.RE_nearest_functions(fpath, nns=1, collections=collections,
-                                                     ignore_hashes=[api.re_binary_id(fpath)]).json()
+            f_suggestions = api.RE_nearest_functions(fpath, nns=1, collections=collections).json()
 
             if len(f_suggestions) == 0:
                 # no match
