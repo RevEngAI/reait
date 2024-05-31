@@ -494,7 +494,7 @@ def RE_health() -> bool:
     """
     Health check & verify access to the API
     """
-    res: Response = reveng_req(requests.get, "/")
+    res: Response = reveng_req(requests.get, "v1")
 
     success = res.json()["success"]
 
