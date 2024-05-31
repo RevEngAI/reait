@@ -507,12 +507,13 @@ def RE_health() -> bool:
 
 def RE_authentication() -> Response:
     """
-    RevEng.AI Authentication Check
+    Authentication Check
     """
     res: Response = reveng_req(requests.get, "v1/authenticate")
 
     res.raise_for_status()
     return res
+
 
 def re_binary_id(fpath: str) -> str:
     """
