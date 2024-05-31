@@ -184,7 +184,7 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
     bin_id = re_binary_id(fpath)
     result = re_hash_check(bin_id)
 
-    end_point = "v1/analyse"
+    end_point = "v1/analyse/"
 
     if result and duplicate is False:
         logger.error("Error, duplicate analysis for %s. To upload again, use the --duplicate flag.",
@@ -504,6 +504,15 @@ def RE_health() -> bool:
         logger.warning(res.json()["error"])
     return success
 
+
+def RE_authentication() -> Response:
+    """
+    RevEng.AI Authentication Check
+    """
+    res: Response = reveng_req(requests.get, "v1/authenticate")
+
+    res.raise_for_status()
+    return res
 
 def re_binary_id(fpath: str) -> str:
     """
