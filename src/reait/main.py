@@ -165,7 +165,7 @@ def main() -> None:
     Tool entry
     """
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-b", "--binary", default="", type=int,
+    parser.add_argument("-b", "--binary", default="", type=str,
                         help="Path of binary to analyse, use ./path:{exec_format} to specify executable format e.g. ./path:raw-x86_64")
     parser.add_argument("-B", "--binary-hash", default="", help="Hex-encoded SHA-256 hash of the binary to use")
     parser.add_argument("-D", "--dir", default="", help="Path of directory to recursively analyse")
@@ -194,7 +194,7 @@ def main() -> None:
     parser.add_argument("-M", "--match", action='store_true',
                         help="Match functions in binary file. Can be used with --confidence, --deviation, --from-file, --found-in.")
     parser.add_argument("--confidence", default="high", help="Confidence threshold used to match symbols.")
-    parser.add_argument("--deviation", default=0.2, type=float,
+    parser.add_argument("--deviation", default=0.1, type=float,
                         help="Deviation in prediction confidence between outlier and next highest symbol. Use if confident symbol is present in binary but not matching.")
     parser.add_argument("-l", "--logs", action='store_true', help="Fetch analysis log file for binary")
     parser.add_argument("-d", "--delete", action='store_true', help="Delete all metadata associated with binary")
