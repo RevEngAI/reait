@@ -153,13 +153,15 @@ def rescale_sim(x):
 
 
 def validate_file(arg):
-    if (file := Path(arg)).is_file():
+    file = Path(arg)
+    if file.is_file():
         return file.absolute()
     raise FileNotFoundError(f"File path {arg} does not exists.")
 
 
 def validate_dir(arg):
-    if (dir := Path(arg)).is_dir():
+    dir = Path(arg)
+    if dir.is_dir():
         return dir.absolute()
     raise NotADirectoryError(f"Directory path {arg} does not exists.")
 
