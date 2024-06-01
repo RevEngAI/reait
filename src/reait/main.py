@@ -165,7 +165,7 @@ def main() -> None:
     Tool entry
     """
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-b", "--binary", default="", type=int,
+    parser.add_argument("-b", "--binary", default="", type=str,
                         help="Path of binary to analyse, use ./path:{exec_format} to specify executable format e.g. ./path:raw-x86_64")
     parser.add_argument("-B", "--binary-hash", default="", help="Hex-encoded SHA-256 hash of the binary to use")
     parser.add_argument("-D", "--dir", default="", help="Path of directory to recursively analyse")
