@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import logging
+from pathlib import Path
 from typing import Optional
 
 from rich import print_json
@@ -46,15 +47,6 @@ def version() -> None:
 
 def verify_binary(fpath_fmt: str) -> tuple[str, str, str]:
     fpath = fpath_fmt
-
-    # if ':' in fpath_fmt:
-    #    fpath, fmt = fpath_fmt.split(':')
-
-    if not os.path.isfile(fpath) and not os.access(fpath, os.R_OK):
-        raise RuntimeError(f"File path {fpath} is not a file or not accessible")
-
-    # if getsize(fpath) > 1024 * 1024 * 10:
-    #    raise RuntimeError("Refusing to analyse file over 10MB. Please use a RevEng.AI SRE integration")
 
     exec_format, exec_isa = api.file_type(fpath)
 
@@ -160,15 +152,27 @@ def rescale_sim(x):
     return np.power(x, 5)
 
 
+def validate_file(arg):
+    if (file := Path(arg)).is_file():
+        return file.absolute()
+    raise FileNotFoundError(f"File path {arg} does not exists.")
+
+
+def validate_dir(arg):
+    if (dir := Path(arg)).is_dir():
+        return dir.absolute()
+    raise NotADirectoryError(f"Directory path {arg} does not exists.")
+
+
 def main() -> None:
     """
     Tool entry
     """
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-b", "--binary", default="", type=str,
+    parser.add_argument("-b", "--binary", type=validate_file,
                         help="Path of binary to analyse, use ./path:{exec_format} to specify executable format e.g. ./path:raw-x86_64")
     parser.add_argument("-B", "--binary-hash", default="", help="Hex-encoded SHA-256 hash of the binary to use")
-    parser.add_argument("-D", "--dir", default="", help="Path of directory to recursively analyse")
+    parser.add_argument("-D", "--dir", type=validate_dir, help="Path of directory to recursively analyse")
     parser.add_argument("-a", "--analyse", action='store_true',
                         help="Perform a full analysis and generate embeddings for every symbol")
     parser.add_argument("--no-embeddings", action='store_true',
@@ -252,10 +256,6 @@ def main() -> None:
         args.analyse = True
 
     if args.dir:
-        if not os.path.isdir(args.dir):
-            rerr.print(f'Error, {args.dir} is not a valid directory path')
-            exit(-1)
-
         files = iglob(os.path.abspath(args.dir) + '/**/*', recursive=True)
         ## perform operation on all files inside directory
         for file in track(files, description='Files in directory'):
