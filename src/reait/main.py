@@ -17,14 +17,13 @@ from reait import api, __version__
 from scipy.spatial import distance
 from glob import iglob
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from multiprocessing import cpu_count
-
-rerr = Console(file=stderr)
-rout = Console(file=stdout)
 
 
-def version() -> None:
+rerr = Console(file=stderr, tab_size=4, width=180)
+rout = Console(file=stdout, tab_size=4, width=180)
+
+
+def version() -> int:
     """
         Display program version
     """
@@ -42,7 +41,7 @@ def version() -> None:
 """)
     rout.print("[yellow]Config:[/yellow]")
     print_json(data=api.re_conf)
-    exit(0)
+    return 0
 
 
 def verify_binary(fpath_fmt: str) -> tuple[str, str, str]:
@@ -96,43 +95,33 @@ def match(fpath: str, embeddings: list, confidence: float = 0.95, deviation: flo
             pass
 
 
-def match_for_each(fpath: str, confidence: float = 0.95, collections=None) -> None:
+def match_for_each(fpath: str, confidence: float = 0.9, nns: int = 1) -> int:
     """
     Match embeddings in fpath from a list of embeddings
     """
-    if collections is None:
-        collections = []
-    rout.print(f"Matching symbols from {fpath} with confidence {confidence}.")
-    b_embeds = api.RE_embeddings(fpath).json()["data"]["embedding"]
+    rout.print(f"Matching symbols from '{fpath}' with confidence {confidence:.02f} and up to {nns} result per function")
+    functions = api.RE_analyze_functions(fpath).json()["functions"]
+    nearest_functions = api.RE_nearest_functions(fpath, nns=nns, distance=1 - confidence).json()["function_matches"]
 
-    with ThreadPoolExecutor(max_workers=cpu_count()) as p:
-        # print(f"Collections: {collections}")
-        partial = lambda x: api.RE_embeddings(fpath).json()["data"]["embedding"]
-        res = {p.submit(partial, embed): embed for embed in b_embeds}
+    if len(nearest_functions) == 0:
+        rerr.print(f"[bold red]No match for confidence:[/bold red] {confidence}")
+        return -1
+    else:
+        for function in functions:
+            nearest = list(filter(lambda x: function["function_id"] == x["origin_function_id"], nearest_functions))
 
-        for future in track(as_completed(res), description="Matching Symbols..."):
-            # get result from future
-            symbol = res[future]
+            if len(nearest):
+                rout.print(f"[bold green]Found match for [/bold green][blue]{function['function_name']}: "
+                           f"{function['function_vaddr']:#x}[/blue]")
 
-            embedding = symbol["embedding"]
-            # do ANN call to match symbols, ignore functions from current file
-            f_suggestions = api.RE_nearest_functions(fpath, nns=1, collections=collections).json()
-
-            if len(f_suggestions) == 0:
-                # no match
-                rerr.print(f"\t[bold red]No match for[/bold red]\t[blue]{symbol['name']}:{symbol['vaddr']}[/blue]")
-                continue
-
-            matched = f_suggestions[0]
-            if matched["distance"] >= confidence:
-                rout.print(
-                    f"\t[bold green]Found match![/bold green][yellow]\t"
-                    f"Confidence: {matched['distance']:.05f}[/yellow]\t"
-                    f"[blue]{symbol['name']}:{symbol['vaddr']}[/blue]\t->\t"
-                    f"[blue]{matched['name']}:{matched['sha_256_hash']}")
-                continue
-
-            rerr.print(f"\t[bold red]No match for[/bold red]\t[blue]{symbol['name']}:{symbol['vaddr']}[/blue]")
+                for suggestion in nearest:
+                    rout.print(f"\t[yellow]Confidence: {suggestion['confidence']:.05f}[/yellow]\t"
+                               f"[blue]{suggestion['nearest_neighbor_function_name']} "
+                               f"({suggestion['nearest_neighbor_binary_name']})[/blue]")
+            else:
+                rout.print(f"[bold red]No match found for[/bold red] "
+                           f"[blue]{function['function_name']}: {function['function_vaddr']:#x}[/blue]")
+    return 0
 
 
 def parse_collections(collections: str) -> Optional[list[str]]:
@@ -141,7 +130,7 @@ def parse_collections(collections: str) -> Optional[list[str]]:
     """
     if not collections:
         return None
-    return collections.split(',')
+    return collections.split(",")
 
 
 def rescale_sim(x):
@@ -166,7 +155,7 @@ def validate_dir(arg):
     raise NotADirectoryError(f"Directory path {arg} does not exists.")
 
 
-def main() -> None:
+def main() -> int:
     """
     Tool entry
     """
@@ -177,8 +166,6 @@ def main() -> None:
     parser.add_argument("-D", "--dir", type=validate_dir, help="Path of directory to recursively analyse")
     parser.add_argument("-a", "--analyse", action="store_true",
                         help="Perform a full analysis and generate embeddings for every symbol")
-    parser.add_argument("--no-embeddings", action="store_true",
-                        help="Only perform binary analysis. Do not generate embeddings for symbols")
     parser.add_argument("--base-address", help="Image base of the executable image to map for remote analysis")
     parser.add_argument("-A", action="store_true", help="Upload and Analyse a new binary")
     parser.add_argument("-u", "--upload", action="store_true", help="Upload a new binary to remote server")
@@ -194,9 +181,6 @@ def main() -> None:
     parser.add_argument("--sbom", action="store_true", help="Generate SBOM for binary")
     parser.add_argument("-m", "--model", default=None, help="AI model used to generate embeddings")
     parser.add_argument("-x", "--extract", action="store_true", help="Fetch embeddings for binary")
-    parser.add_argument("--start-vaddr", help="Start virtual address of the function to extract embeddings")
-    parser.add_argument("--symbol", help="Name of the symbol to extract embeddings")
-    parser.add_argument("-t", "--to", help="CSV list of executables to compute binary similarity against")
     parser.add_argument("-M", "--match", action="store_true",
                         help="Match functions in binary file. Can be used with --confidence, --deviation, --from-file, --found-in.")
     parser.add_argument("--confidence", default="high", choices=["high", "medium", "low", "partial", "all"],
@@ -222,10 +206,12 @@ def main() -> None:
     parser.add_argument("--scope", default="private", choices=["public", "private"],
                         help="Override analysis visibility (scope). Valid values are 'public' or 'private'[DEFAULT]")
     parser.add_argument("--tags", default=None, type=str,
-                        help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3..")
+                        help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3.")
     parser.add_argument("--priority", default=0, type=int, help="Add priority to processing queue.")
     parser.add_argument("--verbose", default=False, action="store_true", help="Set verbose output.")
     parser.add_argument("--debug", default=None, help="Debug file path to write pass with analysis")
+    parser.add_argument("-s", "--status", action="store_true", help="Ongoing status of the provided binary")
+
     args = parser.parse_args()
 
     # set re_conf args
@@ -235,19 +221,14 @@ def main() -> None:
 
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
-    # validate length of string tags
-    if args.tags:
-        # don't add non-content as tags
-        if len(args.tags.strip()) == 0:
-            args.tags = None
-
-        else:
-            # convert to list
-            args.tags = args.tags.split(",")
-
     # display version and exit
     if args.version:
-        version()
+        return version()
+
+    # validate length of string tags
+    tags = None
+    if args.tags:
+        tags = parse_collections(args.tags)
 
     collections = None
     if args.collections:
@@ -255,8 +236,7 @@ def main() -> None:
 
     # auto analysis, uploads and starts analysis
     if args.A:
-        args.upload = True
-        args.analyse = True
+        args.upload = args.analyse = True
 
     if args.dir:
         files = iglob(os.path.abspath(args.dir) + "/**/*", recursive=True)
@@ -274,14 +254,17 @@ def main() -> None:
                 try:
                     fpath, exec_fmt, exec_isa = verify_binary(file)
                     rout.print(f"Found {fpath}: {exec_fmt}-{exec_isa}")
-                    rout.print(f"[green bold]Analysing[/green bold] {file}")
-                    api.RE_analyse(file, model_name=args.model, isa_options=args.isa, platform_options=args.platform,
-                                   dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args,
-                                   file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags,
-                                   priority=args.priority, duplicate=args.duplicate, debug_fpath=args.debug)
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, binary exec type could not be verified:[/red bold] {file}")
                     rerr.print(f"[yellow] {e} [/yellow]")
+
+                rout.print(f"[green bold]Analysing:[/green bold] {file}")
+                api.RE_analyse(file, model_name=api.re_conf["model"], isa_options=args.isa,
+                               platform_options=args.platform, dynamic_execution=args.dynamic_execution,
+                               command_line_args=args.cmd_line_args, file_options=args.exec_format,
+                               binary_scope=args.scope.upper(), tags=tags, priority=args.priority,
+                               duplicate=args.duplicate, debug_fpath=args.debug)
+
             if args.delete:
                 try:
                     rout.print(f"[green bold]Deleting analyses for:[/green bold] {file}")
@@ -289,88 +272,90 @@ def main() -> None:
                 except Exception as e:
                     rerr.print(f"[red bold][!] Error, could not delete analysis for:[/red bold] {file}")
                     rerr.print(f"[yellow] {e} [/yellow]")
+
             if not (args.upload or args.analyse or args.delete):
-                rerr.print(f"Error, -D only supports upload, analyse, or delete.")
-                exit(-1)
-
-        exit(0)
-
-    if args.analyse or args.extract or args.logs or args.delete or args.upload or args.match or args.cves or args.sbom:
-        # verify binary is a file
+                rerr.print(f"Error, '-D' flag only supports upload, analyse, or delete.")
+                return -1
+    elif args.analyse or args.extract or args.logs or args.delete or \
+            args.upload or args.match or args.cves or args.sbom or args.status:
         try:
             fpath, exec_fmt, exec_isa = verify_binary(args.binary)
             # keep stdout to data only
             rout.print(f"Found {fpath}: {exec_fmt}-{exec_isa}")
             args.binary = fpath
         except Exception as e:
-            rerr.print("[bold red][!] Error, please supply a valid binary file using '-b'.[/bold red]")
+            rerr.print("[bold red][!] Error, please supply a valid binary file using '-b' flag.[/bold red]")
             rerr.print(f"[yellow] {e} [/yellow]")
-            exit(-1)
 
-    if args.upload:
-        api.RE_upload(args.binary)
+        if args.upload:
+            api.RE_upload(args.binary)
 
-        if not args.analyse:
-            exit(0)
+            if not args.analyse:
+                return 0
+
         # upload binary first, them carry out actions
+        if args.analyse:
+            api.RE_analyse(args.binary, model_name=api.re_conf["model"], isa_options=args.isa,
+                           platform_options=args.platform, dynamic_execution=args.dynamic_execution,
+                           command_line_args=args.cmd_line_args, file_options=args.exec_format,
+                           binary_scope=args.scope.upper(), tags=tags, priority=args.priority,
+                           duplicate=args.duplicate, debug_fpath=args.debug)
 
-    if args.analyse:
-        api.RE_analyse(args.binary, model_name=args.model, isa_options=args.isa, platform_options=args.platform,
-                       dynamic_execution=args.dynamic_execution, command_line_args=args.cmd_line_args,
-                       file_options=args.exec_format, binary_scope=args.scope.upper(), tags=args.tags,
-                       priority=args.priority, duplicate=args.duplicate, debug_fpath=args.debug)
+        elif args.extract:
+            embeddings = api.RE_embeddings(args.binary).json()
+            print_json(data=embeddings)
 
-    elif args.extract:
-        embeddings = api.RE_embeddings(args.binary).json()
-        print_json(data=embeddings)
+        elif args.match:
+            # parse confidences
+            confidence: float = 0.90
+            if args.confidence:
+                confidences = {
+                    "high": 0.95,
+                    "medium": 0.9,
+                    "low": 0.7,
+                    "partial": 0.5,
+                    "all": 0.0
+                }
+                if args.confidence in confidences.keys():
+                    confidence = confidences[args.confidence]
 
-    elif args.match:
-        # parse confidences
-        confidence: float = 0.90
-        if args.confidence:
-            confidences = {
-                "high": 0.95,
-                "medium": 0.9,
-                "low": 0.7,
-                "partial": 0.5,
-                "all": 0.0
-            }
-            if args.confidence in confidences.keys():
-                confidence = confidences[args.confidence]
+            if args.from_file:
+                if not os.path.isfile(args.from_file) and not os.access(args.from_file, os.R_OK):
+                    rerr.print("[bold red][!] Error, '--from-file' flag requires a path to a JSON embeddings file.[/bold red]")
+                    return -1
+                rout.print(f"[+] Searching for symbols similar to embedding in binary: {args.from_file}")
+                embeddings = json.load(open(args.from_file))
+            elif args.found_in:
+                if not os.path.isfile(args.found_in) and not os.access(args.found_in, os.R_OK):
+                    rerr.print("[bold red][!] Error, '--found-in' flag requires a path to a binary to search from.[/bold red]")
+                    return -1
+                rout.print(f"[+] Matching symbols between {args.binary} and {args.found_in}.")
+                embeddings = api.RE_embeddings(args.found_in).json()["data"]["embedding"]
             else:
-                confidence = float(args.confidence)
+                return match_for_each(args.binary, confidence, args.nns)
 
-        if args.from_file:
-            embeddings = json.load(open(args.from_file, "r"))
-        elif args.found_in:
-            if not os.path.isfile(args.found_in):
-                rerr.print("[bold red][!] Error, --found-in flag requires a path to a binary to search from.[/bold red]")
-                exit(-1)
-            rout.print(f"[+] Matching symbols between {args.binary} and {args.found_in}.")
-            embeddings = api.RE_embeddings(args.found_in).json()["data"]["embedding"]
-        else:
-            # print("No --from-file or --found-in, matching from global symbol database (unstrip) not currently")
-            match_for_each(args.binary, confidence, collections)
-            exit(-1)
+            match(args.binary, embeddings, confidence=confidence, deviation=float(args.deviation))
 
-        match(args.binary, embeddings, confidence=confidence, deviation=float(args.deviation))
+        elif args.logs:
+            api.RE_logs(args.binary)
 
-    elif args.logs:
-        api.RE_logs(args.binary)
+        elif args.delete:
+            api.RE_delete(args.binary)
 
-    elif args.delete:
-        api.RE_delete(args.binary)
+        elif args.sbom:
+            api.RE_SBOM(args.binary)
 
-    elif args.sbom:
-        api.RE_SBOM(args.binary)
+        elif args.cves:
+            api.RE_cves(args.binary)
 
-    elif args.cves:
-        api.RE_cves(args.binary)
+        elif args.status:
+            api.RE_status(args.binary, console=True)
 
     else:
         rerr.print("[bold red][!] Error, please supply an action command.[/bold red]")
         parser.print_help()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
