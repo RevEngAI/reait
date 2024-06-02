@@ -19,8 +19,8 @@ from glob import iglob
 import numpy as np
 
 
-rerr = Console(file=stderr, tab_size=4, width=180)
-rout = Console(file=stdout, tab_size=4, width=180)
+rerr = Console(file=stderr, width=180)
+rout = Console(file=stdout, width=180)
 
 
 def version() -> int:
@@ -99,27 +99,30 @@ def match_for_each(fpath: str, confidence: float = 0.9, nns: int = 1) -> int:
     """
     Match embeddings in fpath from a list of embeddings
     """
-    rout.print(f"Matching symbols from '{fpath}' with confidence {confidence:.02f} and up to {nns} result per function")
-    functions = api.RE_analyze_functions(fpath).json()["functions"]
-    nearest_functions = api.RE_nearest_functions(fpath, nns=nns, distance=1 - confidence).json()["function_matches"]
+    nns = max(nns, 1)
 
-    if len(nearest_functions) == 0:
-        rerr.print(f"[bold red]No match for confidence:[/bold red] {confidence}")
+    rout.print(f"Matching symbols from '{fpath}' with a confidence {confidence:.02f} and up to "
+               f"{nns} result{'' if nns == 1 else 's'} per function")
+    functions = api.RE_analyze_functions(fpath).json()["functions"]
+    function_matches = api.RE_nearest_functions(fpath, nns=nns, distance=1 - confidence).json()["function_matches"]
+
+    if len(function_matches) == 0:
+        rerr.print(f"[bold red]No matches found for a confidence of [/bold red] {confidence:.02f}")
         return -1
     else:
         for function in functions:
-            nearest = list(filter(lambda x: function["function_id"] == x["origin_function_id"], nearest_functions))
+            matches = list(filter(lambda x: function["function_id"] == x["origin_function_id"], function_matches))
 
-            if len(nearest):
-                rout.print(f"[bold green]Found match for [/bold green][blue]{function['function_name']}: "
-                           f"{function['function_vaddr']:#x}[/blue]")
+            if len(matches):
+                rout.print(f"[bold green]Found {len(matches)} match{'' if len(matches) == 1 else 'es'} for "
+                           f"[/bold green][blue]{function['function_name']}: {function['function_vaddr']:#x}[/blue]")
 
-                for suggestion in nearest:
-                    rout.print(f"\t[yellow]Confidence: {suggestion['confidence']:.05f}[/yellow]\t"
-                               f"[blue]{suggestion['nearest_neighbor_function_name']} "
-                               f"({suggestion['nearest_neighbor_binary_name']})[/blue]")
+                for match in matches:
+                    rout.print(f"\t[yellow]Confidence: {match['confidence']:.05f}[/yellow]"
+                               f"\t[blue]{match['nearest_neighbor_function_name']}"
+                               f" ({match['nearest_neighbor_binary_name']})[/blue]")
             else:
-                rout.print(f"[bold red]No match found for[/bold red] "
+                rout.print(f"[bold red]No matches found for[/bold red] "
                            f"[blue]{function['function_name']}: {function['function_vaddr']:#x}[/blue]")
     return 0
 
