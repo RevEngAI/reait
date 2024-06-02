@@ -548,9 +548,9 @@ def _binary_isa(lief_hdlr, exec_type: str) -> str:
     elif exec_type == "pe":
         machine_type = lief_hdlr.header.machine
 
-        if machine_type == PE.MACHINE_TYPES.I386:
+        if machine_type == PE.Header.MACHINE_TYPES.I386:
             return "x86"
-        elif machine_type == PE.MACHINE_TYPES.AMD64:
+        elif machine_type == PE.Header.MACHINE_TYPES.AMD64:
             return "x86_64"
     elif exec_type == "macho":
         machine_type = lief_hdlr.header.cpu_type
@@ -561,7 +561,7 @@ def _binary_isa(lief_hdlr, exec_type: str) -> str:
             return "x86_64"
 
     logger.error("Error, failed to determine or unsupported ISA for exec_type: %s.", exec_type)
-    raise RuntimeError(f"Error, failed to determine or unsupported ISA for exec_type:{exec_type}.")
+    raise RuntimeError(f"Error, failed to determine or unsupported ISA for exec_type: {exec_type}.")
 
 
 def _binary_format(lief_hdlr) -> str:
