@@ -555,7 +555,7 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
     """
     Get ISA format
     """
-    if exec_type == "elf":
+    if exec_type == "ELF":
         arch = binary.header.machine_type
 
         if arch == ELF.ARCH.i386:
@@ -566,7 +566,7 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
             return "arm"
         elif arch == ELF.ARCH.AARCH64:
             return "arm_64"
-    elif exec_type == "pe":
+    elif exec_type == "PE":
         machine_type = binary.header.machine
 
         if machine_type == PE.Header.MACHINE_TYPES.I386:
@@ -577,7 +577,7 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
             return "arm"
         elif machine_type == PE.Header.MACHINE_TYPES.ARM64:
             return "arm_64"
-    elif exec_type == "macho":
+    elif exec_type == "Mach-O":
         cpu_type = binary.header.cpu_type
 
         if cpu_type == MachO.CPU_TYPES.x86:
@@ -598,11 +598,11 @@ def _binary_format(binary: Binary) -> str:
     Get executable file format
     """
     if binary.format == Binary.FORMATS.PE:
-        return "pe"
+        return "PE"
     if binary.format == Binary.FORMATS.ELF:
-        return "elf"
+        return "ELF"
     if binary.format == Binary.FORMATS.MACHO:
-        return "macho"
+        return "Mach-O"
 
     logger.error("Error, could not determine or unsupported binary format: %s.", binary.format)
     raise RuntimeError(f"Error, could not determine or unsupported binary format: {binary.format}")
