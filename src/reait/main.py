@@ -286,8 +286,12 @@ def main() -> int:
             # keep stdout to data only
             rout.print(f"Found {fpath}: {exec_fmt}-{exec_isa}")
             args.binary = fpath
-        except Exception as e:
+        except TypeError as e:
             rerr.print("[bold red][!] Error, please supply a valid binary file using '-b' flag.[/bold red]")
+            rerr.print(f"[yellow] {e} [/yellow]")
+            return -1
+        except Exception as e:
+            rerr.print(f"[bold red][!] Error, binary exec type could not be verified:[/bold red] {args.binary}")
             rerr.print(f"[yellow] {e} [/yellow]")
 
         if args.upload:
