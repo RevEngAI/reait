@@ -556,15 +556,15 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
     Get ISA format
     """
     if exec_type == "elf":
-        machine_type = binary.header.machine_type
+        arch = binary.header.machine_type
 
-        if machine_type == ELF.ARCH.i386:
+        if arch == ELF.ARCH.i386:
             return "x86"
-        elif machine_type == ELF.ARCH.x86_64:
+        elif arch == ELF.ARCH.x86_64:
             return "x86_64"
-        elif machine_type == ELF.ARCH.ARM:
+        elif arch == ELF.ARCH.ARM:
             return "arm"
-        elif machine_type == ELF.ARCH.AARCH64:
+        elif arch == ELF.ARCH.AARCH64:
             return "arm_64"
     elif exec_type == "pe":
         machine_type = binary.header.machine
@@ -573,9 +573,9 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
             return "x86"
         elif machine_type == PE.Header.MACHINE_TYPES.AMD64:
             return "x86_64"
-        elif machine == PE.Header.MACHINE_TYPES.ARM:
+        elif machine_type == PE.Header.MACHINE_TYPES.ARM:
             return "arm"
-        elif machine == PE.Header.MACHINE_TYPES.ARM64:
+        elif machine_type == PE.Header.MACHINE_TYPES.ARM64:
             return "arm_64"
     elif exec_type == "macho":
         cpu_type = binary.header.cpu_type
