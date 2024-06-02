@@ -15,7 +15,7 @@ from os.path import basename, isfile, expanduser, getsize
 from requests import request, Response, HTTPError
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
-from lief import parse, ELF, PE, MachO
+from lief import parse, Binary, ELF, PE, MachO
 
 
 re_conf = {
@@ -551,49 +551,61 @@ def re_binary_id(fpath: str) -> str:
     return "undefined"
 
 
-def _binary_isa(lief_hdlr, exec_type: str) -> str:
+def _binary_isa(binary: Binary, exec_type: str) -> str:
     """
     Get ISA format
     """
     if exec_type == "elf":
-        machine_type = lief_hdlr.header.machine_type
+        machine_type = binary.header.machine_type
 
         if machine_type == ELF.ARCH.i386:
             return "x86"
         elif machine_type == ELF.ARCH.x86_64:
             return "x86_64"
+        elif machine_type == ELF.ARCH.ARM:
+            return "arm"
+        elif machine_type == ELF.ARCH.AARCH64:
+            return "arm_64"
     elif exec_type == "pe":
-        machine_type = lief_hdlr.header.machine
+        machine_type = binary.header.machine
 
         if machine_type == PE.Header.MACHINE_TYPES.I386:
             return "x86"
         elif machine_type == PE.Header.MACHINE_TYPES.AMD64:
             return "x86_64"
+        elif machine == PE.Header.MACHINE_TYPES.ARM:
+            return "arm"
+        elif machine == PE.Header.MACHINE_TYPES.ARM64:
+            return "arm_64"
     elif exec_type == "macho":
-        machine_type = lief_hdlr.header.cpu_type
+        cpu_type = binary.header.cpu_type
 
-        if machine_type == MachO.CPU_TYPES.x86:
+        if cpu_type == MachO.CPU_TYPES.x86:
             return "x86"
-        elif machine_type == MachO.CPU_TYPES.x86_64:
+        elif cpu_type == MachO.CPU_TYPES.x86_64:
             return "x86_64"
+        elif cpu_type == MachO.CPU_TYPES.ARM:
+            return "arm"
+        elif cpu_type == MachO.CPU_TYPES.ARM64:
+            return "arm_64"
 
-    logger.error("Error, failed to determine or unsupported ISA for exec_type: %s.", exec_type)
-    raise RuntimeError(f"Error, failed to determine or unsupported ISA for exec_type: {exec_type}.")
+    logger.error("Error, could not determine or unsupported ISA for binary format: %s.", exec_type)
+    raise RuntimeError(f"Error, could not determine or unsupported ISA for binary format: {exec_type}.")
 
 
-def _binary_format(lief_hdlr) -> str:
+def _binary_format(binary: Binary) -> str:
     """
     Get executable file format
     """
-    if lief_hdlr.format == lief_hdlr.format.PE:
+    if binary.format == lief_hdlr.format.PE:
         return "pe"
-    if lief_hdlr.format == lief_hdlr.format.ELF:
+    if binary.format == lief_hdlr.format.ELF:
         return "elf"
-    if lief_hdlr.format == lief_hdlr.format.MACHO:
+    if binary.format == lief_hdlr.format.MACHO:
         return "macho"
 
-    logger.error("Error, could not determine binary format: %s.", lief_hdlr.format)
-    raise RuntimeError("Error, could not determine binary format.")
+    logger.error("Error, could not determine or unsupported binary format: %s.", binary.format)
+    raise RuntimeError(f"Error, could not determine or unsupported binary format: {binary.format}")
 
 
 def file_type(fpath: str) -> tuple[str, str]:
@@ -603,11 +615,14 @@ def file_type(fpath: str) -> tuple[str, str]:
     """
     binary = parse(fpath)
 
-    # handle PE and ELF files
-    file_format = _binary_format(binary)
-    isa = _binary_isa(binary, file_format)
+    if not binary:
+        file_format = isa_format = "Unknown format"
+    else:
+        # handle PE and ELF files
+        file_format = _binary_format(binary)
+        isa_format = _binary_isa(binary, file_format)
 
-    return file_format, isa
+    return file_format, isa_format
 
 
 def parse_config() -> None:
