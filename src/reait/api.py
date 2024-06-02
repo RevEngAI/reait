@@ -299,7 +299,7 @@ def RE_logs(fpath: str, binary_id: int = 0, console: bool = True) -> Response:
     res: Response = reveng_req(requests.get, end_point)
 
     if res.ok and console:
-        logger.info("Logs found for %s:\n%s", bin_id, res.text)
+        logger.info("Logs found for %s:\n%s", bin_id, res.json()["logs"])
     elif res.status_code == 404:
         logger.warning("Error, logs not found for %s.", bin_id)
 
@@ -338,7 +338,7 @@ def RE_cves(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
-def RE_status(fpath: str, binary_id: int = 0) -> Response:
+def RE_status(fpath: str, binary_id: int = 0, console: bool = False) -> Response:
     """
     Get the status of an ongoing binary analysis
     :param fpath: File path for binary to analyse
@@ -354,6 +354,8 @@ def RE_status(fpath: str, binary_id: int = 0) -> Response:
 
     res: Response = reveng_req(requests.get, end_point)
 
+    if res.ok and console:
+        logger.info("Binary analysis status: %s", res.json()["status"])
     if res.status_code == 400:
         logger.warning(" Error, status not found for %s.", bin_id)
 
@@ -435,6 +437,21 @@ def RE_nearest_functions(fpath: str, binary_id: int = 0, nns: int = 5,
               "distance": distance, }
 
     res: Response = reveng_req(requests.post, end_point, json_data=params)
+
+    res.raise_for_status()
+    return res
+
+
+def RE_analyze_functions(fpath: str, binary_id: int = 0) -> Response:
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
+
+    end_point = f"v1/analyse/functions/{bid}"
+
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res: Response = reveng_req(requests.get, end_point)
 
     res.raise_for_status()
     return res
