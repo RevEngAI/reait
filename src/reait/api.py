@@ -21,7 +21,7 @@ from lief import parse, ELF, PE, MachO
 re_conf = {
     "apikey": "l1br3",
     "host": "https://api.reveng.ai",
-    "model": "binnet-0.2-x86",
+    "model": "binnet-0.3-x86",
 }
 
 
