@@ -597,11 +597,11 @@ def _binary_format(binary: Binary) -> str:
     """
     Get executable file format
     """
-    if binary.format == lief_hdlr.format.PE:
+    if binary.format == Binary.FORMATS.PE:
         return "pe"
-    if binary.format == lief_hdlr.format.ELF:
+    if binary.format == Binary.FORMATS.ELF:
         return "elf"
-    if binary.format == lief_hdlr.format.MACHO:
+    if binary.format == Binary.FORMATS.MACHO:
         return "macho"
 
     logger.error("Error, could not determine or unsupported binary format: %s.", binary.format)
