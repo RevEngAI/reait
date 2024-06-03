@@ -241,7 +241,8 @@ def RE_upload(fpath: str) -> Response:
                         '"message": "File already uploaded!",'
                         '"sha_256_hash": "{1}"{2}').format("{", bin_id, "}").encode()
     else:
-        res: Response = reveng_req(requests.post, "v1/upload", files={"file": open(fpath, "rb")})
+        with open(fpath, "rb") as fd:
+            res: Response = reveng_req(requests.post, "v1/upload", files={"file": fd})
 
         if res.ok:
             logger.info("Successfully uploaded binary to your account. %s - %s", fpath, bin_id)
@@ -563,9 +564,9 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
         elif arch == ELF.ARCH.x86_64:
             return "x86_64"
         elif arch == ELF.ARCH.ARM:
-            return "arm"
+            return "ARM32"
         elif arch == ELF.ARCH.AARCH64:
-            return "arm_64"
+            return "ARM64"
     elif exec_type == "PE":
         machine_type = binary.header.machine
 
@@ -574,9 +575,9 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
         elif machine_type == PE.Header.MACHINE_TYPES.AMD64:
             return "x86_64"
         elif machine_type == PE.Header.MACHINE_TYPES.ARM:
-            return "arm"
+            return "ARM32"
         elif machine_type == PE.Header.MACHINE_TYPES.ARM64:
-            return "arm_64"
+            return "ARM64"
     elif exec_type == "Mach-O":
         cpu_type = binary.header.cpu_type
 
@@ -585,9 +586,9 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
         elif cpu_type == MachO.CPU_TYPES.x86_64:
             return "x86_64"
         elif cpu_type == MachO.CPU_TYPES.ARM:
-            return "arm"
+            return "ARM32"
         elif cpu_type == MachO.CPU_TYPES.ARM64:
-            return "arm_64"
+            return "ARM64"
 
     logger.error("Error, could not determine or unsupported ISA for binary format: %s.", exec_type)
     raise RuntimeError(f"Error, could not determine or unsupported ISA for binary format: {exec_type}.")
