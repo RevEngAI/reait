@@ -14,6 +14,7 @@ setup(
     url="https://github.com/RevEng-AI/reait",
     author="James Patrick-Evans",
     author_email="james@reveng.ai",
+    platforms="Cross Platform",
     packages=find_packages(where="src", exclude=["tests",]),
     package_dir={
         "": "src",

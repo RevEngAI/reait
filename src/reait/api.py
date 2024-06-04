@@ -633,7 +633,7 @@ def parse_config() -> None:
     fpath = expanduser("~/.reait.toml")
 
     if isfile(fpath) and access(fpath, R_OK):
-        with open(fpath, "r") as fd:
+        with open(fpath) as fd:
             config = tomli.loads(fd.read())
 
             for key in ("apikey", "host", "model",):
