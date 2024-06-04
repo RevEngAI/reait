@@ -3,7 +3,6 @@
 from subprocess import check_call
 from sys import executable
 from unittest import main
-from requests import HTTPError
 
 from utils import BaseTestCase, testlog
 
@@ -28,7 +27,7 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--upload",
                                              "--apikey", api.re_conf['apikey']))
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to upload {self._fpath}")
 
     def test_3_analyse(self):
@@ -37,7 +36,7 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--analyse",
                                              "--apikey", api.re_conf['apikey'], "--model", "binnet-0.3-x86-linux"))
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to analyse {self._fpath}")
         finally:
             self.test_7_delete()
@@ -48,7 +47,7 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "-A",
                                              "--apikey", api.re_conf['apikey'], "--model", "binnet-0.3-x86-linux"))
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to upload and analyse {self._fpath}")
 
     def test_5_logs(self):
@@ -57,7 +56,7 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--logs",
                                              "--apikey", api.re_conf['apikey']))
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to get analysis logs {self._fpath}")
 
     def test_6_status(self):
@@ -66,7 +65,7 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--status",
                                              "--apikey", api.re_conf['apikey']))
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to get analysis status {self._fpath}")
 
     def test_7_delete(self):
@@ -75,7 +74,7 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--delete",
                                              "--apikey", api.re_conf['apikey']))
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to delete {self._fpath}")
 
 

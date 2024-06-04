@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from unittest import main
-from requests import HTTPError
 
 from utils import BaseTestCase
 
@@ -20,7 +19,7 @@ class TestAPIs(BaseTestCase):
 
             self.assertTrue(response["success"], "Upload file has failed")
             self.assertEqual(response["sha_256_hash"], api.re_binary_id(self._fpath), "SHA-256 mismatch")
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to upload {self._fpath}")
 
     def test_2_analysis(self):
@@ -29,7 +28,7 @@ class TestAPIs(BaseTestCase):
 
             self.assertTrue(response["success"], "Analysis file has failed")
             self.assertIsInstance(response["binary_id"], int)
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to analyse {self._fpath}")
 
     def test_3_analysis_failure(self):
@@ -38,7 +37,7 @@ class TestAPIs(BaseTestCase):
             api.RE_analyse(self._fpath, model_name="binnet-0.3-x86-linux")
 
             self.fail(f"Duplicate analysis for {self._fpath}")
-        except HTTPError as e:
+        except Exception as e:
             self.assertIsInstance(e, api.ReaitError)
             self.assertIsNotNone(e.response)
             self.assertEqual(e.response.status_code, 404)
@@ -50,7 +49,7 @@ class TestAPIs(BaseTestCase):
 
             self.assertTrue(response["success"], "Analysis file has failed")
             self.assertIsNotNone(response["logs"], "Empty logs analysis")
-        except HTTPError:
+        except Exception:
             self.fail("Failed to retrieve logs")
 
     def test_5_delete(self):
@@ -58,7 +57,7 @@ class TestAPIs(BaseTestCase):
             response = api.RE_delete(self._fpath).json()
 
             self.assertTrue(response["success"], "Delete file has failed")
-        except HTTPError:
+        except Exception:
             self.fail(f"Failed to delete {self._fpath}")
 
 
