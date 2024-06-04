@@ -17,6 +17,7 @@ from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
 from lief import parse, Binary, ELF, PE, MachO
 
+__version__ = "1.0.0"
 
 re_conf = {
     "apikey": "l1br3",

@@ -17,4 +17,4 @@ echo "[?] Press enter to make the change. We will modify reait and pyproject.tom
 read -r line
 
 perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/${VERSION}/" ./pyproject.toml
-perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/${VERSION}/" ./src/reait/__init__.py
+perl -i -pe "s/(?<=version.{0,10}\=.{0,10})[0-9]+\.[0-9]+\.[0-9]+/${VERSION}/" ./src/reait/api.py
