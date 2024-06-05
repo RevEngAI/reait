@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from os import getenv
 from subprocess import check_call
 from sys import executable
 from unittest import main
