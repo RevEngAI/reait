@@ -3,7 +3,10 @@
 from setuptools import setup, find_packages
 
 
-with open("README.md") as fd:
+with open("requirements.txt") as fd:
+    required = fd.read().splitlines()
+
+with open("README.md", encoding="utf-8") as fd:
     long_description = fd.read()
 
 
@@ -24,7 +27,5 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],
-    install_requires=[
-        "tqdm", "argparse", "requests", "rich", "tomli", "pandas", "numpy", "scipy", "scikit-learn", "lief",
-    ],
+    install_requires=required,
 )
