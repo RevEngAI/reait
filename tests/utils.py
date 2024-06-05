@@ -43,7 +43,7 @@ class BaseTestCase(TestCase):
 
         testlog.info("Random selection of '%s' in binaries folder", cls._fpath)
 
-        api.re_conf["model"] += "-" + cls._platform
+        api.re_conf["model"] = "binnet-0.3-x86-" + cls._platform
 
         # Get the API key from the environment variable
         api.re_conf["apikey"] = getenv("REAI_API_KEY", api.re_conf["apikey"])
@@ -61,7 +61,7 @@ class BaseTestCase(TestCase):
             testlog.info("Getting all previous analyses for %s", bin_id)
 
             response = api.reveng_req(get, "v1/search", json_data={"sha_256_hash": bin_id}).json()
-            
+
             if not response["success"]:
                 testlog.error("Failed to get all previous analysis.\n%s", response)
             else:
