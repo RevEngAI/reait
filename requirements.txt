@@ -1,4 +1,3 @@
-tqdm
 argparse
 requests
 rich
