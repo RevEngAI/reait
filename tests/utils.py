@@ -32,13 +32,18 @@ class BaseTestCase(TestCase):
 
     _cwd: str = None
     _fpath: str = None
+    _platform: str = None
 
     @classmethod
     def setUpClass(cls):
         cls._cwd = join(CWD, "binaries")
 
+        cls._platform = choice(listdir(cls._cwd))
+
         # Randomly selects a binary from the binaries folder
-        cls._fpath = join(cls._cwd, choice(listdir(cls._cwd)))
+        cls._fpath = join(cls._cwd, cls._platform, choice(listdir(join(cls._cwd, cls._platform))))
+
+        api.re_conf["model"] += "-" + cls._platform
 
         # Deletes all previous analyses from the RevEng.AI platform
         cls._cleanup_binaries(cls._fpath)

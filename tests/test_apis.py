@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from sys import path
+from pathlib import Path
 from unittest import main
 
-from .utils import BaseTestCase
+# Make it possible to run this file from the root dir of reait without installing reait
+path.insert(0, Path(__file__).parent.as_posix())
+
+from utils import BaseTestCase
 
 import reait.api as api
 
@@ -12,6 +17,7 @@ class TestAPIs(BaseTestCase):
         self.assertGreaterEqual(len(api.re_conf), 3)
         self.assertTrue(all(api.re_conf[key] for key in ("apikey", "host", "model",)))
         self.assertNotEqual(api.re_conf["apikey"], "l1br3")
+        self.assertIn(self._platform, api.re_conf["model"])
 
     def test_1_upload(self):
         try:

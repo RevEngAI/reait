@@ -4,7 +4,7 @@ from subprocess import check_call
 from sys import executable
 from unittest import main
 
-from .utils import BaseTestCase, testlog
+from utils import BaseTestCase, testlog
 
 import reait.api as api
 
