@@ -2,12 +2,11 @@
 import abc
 import logging
 
-from os import listdir
-
 from os.path import join
 from pathlib import Path
 from random import choice
 from sys import path, stdout
+from os import listdir, getenv
 
 from unittest import TestCase
 
@@ -19,7 +18,6 @@ CWD = Path(__file__).parent
 path.insert(0, (CWD / ".." / "src").as_posix())
 
 import reait.api as api
-
 
 # Create a global logger object
 testlog = logging.getLogger("run_tests")
@@ -47,6 +45,11 @@ class BaseTestCase(TestCase):
 
         api.re_conf["model"] += "-" + cls._platform
 
+        # Get the API key from the environment variable
+        api.re_conf["apikey"] = getenv("REAI_API_KEY", api.re_conf["apikey"])
+
+        testlog.info("Configuration:\n%s", api.re_conf)
+
         # Deletes all previous analyses from the RevEng.AI platform
         cls._cleanup_binaries(cls._fpath)
 
@@ -57,7 +60,7 @@ class BaseTestCase(TestCase):
 
             testlog.info("Getting all previous analyses for %s", bin_id)
 
-            response = api.reveng_req(get, "v1/search", json_data={"sha_256_hash": bin_id+'1'}).json()
+            response = api.reveng_req(get, "v1/search", json_data={"sha_256_hash": bin_id}).json()
             print(response)
             if not response["success"]:
                 testlog.error("Failed to get all previous analysis.\n%s", response)
