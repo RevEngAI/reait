@@ -289,7 +289,7 @@ def main() -> int:
         except TypeError as e:
             rerr.print("[bold red][!] Error, please supply a valid binary file using '-b' flag.[/bold red]")
             rerr.print(f"[yellow] {e} [/yellow]")
-            return -1
+            return 0
         except Exception as e:
             rerr.print(f"[bold red][!] Error, binary exec type could not be verified:[/bold red] {args.binary}")
             rerr.print(f"[yellow] {e} [/yellow]")
