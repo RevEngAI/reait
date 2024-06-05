@@ -48,8 +48,6 @@ class BaseTestCase(TestCase):
         # Get the API key from the environment variable
         api.re_conf["apikey"] = getenv("REAI_API_KEY", api.re_conf["apikey"])
 
-        testlog.info("Configuration:\n%s", api.re_conf)
-
         # Deletes all previous analyses from the RevEng.AI platform
         cls._cleanup_binaries(cls._fpath)
 

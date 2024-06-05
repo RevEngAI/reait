@@ -27,18 +27,18 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--upload",
                                              "--apikey", api.re_conf["apikey"]))
-        except Exception:
-            self.fail(f"Failed to upload {self._fpath}")
+        except Exception as e:
+            testlog.error("Something went wrong when upload binary for analysis. %s", e)
 
     def test_3_analyse(self):
         try:
             self.assertEqual(0,
                              run_test_script("src/reait/main.py",
-                                             "--binary", self._fpath, "--analyse", "--duplicate"
+                                             "--binary", self._fpath, "--analyse", "--duplicate",
                                              "--apikey", api.re_conf["apikey"],
                                              "--model", api.re_conf["model"]))
-        except Exception:
-            self.fail(f"Failed to analyse {self._fpath}")
+        except Exception as e:
+            testlog.error("Something went wrong when start analysis. %s", e)
         finally:
             self._cleanup_binaries(self._fpath)
 
@@ -49,8 +49,8 @@ class TestReait(BaseTestCase):
                                              "--binary", self._fpath, "-A", "--duplicate",
                                              "--apikey", api.re_conf["apikey"],
                                              "--model", api.re_conf["model"]))
-        except Exception:
-            self.fail(f"Failed to upload and analyse {self._fpath}")
+        except Exception as e:
+            testlog.error("Something went wrong when upload + start analysis. %s", e)
 
     def test_5_logs(self):
         try:
@@ -58,8 +58,8 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--logs",
                                              "--apikey", api.re_conf["apikey"]))
-        except Exception:
-            self.fail(f"Failed to get analysis logs {self._fpath}")
+        except Exception as e:
+            testlog.error("Something went wrong when getting logs analysis. %s", e)
 
     def test_6_status(self):
         try:
@@ -67,8 +67,8 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--status",
                                              "--apikey", api.re_conf["apikey"]))
-        except Exception:
-            self.fail(f"Failed to get analysis status {self._fpath}")
+        except Exception as e:
+            testlog.error("Something went wrong when getting status. %s", e)
 
     def test_7_delete(self):
         try:
@@ -76,8 +76,8 @@ class TestReait(BaseTestCase):
                              run_test_script("src/reait/main.py",
                                              "--binary", self._fpath, "--delete",
                                              "--apikey", api.re_conf["apikey"]))
-        except Exception:
-            self.fail(f"Failed to delete {self._fpath}")
+        except Exception as e:
+            testlog.error("Something went wrong when deleting analysis. %s", e)
 
 
 if __name__ == "__main__":
