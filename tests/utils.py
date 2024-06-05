@@ -43,6 +43,8 @@ class BaseTestCase(TestCase):
         # Randomly selects a binary from the binaries folder
         cls._fpath = join(cls._cwd, cls._platform, choice(listdir(join(cls._cwd, cls._platform))))
 
+        testlog.info("Random selection of '%s' in binaries folder", cls._fpath)
+
         api.re_conf["model"] += "-" + cls._platform
 
         # Deletes all previous analyses from the RevEng.AI platform
@@ -55,12 +57,14 @@ class BaseTestCase(TestCase):
 
             testlog.info("Getting all previous analyses for %s", bin_id)
 
-            binaries = api.reveng_req(get, "v1/search",
-                                      json_data={"sha_256_hash": bin_id}).json()["query_results"]
+            response = api.reveng_req(get, "v1/search", json_data={"sha_256_hash": bin_id+'1'}).json()
+            print(response)
+            if not response["success"]:
+                testlog.error("Failed to get all previous analysis.\n%s", response)
+            else:
+                for binary in response["query_results"]:
+                    testlog.info("Deleting analysis with binary ID: %d", binary["binary_id"])
 
-            for binary in binaries:
-                testlog.info("Deleting analysis with binary ID: %d", binary["binary_id"])
-
-                api.RE_delete(fpath, binary["binary_id"])
+                    api.RE_delete(fpath, binary["binary_id"])
         except HTTPError as e:
             testlog.error("Something weird happened while deleting all previous analyses. %s", e)
