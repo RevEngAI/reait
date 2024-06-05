@@ -61,7 +61,7 @@ class BaseTestCase(TestCase):
             testlog.info("Getting all previous analyses for %s", bin_id)
 
             response = api.reveng_req(get, "v1/search", json_data={"sha_256_hash": bin_id}).json()
-            print(response)
+            
             if not response["success"]:
                 testlog.error("Failed to get all previous analysis.\n%s", response)
             else:
