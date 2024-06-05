@@ -30,7 +30,7 @@ class TestAPIs(BaseTestCase):
 
     def test_2_analysis(self):
         try:
-            response = api.RE_analyse(self._fpath, model_name="binnet-0.3-x86-linux").json()
+            response = api.RE_analyse(self._fpath, model_name="binnet-0.3-x86-linux", duplicate=True).json()
 
             self.assertTrue(response["success"], "Analysis file has failed")
             self.assertIsInstance(response["binary_id"], int)

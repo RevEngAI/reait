@@ -34,19 +34,19 @@ class TestReait(BaseTestCase):
         try:
             self.assertEqual(0,
                              run_test_script("src/reait/main.py",
-                                             "--binary", self._fpath, "--analyse",
+                                             "--binary", self._fpath, "--analyse", "--duplicate"
                                              "--apikey", api.re_conf["apikey"],
                                              "--model", api.re_conf["model"]))
         except Exception:
             self.fail(f"Failed to analyse {self._fpath}")
         finally:
-            self.test_7_delete()
+            self._cleanup_binaries(self._fpath)
 
     def test_4_upload_analyse(self):
         try:
             self.assertEqual(0,
                              run_test_script("src/reait/main.py",
-                                             "--binary", self._fpath, "-A",
+                                             "--binary", self._fpath, "-A", "--duplicate",
                                              "--apikey", api.re_conf["apikey"],
                                              "--model", api.re_conf["model"]))
         except Exception:
