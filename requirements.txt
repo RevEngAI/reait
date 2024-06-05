@@ -1,0 +1,9 @@
+argparse
+requests
+rich
+tomli
+pandas
+numpy
+scipy
+scikit-learn
+lief

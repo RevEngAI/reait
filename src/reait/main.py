@@ -13,11 +13,11 @@ import os
 import argparse
 import json
 from sys import exit, stdout, stderr
-from reait import api, __version__
 from scipy.spatial import distance
 from glob import iglob
 import numpy as np
 
+import api
 
 rerr = Console(file=stderr, width=180)
 rout = Console(file=stdout, width=180)
@@ -37,7 +37,7 @@ def version() -> int:
 ::  :::::::::::  :::
 ::  :::::  ::::  :::
 ::::::::    :::::::: [/bold blue]
-  [bold red]reait[/bold red] [bold bright_green]v{__version__}[/bold bright_green]
+  [bold red]reait[/bold red] [bold bright_green]v{api.__version__}[/bold bright_green]
 """)
     rout.print("[yellow]Config:[/yellow]")
     print_json(data=api.re_conf)
@@ -289,7 +289,7 @@ def main() -> int:
         except TypeError as e:
             rerr.print("[bold red][!] Error, please supply a valid binary file using '-b' flag.[/bold red]")
             rerr.print(f"[yellow] {e} [/yellow]")
-            return -1
+            return 0
         except Exception as e:
             rerr.print(f"[bold red][!] Error, binary exec type could not be verified:[/bold red] {args.binary}")
             rerr.print(f"[yellow] {e} [/yellow]")

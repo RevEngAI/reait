@@ -17,6 +17,7 @@ from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
 from lief import parse, Binary, ELF, PE, MachO
 
+__version__ = "1.0.0"
 
 re_conf = {
     "apikey": "l1br3",
@@ -241,7 +242,8 @@ def RE_upload(fpath: str) -> Response:
                         '"message": "File already uploaded!",'
                         '"sha_256_hash": "{1}"{2}').format("{", bin_id, "}").encode()
     else:
-        res: Response = reveng_req(requests.post, "v1/upload", files={"file": open(fpath, "rb")})
+        with open(fpath, "rb") as fd:
+            res: Response = reveng_req(requests.post, "v1/upload", files={"file": fd})
 
         if res.ok:
             logger.info("Successfully uploaded binary to your account. %s - %s", fpath, bin_id)
@@ -555,7 +557,7 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
     """
     Get ISA format
     """
-    if exec_type == "elf":
+    if exec_type == "ELF":
         arch = binary.header.machine_type
 
         if arch == ELF.ARCH.i386:
@@ -563,10 +565,10 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
         elif arch == ELF.ARCH.x86_64:
             return "x86_64"
         elif arch == ELF.ARCH.ARM:
-            return "arm"
+            return "ARM32"
         elif arch == ELF.ARCH.AARCH64:
-            return "arm_64"
-    elif exec_type == "pe":
+            return "ARM64"
+    elif exec_type == "PE":
         machine_type = binary.header.machine
 
         if machine_type == PE.Header.MACHINE_TYPES.I386:
@@ -574,10 +576,10 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
         elif machine_type == PE.Header.MACHINE_TYPES.AMD64:
             return "x86_64"
         elif machine_type == PE.Header.MACHINE_TYPES.ARM:
-            return "arm"
+            return "ARM32"
         elif machine_type == PE.Header.MACHINE_TYPES.ARM64:
-            return "arm_64"
-    elif exec_type == "macho":
+            return "ARM64"
+    elif exec_type == "Mach-O":
         cpu_type = binary.header.cpu_type
 
         if cpu_type == MachO.CPU_TYPES.x86:
@@ -585,9 +587,9 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
         elif cpu_type == MachO.CPU_TYPES.x86_64:
             return "x86_64"
         elif cpu_type == MachO.CPU_TYPES.ARM:
-            return "arm"
+            return "ARM32"
         elif cpu_type == MachO.CPU_TYPES.ARM64:
-            return "arm_64"
+            return "ARM64"
 
     logger.error("Error, could not determine or unsupported ISA for binary format: %s.", exec_type)
     raise RuntimeError(f"Error, could not determine or unsupported ISA for binary format: {exec_type}.")
@@ -598,11 +600,11 @@ def _binary_format(binary: Binary) -> str:
     Get executable file format
     """
     if binary.format == Binary.FORMATS.PE:
-        return "pe"
+        return "PE"
     if binary.format == Binary.FORMATS.ELF:
-        return "elf"
+        return "ELF"
     if binary.format == Binary.FORMATS.MACHO:
-        return "macho"
+        return "Mach-O"
 
     logger.error("Error, could not determine or unsupported binary format: %s.", binary.format)
     raise RuntimeError(f"Error, could not determine or unsupported binary format: {binary.format}")
@@ -632,7 +634,7 @@ def parse_config() -> None:
     fpath = expanduser("~/.reait.toml")
 
     if isfile(fpath) and access(fpath, R_OK):
-        with open(fpath, "r") as fd:
+        with open(fpath) as fd:
             config = tomli.loads(fd.read())
 
             for key in ("apikey", "host", "model",):

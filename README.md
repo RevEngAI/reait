@@ -46,11 +46,6 @@ Once an analysis is complete, you may access RevEng.AI's BinNet embeddings for a
 reait -b /usr/bin/true -x > embeddings.json
 ```
 
-#### Extract embedding for symbol at vaddr 0x19F0
-```shell
-reait -b /usr/bin/true -x | jq ".[] | select(.vaddr==$((0x19F0))).embedding" > embedding.json
-```
-
 ### Search for similar symbols using an embedding
 To query our database of similar symbols based on an embedding, use `-n` to search using Approximate Nearest Neighbours. The `--nns` allows you to specify the number of results returned. A list of symbols with their names, distance (similarity), RevEng.AI collection set, source code filename, source code line number, and file creation timestamp is returned. 
 
@@ -151,7 +146,7 @@ Found /usr/bin/true:elf-x86_64
 ```shell
 apikey = "l1br3"
 host = "https://api.reveng.ai"
-model = "binnet-0.1"
+model = "binnet-0.3-x86"
 ```
 
 ## Contact
