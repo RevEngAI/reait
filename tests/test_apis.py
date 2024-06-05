@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from unittest import main
 
-from utils import BaseTestCase
+from .utils import BaseTestCase
 
 import reait.api as api
 
