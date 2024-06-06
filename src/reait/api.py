@@ -91,7 +91,8 @@ def re_bid_search(bin_id: str) -> int:
     bid = -1
 
     if res.ok:
-        binaries = res.json()["query_results"]
+        # Filter the result who matches the SHA-256
+        binaries = list(filter(lambda binary: binary["sha_256_hash"] == bin_id, res.json()["query_results"]))
 
         # Check only one record is returned
         if len(binaries) == 1:
