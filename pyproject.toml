@@ -11,17 +11,7 @@ classifiers=[
   "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
   "Operating System :: OS Independent"
 ]
-dependencies = [
-    "requests",
-    "rich",
-    "argparse",
-    "tomli",
-    "pandas",
-    "numpy",
-    "scipy",
-    "lief",
-    "scikit-learn",
-]
+dynamic = ["dependencies"]
 keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai", "vector", "embedding"]
 requires-python = ">=3.7"
 license = {file = "LICENSE"}
@@ -31,6 +21,9 @@ authors = [
 maintainers = [
   {name = "James Patrick-Evans", email = "james@reveng.ai"},
 ]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt",]}
 
 [project.urls]
 "Homepage" = "https://github.com/RevEng-AI/reait"
