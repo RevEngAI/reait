@@ -42,5 +42,5 @@ jobs:
         REAI_API_KEY: ${{ secrets.REAI_API_KEY }}
       run: |
         pip install pytest
-        pytest
+        python -m pytest tests/
     
