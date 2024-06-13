@@ -30,7 +30,7 @@ class TestAPIs(BaseTestCase):
 
     def test_2_analysis(self):
         try:
-            response = api.RE_analyse(self._fpath, model_name="binnet-0.3-x86-linux", duplicate=True).json()
+            response = api.RE_analyse(self._fpath, model_name=api.re_conf["model"], duplicate=True).json()
 
             self.assertTrue(response["success"], "Analysis file has failed")
             self.assertIsInstance(response["binary_id"], int)
@@ -40,7 +40,7 @@ class TestAPIs(BaseTestCase):
     def test_3_analysis_failure(self):
         try:
             # Should raise a ReaitError because of duplicate analysis
-            api.RE_analyse(self._fpath, model_name="binnet-0.3-x86-linux")
+            api.RE_analyse(self._fpath, model_name=api.re_conf["model"])
 
             self.fail(f"Duplicate analysis for {self._fpath}")
         except Exception as e:
