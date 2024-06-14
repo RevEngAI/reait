@@ -17,7 +17,7 @@ from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
 from lief import parse, Binary, ELF, PE, MachO
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 re_conf = {
     "apikey": "l1br3",
@@ -387,7 +387,7 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
     json_sims = [{"similaritiy": float(d[0]),
                   "vaddr": int(df.iloc[v]["vaddr"]),
                   "name": str(df.iloc[v]["name"]),
-                  "size": int(df.iloc[v]["size"])
+                  "size": int(df.iloc[v]["size"]),
                  } for d, v in similarities]
     return json_sims
 
@@ -405,7 +405,8 @@ def RE_nearest_symbols_batch(function_ids: list[int], nns: int = 5, collections:
     params = {"function_id_list": function_ids,
               "result_per_function": nns,
               "debug_mode": debug_enabled,
-              "distance": distance,}
+              "distance": distance,
+              }
 
     if collections:
         # api param is collection, not collections
@@ -437,7 +438,8 @@ def RE_nearest_functions(fpath: str, binary_id: int = 0, nns: int = 5,
 
     params = {"result_per_function": nns,
               "debug_mode": debug_enabled,
-              "distance": distance, }
+              "distance": distance,
+              }
 
     res: Response = reveng_req(requests.post, end_point, json_data=params)
 
@@ -500,6 +502,22 @@ def RE_functions_rename(function_id: int, new_name: str) -> Response:
     return res
 
 
+def RE_functions_rename_batch(mapping: dict[int, str]) -> Response:
+    """
+    Send a list of dictionaries, with a corresponding key as function ID and the desired function_name
+    :param mapping: dictionary containing the function_id as key and function_name as value
+    """
+    params = {"new_name_mapping":
+                  [{"function_id": func_id,
+                    "function_name": func_name,
+                    } for func_id, func_name in mapping.items()]
+              }
+
+    res: Response = reveng_req(requests.post, "v1/functions/batch/rename", json_data=params)
+
+    res.raise_for_status()
+    return res
+
 def RE_settings() -> Response:
     """
     Get the configuration settings
@@ -551,7 +569,7 @@ def re_binary_id(fpath: str) -> str:
     else:
         logger.error("File '%s' doesn't exist or isn't readable", fpath)
 
-    return "undefined"
+    return "Undefined"
 
 
 def _binary_isa(binary: Binary, exec_type: str) -> str:
