@@ -40,6 +40,8 @@ jobs:
     - name: Test with pytest
       env: # Set the secret as an environment variable
         REAI_API_KEY: ${{ secrets.REAI_API_KEY }}
+        REAI_API_HOST: ${{ secrets.REAI_API_HOST }}
+        HEADER_HOST: "api.local"
       run: |
         pip install pytest
         python -m pytest tests/

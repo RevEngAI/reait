@@ -210,6 +210,7 @@ def main() -> int:
                         help="Override analysis visibility (scope). Valid values are 'public' or 'private'[DEFAULT]")
     parser.add_argument("--tags", default=None, type=str,
                         help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3.")
+    parser.add_argument("--do-not-auto-tag", default=False, type=bool, action="store_true",help="Disable auto-tagging in API views",)
     parser.add_argument("--priority", default=0, type=int, help="Add priority to processing queue.")
     parser.add_argument("--verbose", default=False, action="store_true", help="Set verbose output.")
     parser.add_argument("--debug", default=None, help="Debug file path to write pass with analysis")
@@ -266,7 +267,9 @@ def main() -> int:
                                platform_options=args.platform, dynamic_execution=args.dynamic_execution,
                                command_line_args=args.cmd_line_args, file_options=args.exec_format,
                                binary_scope=args.scope.upper(), tags=tags, priority=args.priority,
-                               duplicate=args.duplicate, debug_fpath=args.debug)
+                               duplicate=args.duplicate, debug_fpath=args.debug,
+                               skip_scraping=args.do_not_auto_tag
+                               )
 
             if args.delete:
                 try:
@@ -306,7 +309,9 @@ def main() -> int:
                            platform_options=args.platform, dynamic_execution=args.dynamic_execution,
                            command_line_args=args.cmd_line_args, file_options=args.exec_format,
                            binary_scope=args.scope.upper(), tags=tags, priority=args.priority,
-                           duplicate=args.duplicate, debug_fpath=args.debug)
+                           duplicate=args.duplicate, debug_fpath=args.debug,
+                           skip_scraping=args.do_not_auto_tag
+                           )
 
         elif args.extract:
             embeddings = api.RE_embeddings(args.binary).json()
