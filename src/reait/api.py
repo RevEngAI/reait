@@ -10,7 +10,7 @@ from hashlib import sha256
 from datetime import datetime
 
 from sklearn.metrics.pairwise import cosine_similarity
-from os import access, R_OK
+from os import access, R_OK, environ
 from os.path import basename, isfile, expanduser, getsize
 from requests import request, Response, HTTPError
 from numpy import array, vstack, dot, arccos, pi
@@ -20,9 +20,9 @@ from lief import parse, Binary, ELF, PE, MachO
 __version__ = "1.0.1"
 
 re_conf = {
-    "apikey": "l1br3",
-    "host": "https://api.reveng.ai",
-    "model": "binnet-0.3-x86",
+    "apikey": environ.get("REAI_API_KEY", "l1br3"),
+    "host": environ.get("REAI_API_HOST", "https://api.reveng.ai"),
+    "header-host": environ.get("HEADER_HOST", None),
 }
 
 
@@ -41,11 +41,11 @@ class ReaitError(HTTPError):
         super().__init__(reason, response=response)
 
 
-def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict = None,
+def reveng_req(req: request, end_point: str, data: dict = None, ex_headers: dict = None,
                params: dict = None, json_data: dict = None, timeout: int = 60, files: dict = None) -> Response:
     """
     Constructs and sends a Request
-    :param r: Method for the new Request
+    :param req: Method for the new Request
     :param end_point: Endpoint to add to the base URL
     :param ex_headers: Extended HTTP headers to add
     :param data: Dictionary, list of tuples, bytes, or file-like object to send in the body
@@ -56,17 +56,19 @@ def reveng_req(r: request, end_point: str, data: dict = None, ex_headers: dict =
     """
     url = f"{re_conf['host']}/{end_point if end_point[0] != '/' else end_point[1:]}"
     headers = {"Authorization": re_conf["apikey"]}
+    if re_conf["header-host"] is not None:
+        headers["Host"] = re_conf["header-host"]
 
     if ex_headers:
         headers.update(ex_headers)
 
     logger.debug("Making %s request %s:\n  - headers: %s\n  - data: %s\n  - json_data: %s\n  - params: %s\n  - files: %s",
-                 r.__name__.upper(), url, headers, data, json_data, params, files)
+                 req.__name__.upper(), url, headers, data, json_data, params, files)
 
-    response: Response = r(url, headers=headers, json=json_data, data=data, params=params, timeout=timeout, files=files)
+    response: Response = req(url, headers=headers, json=json_data, data=data, params=params, timeout=timeout, files=files)
 
     logger.debug("Making %s response %s:\n  - headers: %s\n  - status_code: %d\n  - content: %s",
-                 r.__name__.upper(), url, response.headers, response.status_code, response.text)
+                 req.__name__.upper(), url, response.headers, response.status_code, response.text)
 
     return response
 
