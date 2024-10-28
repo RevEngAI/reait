@@ -17,7 +17,7 @@ from scipy.spatial import distance
 from glob import iglob
 import numpy as np
 
-import api
+from . import api
 
 rerr = Console(file=stderr, width=180)
 rout = Console(file=stdout, width=180)
@@ -210,7 +210,7 @@ def main() -> int:
                         help="Override analysis visibility (scope). Valid values are 'public' or 'private'[DEFAULT]")
     parser.add_argument("--tags", default=None, type=str,
                         help="Assign tags to an analysis. Valid responses are tag1,tag2,tag3.")
-    parser.add_argument("--do-not-auto-tag", default=False, type=bool, action="store_true",help="Disable auto-tagging in API views",)
+    parser.add_argument("--do-not-auto-tag", default=False, action="store_true" ,help="Disable auto-tagging in API views",)
     parser.add_argument("--priority", default=0, type=int, help="Add priority to processing queue.")
     parser.add_argument("--verbose", default=False, action="store_true", help="Set verbose output.")
     parser.add_argument("--debug", default=None, help="Debug file path to write pass with analysis")

@@ -46,10 +46,9 @@ class BaseTestCase(TestCase):
         testlog.info("Random selection of '%s' in binaries folder", cls._fpath)
 
         api.re_conf["model"] = f"{cls.MODEL_NAME_PREFIX}{cls._platform}"
-
         # Get the API key from the environment variable
         api.re_conf["apikey"] = getenv("REAI_API_KEY", api.re_conf["apikey"])
-
+        api.re_conf["header-host"] = getenv("HEADER_HOST", 'api.local')
 
         # Deletes all previous analyses from the RevEng.AI platform
         cls._cleanup_binaries(cls._fpath)
