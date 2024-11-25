@@ -16,6 +16,7 @@ from sys import exit, stdout, stderr
 from scipy.spatial import distance
 from glob import iglob
 import numpy as np
+from requests import HTTPError
 
 from . import api
 
@@ -158,6 +159,29 @@ def validate_dir(arg):
     raise NotADirectoryError(f"Directory path {arg} does not exists.")
 
 
+
+def report_api_error_message(f):
+    """
+        Print message from API errors to console
+    """
+    def decorate(f):
+        def applicator(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except HTTPError as err:
+                content = err.response.json()
+                if 'message' in content:
+                    rerr.print(f"[bold red]API Error[/bold red] [bold blue_violet]{err.response.status_code}[/bold blue_violet][bold red] to [/bold red][bold yellow]{err.response.url}[/bold yellow][bold red] {err.response.json()['message']}[/bold red]")
+                    if 'errors' in content:
+                        for msg in content['errors']:
+                            rerr.print(f"[bold red]{msg['message']}[/bold red]")
+
+                    exit()
+
+        return applicator
+    return decorate(f)
+
+@report_api_error_message
 def main() -> int:
     """
     Tool entry
