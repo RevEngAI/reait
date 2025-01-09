@@ -491,14 +491,15 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
 def RE_binary_additonal_details(fpath: str, binary_id: int = None) -> Response:
     bin_id = re_binary_id(fpath)
     bid = re_bid_search(bin_id) if binary_id is None else binary_id
-
     if bid == -1:
         raise ReaitError(f"No matches found for hash: {bin_id}")
 
-    endpoint = f"v2/analyse/functions/{bid}"
+    endpoint = f"v2/binaries/{bid}/additional-details"
     res: Response = reveng_req(requests.get, endpoint)
-
     res.raise_for_status()
+
+    logger.info(f"Additional Details Info({fpath}):\n")
+    logger.info(f"\n{json.dumps(res.json(), indent=4)}")
     return res
 
 

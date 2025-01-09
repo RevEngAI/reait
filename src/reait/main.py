@@ -197,6 +197,7 @@ def main() -> int:
     parser.add_argument("-A", action="store_true", help="Upload and Analyse a new binary")
     parser.add_argument("-u", "--upload", action="store_true", help="Upload a new binary to remote server")
     parser.add_argument("--duplicate", default=False, action="store_true", help="Duplicate an existing binary")
+    parser.add_argument("--details", default=False, action="store_true", help="Get binary additional details")
     parser.add_argument("-e", "--embedding", help="Path of JSON file containing a BinNet embedding")
     parser.add_argument("--nns", default="5", help="Number of approximate nearest neighbors to fetch", type=int)
     parser.add_argument("--collections", default=None,
@@ -306,7 +307,7 @@ def main() -> int:
             if not (args.upload or args.analyse or args.delete):
                 rerr.print(f"Error, '-D' flag only supports upload, analyse, or delete.")
                 return -1
-    elif args.analyse or args.extract or args.logs or args.delete or \
+    elif args.analyse or args.extract or args.logs or args.delete or args.details or \
             args.upload or args.match or args.cves or args.sbom or args.status:
         try:
             fpath, exec_fmt, exec_isa = verify_binary(args.binary)
@@ -383,7 +384,6 @@ def main() -> int:
 
         elif args.cves:
             api.RE_cves(args.binary)
-
         elif args.details:
             api.RE_binary_additonal_details(args.binary)
 
