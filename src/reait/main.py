@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 
-import logging
-from pathlib import Path
-from typing import Optional
+from sys import exit, stdout, stderr
 
-from rich import print_json
-from rich.progress import track
-from rich.console import Console
-import os
 import argparse
 import json
-from sys import exit, stdout, stderr
-from scipy.spatial import distance
-from glob import iglob
+import logging
 import numpy as np
+import os
+from glob import iglob
+from pathlib import Path
 from requests import HTTPError
+from rich import print_json
+from rich.console import Console
+from rich.progress import track
+from scipy.spatial import distance
+from typing import Optional
 
 from . import api
 
@@ -383,6 +383,9 @@ def main() -> int:
 
         elif args.cves:
             api.RE_cves(args.binary)
+
+        elif args.details:
+            api.RE_binary_additonal_details(args.binary)
 
         elif args.status:
             api.RE_status(args.binary, console=True)

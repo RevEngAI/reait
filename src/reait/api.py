@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, annotations
 
-import json
-import tomli
-import logging
-import requests
-
-from hashlib import sha256
-from datetime import datetime
-
-from sklearn.metrics.pairwise import cosine_similarity
 from os import access, R_OK, environ
 from os.path import basename, isfile, expanduser, getsize
-from requests import request, Response, HTTPError
+
+import json
+import logging
+import requests
+import tomli
+from datetime import datetime
+from hashlib import sha256
+from lief import parse, Binary, ELF, PE, MachO
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
-from lief import parse, Binary, ELF, PE, MachO
+from requests import request, Response, HTTPError
+from sklearn.metrics.pairwise import cosine_similarity
 
 __version__ = "1.0.1"
 
@@ -484,6 +483,20 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
     res: Response = reveng_req(requests.get, end_point)
 
     logger.info("SBOM for %s:\n%s", fpath, res.text)
+
+    res.raise_for_status()
+    return res
+
+
+def RE_binary_additonal_details(fpath: str, binary_id: int = None) -> Response:
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id is None else binary_id
+
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}")
+
+    endpoint = f"v2/analyse/functions/{bid}"
+    res: Response = reveng_req(requests.get, endpoint)
 
     res.raise_for_status()
     return res
