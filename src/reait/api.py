@@ -21,7 +21,6 @@ __version__ = "1.0.1"
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", "l1br3"),
     "host": environ.get("REAI_API_HOST", "https://api.reveng.ai"),
-    "header-host": environ.get("HEADER_HOST", None),
 }
 
 
@@ -55,8 +54,6 @@ def reveng_req(req: request, end_point: str, data: dict = None, ex_headers: dict
     """
     url = f"{re_conf['host']}/{end_point if end_point[0] != '/' else end_point[1:]}"
     headers = {"Authorization": re_conf["apikey"]}
-    if re_conf["header-host"] is not None:
-        headers["Host"] = re_conf["header-host"]
 
     if ex_headers:
         headers.update(ex_headers)
