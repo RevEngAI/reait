@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, annotations
 
-import json
-import tomli
-import logging
-import requests
-
-from hashlib import sha256
-from datetime import datetime
-
-from sklearn.metrics.pairwise import cosine_similarity
 from os import access, R_OK, environ
 from os.path import basename, isfile, expanduser, getsize
-from requests import request, Response, HTTPError
+
+import json
+import logging
+import requests
+import tomli
+from datetime import datetime
+from hashlib import sha256
+from lief import parse, Binary, ELF, PE, MachO
 from numpy import array, vstack, dot, arccos, pi
 from pandas import DataFrame
-from lief import parse, Binary, ELF, PE, MachO
+from requests import request, Response, HTTPError
+from sklearn.metrics.pairwise import cosine_similarity
 
 __version__ = "1.0.1"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", "l1br3"),
     "host": environ.get("REAI_API_HOST", "https://api.reveng.ai"),
-    "header-host": environ.get("HEADER_HOST", None),
 }
 
 
@@ -56,8 +54,6 @@ def reveng_req(req: request, end_point: str, data: dict = None, ex_headers: dict
     """
     url = f"{re_conf['host']}/{end_point if end_point[0] != '/' else end_point[1:]}"
     headers = {"Authorization": re_conf["apikey"]}
-    if re_conf["header-host"] is not None:
-        headers["Host"] = re_conf["header-host"]
 
     if ex_headers:
         headers.update(ex_headers)
@@ -486,6 +482,21 @@ def RE_SBOM(fpath: str, binary_id: int = 0) -> Response:
     logger.info("SBOM for %s:\n%s", fpath, res.text)
 
     res.raise_for_status()
+    return res
+
+
+def RE_binary_additonal_details(fpath: str, binary_id: int = None) -> Response:
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id is None else binary_id
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}")
+
+    endpoint = f"v2/binaries/{bid}/additional-details"
+    res: Response = reveng_req(requests.get, endpoint)
+    res.raise_for_status()
+
+    logger.info(f"Additional Details Info({fpath}):\n")
+    logger.info(f"\n{json.dumps(res.json(), indent=4)}")
     return res
 
 
