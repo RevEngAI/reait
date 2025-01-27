@@ -686,3 +686,25 @@ def angular_distance(x, y) -> float:
     """
     cos = dot(x, y) / ((dot(x, x) * dot(y, y))**0.5)
     return 1.0 - arccos(cos) / pi
+
+def RE_analysis_id(fpath: str, binary_id: int = 0) -> Response:
+    """
+    Get the Analysis ID for the Binary ID
+    :param fpath: File path for binary to analyse
+    :param binary_id: ID of binary
+    """
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id == 0 else binary_id
+
+    end_point = f"v2/analyses/lookup/{bid}"
+
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}", end_point)
+
+    res: Response = reveng_req(requests.get, end_point)
+
+    logger.info("SBOM for %s:\n%s", fpath, res.text)
+
+    res.raise_for_status()
+    return res
+
