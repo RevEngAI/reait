@@ -215,7 +215,6 @@ def RE_analyse(fpath: str, model_name: str = None, isa_options: str = None,
             params[p_name] = p_value
 
     res: Response = reveng_req(requests.post, end_point, json_data=params)
-
     if res.ok:
         logger.info("Successfully submitted binary for analysis. %s - %s", fpath, bin_id)
     elif res.status_code == 400:
@@ -703,8 +702,33 @@ def RE_analysis_id(fpath: str, binary_id: int = 0) -> Response:
 
     res: Response = reveng_req(requests.get, end_point)
 
-    logger.info("SBOM for %s:\n%s", fpath, res.text)
+    logger.info("Analysis ID for %s:\n%s", fpath, res.text)
 
     res.raise_for_status()
     return res
 
+def RE_generate_data_types(analysis_id: int, function_ids: list[int]) -> Response:
+    """
+    Generate data types for the analysis
+    :param aid: Analysis ID
+    """
+    end_point = f"/v2/analyses/{analysis_id}/info/functions/data_types"
+
+    res: Response = reveng_req(requests.post, end_point, json_data={"function_ids": function_ids})
+    res.raise_for_status()
+    return res
+
+
+def RE_list_data_types(analysis_id: int, function_ids: list[int]) -> Response:
+    """
+    List data types for the analysis
+    :param aid: Analysis ID
+    :param function_ids: List of function IDs
+    """
+    end_point = f"/v2/analyses/{analysis_id}/info/functions/data_types"
+
+
+    res: Response = reveng_req(requests.get, end_point, json_data={"function_ids": function_ids})
+
+    res.raise_for_status()
+    return res
