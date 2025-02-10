@@ -568,6 +568,50 @@ def RE_authentication() -> Response:
     return res
 
 
+def RE_functions_list(
+        analysis_id: int,
+        search_term: str = "",
+        min_v_address: int = 0,
+        max_v_address: int = 0) -> Response:
+    """
+    Get the functions of a binary
+    :param binary_id: Binary ID
+    """
+    params = {}
+    if search_term:
+        params["search_term"] = search_term
+
+    if min_v_address != 0:
+        params["min_v_address"] = min_v_address
+
+    if max_v_address != 0:
+        params["max_v_address"] = max_v_address
+
+    res: Response = reveng_req(
+        requests.get,
+        f"v2/analyses/{analysis_id}/info/functions/list",
+        params=params
+    )
+
+    res.raise_for_status()
+
+    return res
+
+
+def RE_function_callers_callees(function: int) -> Response:
+    """
+    Get the callers and callees of a functions
+    :param function: Function ID
+    """
+    res: Response = reveng_req(
+        requests.get,
+        f"v2/functions/{function}/callees_callers"
+    )
+
+    res.raise_for_status()
+    return res
+
+
 def re_binary_id(fpath: str) -> str:
     """
     Take the SHA-256 hash of binary file
