@@ -612,6 +612,20 @@ def RE_function_callers_callees(function: int) -> Response:
     return res
 
 
+def RE_analysis_info(analysis_id: int) -> Response:
+    """
+    Get the analysis information
+    :param analysis_id: Analysis ID
+    """
+    res: Response = reveng_req(
+        requests.get,
+        f"v2/analyses/{analysis_id}/info/basic"
+    )
+
+    res.raise_for_status()
+    return res
+
+
 def re_binary_id(fpath: str) -> str:
     """
     Take the SHA-256 hash of binary file
