@@ -785,8 +785,28 @@ def RE_list_data_types(analysis_id: int, function_ids: list[int]) -> Response:
     """
     end_point = f"/v2/analyses/{analysis_id}/info/functions/data_types"
 
-
     res: Response = reveng_req(requests.get, end_point, json_data={"function_ids": function_ids})
+    res.raise_for_status()
+    return res
 
+def RE_begin_ai_decompilation(function_id: int) -> Response:
+    """
+    Begin AI decompilation for the function
+    :param function_id: Function ID
+    """
+    end_point = f"/v2/ai-decompilation"
+
+    res: Response = reveng_req(requests.post, end_point, json_data={"function_id": function_id})
+    res.raise_for_status()
+    return res
+
+def RE_poll_ai_decompilation(function_id: int) -> Response:
+    """
+    Poll AI decompilation for the function
+    :param function_id: Function ID
+    """
+    end_point = f"/v2/ai-decompilation/{function_id}"
+
+    res: Response = reveng_req(requests.get, end_point)
     res.raise_for_status()
     return res
