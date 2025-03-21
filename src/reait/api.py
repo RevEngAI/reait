@@ -498,6 +498,20 @@ def RE_binary_additonal_details(fpath: str, binary_id: int = None) -> Response:
     logger.info(f"\n{json.dumps(res.json(), indent=4)}")
     return res
 
+def RE_binary_details(fpath: str, binary_id: int = None) -> Response:
+    bin_id = re_binary_id(fpath)
+    bid = re_bid_search(bin_id) if binary_id is None else binary_id
+    if bid == -1:
+        raise ReaitError(f"No matches found for hash: {bin_id}")
+
+    endpoint = f"v2/binaries/{bid}/details"
+    res: Response = reveng_req(requests.get, endpoint)
+    res.raise_for_status()
+
+    logger.info(f"Details Info({fpath}):\n")
+    logger.info(f"\n{json.dumps(res.json(), indent=4)}")
+    return res
+
 
 def RE_functions_rename(function_id: int, new_name: str) -> Response:
     """
@@ -640,9 +654,8 @@ def re_binary_id(fpath: str) -> str:
 
         return hf.hexdigest()
     else:
-        logger.error("File '%s' doesn't exist or isn't readable", fpath)
+        return fpath
 
-    return "Undefined"
 
 
 def _binary_isa(binary: Binary, exec_type: str) -> str:
@@ -810,3 +823,48 @@ def RE_poll_ai_decompilation(function_id: int) -> Response:
     res: Response = reveng_req(requests.get, end_point)
     res.raise_for_status()
     return res
+
+# Bin_id is referred to as hash in this program - to maintain usage BID = id of a binary bin_id = hash
+# Assumes a file has been passed, correct hash only
+# Returns the BID of the binary_id (hash)
+def RE_latest_bid(bin_id: str) -> int:
+    res: Response = reveng_req(requests.get, "v1/search", json_data={"sha_256_hash": bin_id})
+
+    bid = -1
+
+    if res.ok:
+        # Filter the result who matches the SHA-256
+        binaries = list(filter(lambda binary: binary["sha_256_hash"] == bin_id, res.json()["query_results"]))
+
+        # Check only one record is returned
+        if len(binaries) == 1:
+            binary = binaries[0]
+            bid = binary["binary_id"]
+
+            logger.info("Only one record exists, selecting - ID: %d, Name: %s, Creation: %s, Model: %s, Status: %s",
+                        bid, binary["binary_name"], binary["creation"], binary["model_name"], binary["status"])
+        elif len(binaries) > 1:
+            binaries.sort(key=lambda binary: datetime.fromisoformat(binary["creation"]).timestamp(), reverse=True)
+
+            logger.info("%d matches found for hash: %s", len(binaries), bin_id)
+
+            options_dict = {}
+
+            for idx, binary in enumerate(binaries):
+                logger.info("[%d] - ID: %d, Name: %s, Creation: %s, Model: %s, Status: %s",
+                            idx, binary["binary_id"], binary["binary_name"], binary["creation"],
+                            binary["model_name"], binary["status"])
+
+                options_dict[idx] = binary["binary_id"]
+            try:
+                bid = options_dict[0]
+            except Exception:
+                bid = options_dict[0]
+                logger.warning("Select the most recent analysis - ID: %d", bid)
+        else:
+            logger.warning("No matches found for hash: %s", bin_id)
+    else:
+        logger.warning("Bad Request: %s", res.text)
+
+    res.raise_for_status()
+    return bid    
