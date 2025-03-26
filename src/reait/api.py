@@ -686,10 +686,9 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
     """
     if exec_type == "ELF":
         arch = binary.header.machine_type
-
-        if arch == ELF.ARCH.i386:
+        if arch == ELF.ARCH.I386:
             return "x86"
-        elif arch == ELF.ARCH.x86_64:
+        elif arch == ELF.ARCH.X86_64:
             return "x86_64"
         elif arch == ELF.ARCH.ARM:
             return "ARM32"
@@ -697,7 +696,6 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
             return "ARM64"
     elif exec_type == "PE":
         machine_type = binary.header.machine
-
         if machine_type == PE.Header.MACHINE_TYPES.I386:
             return "x86"
         elif machine_type == PE.Header.MACHINE_TYPES.AMD64:
@@ -709,19 +707,23 @@ def _binary_isa(binary: Binary, exec_type: str) -> str:
     elif exec_type == "Mach-O":
         cpu_type = binary.header.cpu_type
 
-        if cpu_type == MachO.CPU_TYPES.x86:
+        if cpu_type == MachO.Header.CPU_TYPE.X86:
             return "x86"
-        elif cpu_type == MachO.CPU_TYPES.x86_64:
+        elif cpu_type == MachO.Header.CPU_TYPE.X86_64:
             return "x86_64"
-        elif cpu_type == MachO.CPU_TYPES.ARM:
+        elif cpu_type == MachO.Header.CPU_TYPE.ARM:
             return "ARM32"
-        elif cpu_type == MachO.CPU_TYPES.ARM64:
+        elif cpu_type == MachO.Header.CPU_TYPE.ARM64:
             return "ARM64"
 
     logger.error(
-        "Error, could not determine or unsupported ISA for binary format: %s.", exec_type)
+        "Error, could not determine or unsupported "
+        f"ISA for binary format: {exec_type}."
+    )
     raise RuntimeError(
-        f"Error, could not determine or unsupported ISA for binary format: {exec_type}.")
+        "Error, could not determine or unsupported "
+        f"ISA for binary format: {exec_type}."
+    )
 
 
 def _binary_format(binary: Binary) -> str:
@@ -736,9 +738,13 @@ def _binary_format(binary: Binary) -> str:
         return "Mach-O"
 
     logger.error(
-        "Error, could not determine or unsupported binary format: %s.", binary.format)
+        "Error, could not determine or unsupported"
+        f" binary format: {binary.format}."
+    )
     raise RuntimeError(
-        f"Error, could not determine or unsupported binary format: {binary.format}")
+        "Error, could not determine or "
+        f"unsupported binary format: {binary.format}"
+    )
 
 
 def file_type(fpath: str) -> tuple[str, str]:
