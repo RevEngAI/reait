@@ -864,6 +864,17 @@ def RE_poll_ai_decompilation(function_id: int) -> Response:
     return res
 
 
+def RE_analysis_lookup(binary_id: int) -> Response:
+    """
+    Get the Analysis ID from a Binary ID
+    :param binary_id: Binary ID
+    """
+    end_point = f"/v2/analyses/lookup/{binary_id}"
+    res: Response = reveng_req(requests.get, end_point)
+    res.raise_for_status()
+    return res
+
+
 # Bin_id is referred to as hash in this program - to maintain usage BID = id
 # of a binary bin_id = hash
 # Assumes a file has been passed, correct hash only
