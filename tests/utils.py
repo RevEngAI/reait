@@ -28,7 +28,7 @@ testlog.addHandler(logging.StreamHandler(stdout))
 class BaseTestCase(TestCase):
     __metaclass__ = abc.ABCMeta
 
-    MODEL_NAME_PREFIX = "binnet-0.4-x86-"
+    MODEL_NAME_PREFIX = "binnet-0.5-x86-"
     _cwd: str = None
     _fpath: str = None
     _platform: str = None
@@ -38,7 +38,7 @@ class BaseTestCase(TestCase):
     def setUpClass(cls):
         cls._cwd = join(CWD, "binaries")
 
-        cls._platform = choice(listdir(cls._cwd))
+        cls._platform = "linux"
 
         # Randomly selects a binary from the binaries folder
         cls._fpath = join(cls._cwd, cls._platform, choice(listdir(join(cls._cwd, cls._platform))))

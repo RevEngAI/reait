@@ -14,7 +14,7 @@ classifiers=[
 dynamic = ["dependencies"]
 keywords = ["reverse", "engineering", "reveng.ai", "reveng", "machine", "learning", "binary", "analysis", "ml", "ai", "vector", "embedding"]
 description = "RevEng.AI Toolkit and Python API"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
   {name = "James Patrick-Evans", email = "james@reveng.ai"},
