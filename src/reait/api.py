@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from __future__ import print_function, annotations
 
 from os import access, R_OK, environ
