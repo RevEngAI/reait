@@ -892,15 +892,6 @@ def parse_config() -> None:
         logger.info("File %s doesn't exist or isn't readable", fpath)
 
 
-def angular_distance(x, y) -> float:
-    """
-    Compute angular distance between two embedding vectors
-    Normalised euclidian distance
-    """
-    cos = dot(x, y) / ((dot(x, x) * dot(y, y)) ** 0.5)
-    return 1.0 - arccos(cos) / pi
-
-
 def RE_analysis_id(fpath: str, binary_id: int = 0) -> Response:
     """
     Get the Analysis ID for the Binary ID
