@@ -18,7 +18,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 __version__ = "1.0.1"
 
 re_conf = {
-    "apikey": environ.get("REAI_API_KEY", "l1br3"),
+    "apikey": environ.get("REAI_API_KEY", ""),
     "host": environ.get("REAI_API_HOST", "https://api.reveng.ai"),
 }
 
