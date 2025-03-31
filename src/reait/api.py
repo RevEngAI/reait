@@ -881,6 +881,27 @@ def RE_analysis_lookup(binary_id: int) -> Response:
     return res
 
 
+def RE_collections_search(
+        partial_collection_name: str,
+        partial_binary_name: str = None,
+        partial_binary_sha256: str = None,
+        tags: list[str] | str = None,
+        model_name: str = None,
+) -> Response:
+    """
+    """
+    end_point = "/v2/search/collections"
+    res: Response = reveng_req(requests.get, end_point, params={
+        "partial_collection_name": partial_collection_name,
+        "partial_binary_name": partial_binary_name,
+        "partial_binary_sha256": partial_binary_sha256,
+        "tags": tags,
+        "model_name": model_name,
+    })
+    res.raise_for_status()
+    return res
+
+
 # Bin_id is referred to as hash in this program - to maintain usage BID = id
 # of a binary bin_id = hash
 # Assumes a file has been passed, correct hash only
