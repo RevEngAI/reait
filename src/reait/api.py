@@ -882,21 +882,21 @@ def RE_analysis_lookup(binary_id: int) -> Response:
 
 
 def RE_collections_search(
-        partial_collection_name: str,
-        partial_binary_name: str = None,
-        partial_binary_sha256: str = None,
-        tags: list[str] | str = None,
-        model_name: str = None,
+        page: int = 1,
+        page_size: int = 10,
+        partial_collection_name: str = "",
+        partial_binary_name: str = "",
+        partial_binary_sha256: str = "",
+        tags: list[str] | str = "",
+        model_name: str = "",
 ) -> Response:
     """
     """
     end_point = "/v2/search/collections"
     res: Response = reveng_req(requests.get, end_point, params={
+        "page": page,
+        "page_size": page_size,
         "partial_collection_name": partial_collection_name,
-        "partial_binary_name": partial_binary_name,
-        "partial_binary_sha256": partial_binary_sha256,
-        "tags": tags,
-        "model_name": model_name,
     })
     res.raise_for_status()
     return res
