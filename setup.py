@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
 
@@ -18,7 +17,12 @@ setup(
     author="James Patrick-Evans",
     author_email="james@reveng.ai",
     platforms="Cross Platform",
-    packages=find_packages(where="src", exclude=["tests",]),
+    packages=find_packages(
+        where="src",
+        exclude=[
+            "tests",
+        ],
+    ),
     package_dir={
         "": "src",
     },
