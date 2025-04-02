@@ -1117,3 +1117,24 @@ def RE_search(fpath: str) -> Response:
 
     res.raise_for_status()
     return res
+
+
+# NOTE: this uses a newer API version
+def RE_similar_functions(
+    function_id: int,
+    limit: int = 20,
+    distance: int | float = 0.09999999999999998,
+    debug: bool = False,
+):
+    params = {
+        "distance": distance,
+        "limit": limit,
+        "debug": debug,
+    }
+
+    res: Response = reveng_req(
+        requests.get, f"v2/functions/{function_id}/similar-functions", params=params
+    )
+
+    res.raise_for_status()
+    return res
