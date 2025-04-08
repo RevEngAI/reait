@@ -243,6 +243,9 @@ def RE_analyse(
     symbols: dict = None,
     debug_fpath: str = None,
     skip_scraping: bool = False,
+    skip_capabilities: bool = False,
+    skip_sbom: bool = False,
+    advanced_analysis: bool = False
 ) -> Response:
     """
     Start analysis job for binary file
@@ -302,6 +305,9 @@ def RE_analyse(
         "priority",
         "symbols",
         "skip_scraping",
+        "skip_capabilities",
+        "skip_sbom",
+        "advanced_analysis"
     ):
         p_value = locals()[p_name]
 
