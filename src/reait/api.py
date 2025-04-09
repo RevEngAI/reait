@@ -925,7 +925,7 @@ def RE_generate_data_types(analysis_id: int, function_ids: list[int]) -> Respons
     Generate data types for the analysis
     :param aid: Analysis ID
     """
-    end_point = f"/v2/analyses/{analysis_id}/info/functions/data_types"
+    end_point = f"/v2/analyses/{analysis_id}/functions/data_types"
 
     res: Response = reveng_req(
         requests.post, end_point, json_data={"function_ids": function_ids}
@@ -940,7 +940,7 @@ def RE_list_data_types(analysis_id: int, function_ids: list[int]) -> Response:
     :param aid: Analysis ID
     :param function_ids: List of function IDs
     """
-    end_point = f"/v2/analyses/{analysis_id}/info/functions/data_types"
+    end_point = f"/v2/analyses/{analysis_id}/functions/data_types"
 
     res: Response = reveng_req(
         requests.get, end_point, json_data={"function_ids": function_ids}
