@@ -15,7 +15,7 @@ from pandas import DataFrame
 from requests import request, Response, HTTPError
 from sklearn.metrics.pairwise import cosine_similarity
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
@@ -32,7 +32,8 @@ class ReaitError(HTTPError):
 
         response.reason = reason
         response.status_code = 404
-        response._content = b'{"success": false, "error": "' + reason.encode() + b'"}'
+        response._content = b'{"success": false, "error": "' + \
+            reason.encode() + b'"}'
         response.url = (
             f"{re_conf['host']}/{end_point if end_point[0] != '/' else end_point[1:]}"
             if end_point
@@ -321,7 +322,8 @@ def RE_analyse(
         )
     elif res.status_code == 400:
         if "error" in res.json().keys():
-            logger.warning("Error analysing %s - %s", fpath, res.json()["error"])
+            logger.warning("Error analysing %s - %s",
+                           fpath, res.json()["error"])
 
     res.raise_for_status()
     return res
@@ -336,7 +338,8 @@ def RE_upload(fpath: str) -> Response:
     result = re_hash_check(bin_id)
 
     if result:
-        logger.info("File %s - %s already uploaded. Skipping upload...", fpath, bin_id)
+        logger.info(
+            "File %s - %s already uploaded. Skipping upload...", fpath, bin_id)
 
         res = Response()
         res.status_code = 200
@@ -352,7 +355,8 @@ def RE_upload(fpath: str) -> Response:
         )
     else:
         with open(fpath, "rb") as fd:
-            res: Response = reveng_req(requests.post, "v1/upload", files={"file": fd})
+            res: Response = reveng_req(
+                requests.post, "v1/upload", files={"file": fd})
 
         if res.ok:
             logger.info(
@@ -360,7 +364,8 @@ def RE_upload(fpath: str) -> Response:
             )
         elif res.status_code == 400:
             if "error" in res.json().keys():
-                logger.warning("Error uploading %s - %s", fpath, res.json()["error"])
+                logger.warning("Error uploading %s - %s",
+                               fpath, res.json()["error"])
         elif res.status_code == 413:
             logger.warning("File too large. Please upload files under 10MB.")
         elif res.status_code == 500:
@@ -517,7 +522,8 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
 def RE_nearest_symbols_batch(
     function_ids: list[int],
     nns: int = 5,
-    collections: list[str] = None,
+    collections: list[int] = None,
+    binaries: list[int] = None,
     distance: float = 0.1,
     debug_enabled: bool = False,
 ) -> Response:
@@ -537,10 +543,13 @@ def RE_nearest_symbols_batch(
     }
 
     if collections:
-        # api param is collection, not collections
-        params["collection"] = collections
+        params["collection_search_list"] = collections
 
-    res: Response = reveng_req(requests.post, "v1/ann/symbol/batch", json_data=params)
+    if binaries:
+        params["binaries_search_list"] = binaries
+
+    res: Response = reveng_req(
+        requests.post, "v1/ann/symbol/batch", json_data=params)
 
     res.raise_for_status()
     return res
@@ -661,9 +670,11 @@ def RE_functions_rename(function_id: int, new_name: str) -> Response:
     )
 
     if res.ok:
-        logger.info("FunctionId %d has been renamed with '%s'.", function_id, new_name)
+        logger.info("FunctionId %d has been renamed with '%s'.",
+                    function_id, new_name)
     else:
-        logger.warning("Error, cannot rename FunctionId %d. %s", function_id, res.text)
+        logger.warning("Error, cannot rename FunctionId %d. %s",
+                       function_id, res.text)
 
     res.raise_for_status()
     return res
@@ -761,7 +772,8 @@ def RE_function_callers_callees(function: int) -> Response:
     Get the callers and callees of a functions
     :param function: Function ID
     """
-    res: Response = reveng_req(requests.get, f"v2/functions/{function}/callees_callers")
+    res: Response = reveng_req(
+        requests.get, f"v2/functions/{function}/callees_callers")
 
     res.raise_for_status()
     return res
@@ -772,7 +784,8 @@ def RE_analysis_info(analysis_id: int) -> Response:
     Get the analysis information
     :param analysis_id: Analysis ID
     """
-    res: Response = reveng_req(requests.get, f"v2/analyses/{analysis_id}/info/basic")
+    res: Response = reveng_req(
+        requests.get, f"v2/analyses/{analysis_id}/info/basic")
 
     res.raise_for_status()
     return res
@@ -987,6 +1000,40 @@ def RE_analysis_lookup(binary_id: int) -> Response:
     """
     end_point = f"/v2/analyses/lookup/{binary_id}"
     res: Response = reveng_req(requests.get, end_point)
+    res.raise_for_status()
+    return res
+
+
+def RE_collections_search(
+        page: int = 1,
+        page_size: int = 10,
+        search: str = "",
+) -> Response:
+    """
+    """
+    end_point = "/v2/search/collections"
+    res: Response = reveng_req(requests.get, end_point, params={
+        "page": page,
+        "page_size": page_size,
+        "partial_collection_name": search,
+    })
+    res.raise_for_status()
+    return res
+
+
+def RE_binaries_search(
+        page: int = 1,
+        page_size: int = 10,
+        search: str = "",
+) -> Response:
+    """
+    """
+    end_point = "/v2/search/binaries"
+    res: Response = reveng_req(requests.get, end_point, params={
+        "page": page,
+        "page_size": page_size,
+        "partial_name": search,
+    })
     res.raise_for_status()
     return res
 
