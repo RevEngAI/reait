@@ -933,7 +933,10 @@ def RE_analysis_id(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
-def RE_generate_data_types(analysis_id: int, function_ids: list[int]) -> Response:
+def RE_generate_data_types(
+    analysis_id: int,
+    function_ids: list[int]
+) -> Response:
     """
     Generate data types for the analysis
     :param aid: Analysis ID
@@ -943,6 +946,21 @@ def RE_generate_data_types(analysis_id: int, function_ids: list[int]) -> Respons
     res: Response = reveng_req(
         requests.post, end_point, json_data={"function_ids": function_ids}
     )
+    res.raise_for_status()
+    return res
+
+
+def RE_poll_data_types(
+    analysis_id: int,
+    function_id: int,
+) -> Response:
+    """
+    Poll data types for the analysis
+    :param aid: Analysis ID
+    """
+    end_point = f"/v2/analyses/{analysis_id}/functions/{function_id}/data_types"
+
+    res: Response = reveng_req(requests.get, end_point)
     res.raise_for_status()
     return res
 
