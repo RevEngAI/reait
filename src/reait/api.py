@@ -15,7 +15,7 @@ from pandas import DataFrame
 from requests import request, Response, HTTPError
 from sklearn.metrics.pairwise import cosine_similarity
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
@@ -244,6 +244,9 @@ def RE_analyse(
     symbols: dict = None,
     debug_fpath: str = None,
     skip_scraping: bool = False,
+    skip_capabilities: bool = False,
+    skip_sbom: bool = False,
+    advanced_analysis: bool = False
 ) -> Response:
     """
     Start analysis job for binary file
@@ -303,6 +306,9 @@ def RE_analyse(
         "priority",
         "symbols",
         "skip_scraping",
+        "skip_capabilities",
+        "skip_sbom",
+        "advanced_analysis"
     ):
         p_value = locals()[p_name]
 
@@ -932,7 +938,7 @@ def RE_generate_data_types(analysis_id: int, function_ids: list[int]) -> Respons
     Generate data types for the analysis
     :param aid: Analysis ID
     """
-    end_point = f"/v2/analyses/{analysis_id}/info/functions/data_types"
+    end_point = f"/v2/analyses/{analysis_id}/functions/data_types"
 
     res: Response = reveng_req(
         requests.post, end_point, json_data={"function_ids": function_ids}
@@ -947,7 +953,7 @@ def RE_list_data_types(analysis_id: int, function_ids: list[int]) -> Response:
     :param aid: Analysis ID
     :param function_ids: List of function IDs
     """
-    end_point = f"/v2/analyses/{analysis_id}/info/functions/data_types"
+    end_point = f"/v2/analyses/{analysis_id}/functions/data_types"
 
     res: Response = reveng_req(
         requests.get, end_point, json_data={"function_ids": function_ids}
