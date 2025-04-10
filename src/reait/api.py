@@ -972,16 +972,25 @@ def RE_begin_ai_decompilation(function_id: int) -> Response:
     return res
 
 
-def RE_poll_ai_decompilation(function_id: int) -> Response:
+def RE_poll_ai_decompilation(
+    function_id: int,
+    summarise: bool = False
+) -> Response:
     """
     Poll AI decompilation for the function
     :param function_id: Function ID
     """
     end_point = f"/v2/functions/{function_id}/ai-decompilation"
 
+    params = {}
+
+    if summarise:
+        params["summarise"] = summarise
+
     res: Response = reveng_req(
         requests.get,
         end_point,
+        params=params,
     )
     res.raise_for_status()
     return res
@@ -1001,16 +1010,41 @@ def RE_analysis_lookup(binary_id: int) -> Response:
 def RE_collections_search(
         page: int = 1,
         page_size: int = 10,
-        search: str = "",
+        query: dict = {},
 ) -> Response:
     """
+    Search for collections in the database
     """
     end_point = "/v2/search/collections"
-    res: Response = reveng_req(requests.get, end_point, params={
+    params = {
         "page": page,
         "page_size": page_size,
-        "partial_collection_name": search,
-    })
+    }
+
+    # this api support:
+    #   partial_collection_name
+    #   partial_binary_name
+    #   partial_binary_sha256
+    #   model_name
+    #   tags
+
+    def exist_and_populated(key: str) -> bool:
+        return key in query and query[key] is not None and len(query[key]) > 0
+
+    if exist_and_populated("collection_name"):
+        params["partial_collection_name"] = query["collection_name"]
+    elif exist_and_populated("binary_name"):
+        params["partial_binary_name"] = query["binary_name"]
+    elif exist_and_populated("sha_256_hash"):
+        params["partial_binary_sha256"] = query["sha_256_hash"]
+    elif exist_and_populated("tags"):
+        params["tags"] = query["tags"]
+    elif exist_and_populated("model_name"):
+        params["model_name"] = query["model_name"]
+    elif exist_and_populated("query"):
+        params["partial_collection_name"] = query["query"]
+
+    res: Response = reveng_req(requests.get, end_point, params=params)
     res.raise_for_status()
     return res
 
@@ -1018,16 +1052,38 @@ def RE_collections_search(
 def RE_binaries_search(
         page: int = 1,
         page_size: int = 10,
-        search: str = "",
+        query: dict = {},
 ) -> Response:
     """
+    Search for binaries in the database
     """
     end_point = "/v2/search/binaries"
-    res: Response = reveng_req(requests.get, end_point, params={
+    params = {
         "page": page,
         "page_size": page_size,
-        "partial_name": search,
-    })
+    }
+
+    # this api support:
+    #   partial_name
+    #   partial_sha256
+    #   tags
+    #   model_name
+
+    def exist_and_populated(key: str) -> bool:
+        return key in query and query[key] is not None and len(query[key]) > 0
+
+    if exist_and_populated("binary_name"):
+        params["partial_name"] = query["binary_name"]
+    elif exist_and_populated("sha_256_hash"):
+        params["partial_sha256"] = query["sha_256_hash"]
+    elif exist_and_populated("tags"):
+        params["tags"] = query["tags"]
+    elif exist_and_populated("model_name"):
+        params["model_name"] = query["model_name"]
+    elif exist_and_populated("query"):
+        params["partial_name"] = query["query"]
+
+    res: Response = reveng_req(requests.get, end_point, params=params)
     res.raise_for_status()
     return res
 
