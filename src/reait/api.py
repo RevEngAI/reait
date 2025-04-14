@@ -759,7 +759,9 @@ def RE_functions_list(
         params["max_v_address"] = max_v_address
 
     res: Response = reveng_req(
-        requests.get, f"v2/analyses/{analysis_id}/info/functions/list", params=params
+        requests.get,
+        f"v2/analyses/{analysis_id}/info/functions/list",
+        params=params
     )
 
     res.raise_for_status()
@@ -866,10 +868,12 @@ def _binary_format(binary: Binary) -> str:
         return "Mach-O"
 
     logger.error(
-        "Error, could not determine or unsupported" f" binary format: {binary.format}."
+        "Error, could not determine or unsupported"
+        f" binary format: {binary.format}."
     )
     raise RuntimeError(
-        "Error, could not determine or " f"unsupported binary format: {binary.format}"
+        "Error, could not determine or "
+        f"unsupported binary format: {binary.format}"
     )
 
 
