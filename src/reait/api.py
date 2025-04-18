@@ -937,6 +937,22 @@ def RE_analysis_id(fpath: str, binary_id: int = 0) -> Response:
     return res
 
 
+def RE_functions_data_types(
+    function_ids: list[int],
+) -> Response:
+    """
+    Get data types for the functions
+    :param functions_ids: List of function IDs
+    :return: Response object
+    """
+    endpoint = "/v2/functions/data_types"
+    res: Response = reveng_req(
+        requests.post, endpoint, json_data={"function_ids": function_ids}
+    )
+    res.raise_for_status()
+    return res
+
+
 def RE_generate_data_types(
     analysis_id: int,
     function_ids: list[int]
