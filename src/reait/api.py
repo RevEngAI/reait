@@ -953,6 +953,22 @@ def RE_functions_data_types(
     return res
 
 
+def RE_functions_data_types_poll(
+    function_ids: list[int],
+) -> Response:
+    """
+    Poll data types for the functions
+    :param functions_ids: List of function IDs
+    :return: Response object
+    """
+    endpoint = "/v2/functions/data_types"
+    res: Response = reveng_req(
+        requests.get, endpoint, params={"function_ids": function_ids}
+    )
+    res.raise_for_status()
+    return res
+
+
 def RE_generate_data_types(
     analysis_id: int,
     function_ids: list[int]
