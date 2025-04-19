@@ -10,12 +10,12 @@ import tomli
 from datetime import datetime
 from hashlib import sha256
 from lief import parse, Binary, ELF, PE, MachO
-from numpy import array, vstack, dot, arccos, pi
+from numpy import array, vstack
 from pandas import DataFrame
 from requests import request, Response, HTTPError
 from sklearn.metrics.pairwise import cosine_similarity
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
