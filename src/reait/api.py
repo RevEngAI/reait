@@ -520,6 +520,7 @@ def RE_compute_distance(embedding: list, embeddings: list, nns: int = 5) -> list
 
 
 def RE_nearest_symbols_batch(
+    analysis_id: int,
     function_ids: list[int],
     nns: int = 5,
     collections: list[int] = None,
@@ -535,21 +536,48 @@ def RE_nearest_symbols_batch(
     :param distance: How close we want the ANN search to filter for
     :param debug_enabled: ANN Symbol Search, only perform ANN on debug symbols if set
     """
+
+    """
+    {
+        "limit": 5,
+        "distance": 0.1,
+        "analysis_search_ids": [
+            123456,
+            222345
+        ],
+        "collection_search_ids": [
+            "12345",
+            "6789"
+        ],
+        "search_binary_ids": [
+            123456,
+            222345
+        ],
+        "search_function_ids": [
+            123456,
+            222345
+        ],
+        "debug_only": false
+    }
+    """
     params = {
-        "function_id_list": function_ids,
-        "result_per_function": nns,
-        "debug_mode": debug_enabled,
+        "search_function_ids": function_ids,
+        "limit": nns,
+        "debug_only": debug_enabled,
         "distance": distance,
     }
 
     if collections:
-        params["collection_search_list"] = collections
+        params["collection_search_ids"] = collections
 
     if binaries:
-        params["binaries_search_list"] = binaries
+        params["search_binary_ids"] = binaries
 
     res: Response = reveng_req(
-        requests.post, "v1/ann/symbol/batch", json_data=params)
+        requests.post,
+        f"/v2/analyses/{analysis_id}/similarity/functions",
+        json_data=params
+    )
 
     res.raise_for_status()
     return res
