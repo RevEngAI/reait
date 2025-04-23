@@ -549,7 +549,7 @@ def RE_nearest_symbols_batch(
         params["binaries_search_list"] = binaries
 
     res: Response = reveng_req(
-        requests.post, "v1/ann/symbol/batch", json_data=params)
+        requests.post, "v2/ann/symbol/batch", json_data=params)
 
     res.raise_for_status()
     return res
