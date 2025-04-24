@@ -760,7 +760,7 @@ def RE_functions_list(
 
     res: Response = reveng_req(
         requests.get,
-        f"v2/analyses/{analysis_id}/info/functions/list",
+        f"/v2/analyses/{analysis_id}/functions/list",
         params=params
     )
 
