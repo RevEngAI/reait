@@ -1301,3 +1301,30 @@ def RE_similar_functions(
 
     res.raise_for_status()
     return res
+
+def RE_binary_ann(
+    analysis_id: int,
+    confidence: float = 0.0,
+    nns: int = 1,
+    collection_ids: list[int] = None,
+    binary_ids: list[int] = None,
+) -> Response:
+    """
+    Perform binary ANN (Approximate Nearest Neighbor) search.
+    :param analysis_id: Analysis ID
+    :param confidence: Confidence threshold for the search
+    :param nns: Number of nearest neighbors to retrieve
+    :param collection_ids: List of collection IDs to search within
+    :param binary_ids: List of binary IDs to search within
+    """
+    end_point = f"v2/binary_ann/{analysis_id}"
+    json_data = {
+        "confidence": confidence,
+        "nns": nns,
+        "collection_ids": collection_ids or [],
+        "binary_ids": binary_ids or [],
+    }
+
+    res: Response = reveng_req(requests.post, end_point, json_data=json_data)
+    res.raise_for_status()
+    return res
