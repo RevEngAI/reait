@@ -1199,7 +1199,7 @@ def RE_update_collection_description(
     }
 
     res: Response = reveng_req(
-        requests.patch, f"v2/collections/{collection_id}", params=params
+        requests.patch, f"v2/collections/{collection_id}", json_data=params
     )
 
     res.raise_for_status()
