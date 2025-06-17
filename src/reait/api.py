@@ -20,6 +20,7 @@ __version__ = "1.2.2"
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
     "host": environ.get("REAI_API_HOST", "https://api.reveng.ai"),
+    "user_agent": environ.get("REAI_USER_AGENT", "RevEng.AI Toolkit")
 }
 
 
@@ -65,7 +66,7 @@ def reveng_req(
     :param files: Dictionary of files to send to the specified URL
     """
     url = f"{re_conf['host']}/{end_point if end_point[0] != '/' else end_point[1:]}"
-    headers = {"Authorization": re_conf["apikey"]}
+    headers = {"Authorization": re_conf["apikey"], "User-Agent": re_conf["user_agent"]}
 
     if ex_headers:
         headers.update(ex_headers)
