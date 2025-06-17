@@ -15,7 +15,7 @@ from pandas import DataFrame
 from requests import request, Response, HTTPError
 from sklearn.metrics.pairwise import cosine_similarity
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
@@ -335,43 +335,25 @@ def RE_upload(fpath: str) -> Response:
     :param fpath: File path for binary to analyse
     """
     bin_id = re_binary_id(fpath)
-    result = re_hash_check(bin_id)
 
-    if result:
+    with open(fpath, "rb") as fd:
+        res: Response = reveng_req(
+            requests.post, "v1/upload", files={"file": fd})
+
+    if res.ok:
         logger.info(
-            "File %s - %s already uploaded. Skipping upload...", fpath, bin_id)
-
-        res = Response()
-        res.status_code = 200
-        res.url = f"{re_conf['host']}/v1/upload"
-        res._content = (
-            (
-                '{0}"success": true,'
-                '"message": "File already uploaded!",'
-                '"sha_256_hash": "{1}"{2}'
-            )
-            .format("{", bin_id, "}")
-            .encode()
+            "Successfully uploaded binary to your account. %s - %s", fpath, bin_id
         )
-    else:
-        with open(fpath, "rb") as fd:
-            res: Response = reveng_req(
-                requests.post, "v1/upload", files={"file": fd})
-
-        if res.ok:
-            logger.info(
-                "Successfully uploaded binary to your account. %s - %s", fpath, bin_id
-            )
-        elif res.status_code == 400:
-            if "error" in res.json().keys():
-                logger.warning("Error uploading %s - %s",
-                               fpath, res.json()["error"])
-        elif res.status_code == 413:
-            logger.warning("File too large. Please upload files under 10MB.")
-        elif res.status_code == 500:
-            logger.error(
-                "Internal Server Error. Please contact support. Skipping upload..."
-            )
+    elif res.status_code == 400:
+        if "error" in res.json().keys():
+            logger.warning("Error uploading %s - %s",
+                           fpath, res.json()["error"])
+    elif res.status_code == 413:
+        logger.warning("File too large. Please upload files under 10MB.")
+    elif res.status_code == 500:
+        logger.error(
+            "Internal Server Error. Please contact support. Skipping upload..."
+        )
 
     res.raise_for_status()
     return res
@@ -1301,6 +1283,7 @@ def RE_similar_functions(
 
     res.raise_for_status()
     return res
+
 
 def RE_binary_ann(
     analysis_id: int,
