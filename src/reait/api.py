@@ -1312,3 +1312,36 @@ def RE_binary_ann(
     res: Response = reveng_req(requests.post, end_point, json_data=json_data)
     res.raise_for_status()
     return res
+
+def RE_name_score(
+        functions: list, 
+        is_debug: bool = False
+) -> Response:
+
+    body = {
+        "functions": functions,
+        "is_debug": is_debug
+    }   
+    res: Response = reveng_req(requests.post, "v2/confidence/functions/name_score", json_data=body)
+
+    res.raise_for_status()
+    return res
+
+
+def RE_get_analysis_id_from_binary_id(
+        binary_id: int
+) -> Response:
+
+    res: Response = reveng_req(requests.get, f"v2/analyses/lookup/{binary_id}")
+
+    res.raise_for_status()
+    return res
+
+def RE_get_functions_from_analysis(
+        analysis_id: int
+) -> Response:
+
+    res: Response = reveng_req(requests.get, f"v2/analyses/{analysis_id}/functions/list")
+
+    res.raise_for_status()
+    return res
