@@ -308,6 +308,7 @@ def RE_analyse(
         "skip_capabilities",
         "skip_sbom",
         "advanced_analysis",
+        "skip_cves",
     ):
         p_value = locals()[p_name]
 
