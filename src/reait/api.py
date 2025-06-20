@@ -15,7 +15,7 @@ from pandas import DataFrame
 from requests import request, Response, HTTPError
 from sklearn.metrics.pairwise import cosine_similarity
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
@@ -1249,6 +1249,40 @@ def RE_recent_analysis(
         json_data={"status": status, "scope": scope, "n": nb_analysis},
     )
 
+    res.raise_for_status()
+    return res
+
+
+def RE_recent_analysis_v2(
+    search: str = "",
+    workspace: str = "personal",
+    status: str = "All",
+    users: list[str] = [],
+    limit: int = 50
+) -> Response:
+    """
+    Get recent analysis using the v2 API
+    :param status: Status of the analysis (default: "All")
+    :param scope: Scope of the analysis (default: "ALL")
+    :param nb_analysis: Number of analysis to retrieve (default: 50)
+    """
+    res: Response = reveng_req(
+        requests.get,
+        "/v2/analyses/list",
+        params={
+            "search_term": search, "status": status, "workspace": workspace,
+            "limit": limit, "usernames": users},
+    )
+
+    res.raise_for_status()
+    return res
+
+
+def RE_users_me() -> Response:
+    """
+    Get the current user's information
+    """
+    res: Response = reveng_req(requests.get, "/v2/users/me")
     res.raise_for_status()
     return res
 
