@@ -20,14 +20,14 @@ class TestReait(BaseTestCase):
     def test_1_version(self):
         try:
             self.assertEqual(0,
-                             run_test_script("src/reait/main.py", "--version"))
+                             run_test_script("src/reait/main_v_old.py", "--version"))
         except Exception as e:
             testlog.error("Something went wrong when displaying version. %s", e)
 
     def test_2_upload(self):
         try:
             self.assertEqual(0,
-                             run_test_script("src/reait/main.py",
+                             run_test_script("src/reait/main_v_old.py",
                                              "--binary", self._fpath, "--upload",
                                              "--apikey", api.re_conf["apikey"]))
         except Exception as e:
@@ -36,7 +36,7 @@ class TestReait(BaseTestCase):
     def test_3_analyse(self):
         try:
             self.assertEqual(0,
-                             run_test_script("src/reait/main.py",
+                             run_test_script("src/reait/main_v_old.py",
                                              "--binary", self._fpath, "--analyse", "--duplicate",
                                              "--apikey", api.re_conf["apikey"],
                                              "--model", api.re_conf["model"]))
@@ -48,7 +48,7 @@ class TestReait(BaseTestCase):
     def test_4_upload_analyse(self):
         try:
             self.assertEqual(0,
-                             run_test_script("src/reait/main.py",
+                             run_test_script("src/reait/main_v_old.py",
                                              "--binary", self._fpath, "-A", "--duplicate",
                                              "--apikey", api.re_conf["apikey"],
                                              "--model", api.re_conf["model"]))
@@ -58,7 +58,7 @@ class TestReait(BaseTestCase):
     def test_5_logs(self):
         try:
             self.assertEqual(0,
-                             run_test_script("src/reait/main.py",
+                             run_test_script("src/reait/main_v_old.py",
                                              "--binary", self._fpath, "--logs",
                                              "--apikey", api.re_conf["apikey"]))
         except Exception as e:
@@ -67,7 +67,7 @@ class TestReait(BaseTestCase):
     def test_6_status(self):
         try:
             self.assertEqual(0,
-                             run_test_script("src/reait/main.py",
+                             run_test_script("src/reait/main_v_old.py",
                                              "--binary", self._fpath, "--status",
                                              "--apikey", api.re_conf["apikey"]))
         except Exception as e:
@@ -76,7 +76,7 @@ class TestReait(BaseTestCase):
     def test_7_delete(self):
         try:
             self.assertEqual(0,
-                             run_test_script("src/reait/main.py",
+                             run_test_script("src/reait/main_v_old.py",
                                              "--binary", self._fpath, "--delete",
                                              "--apikey", api.re_conf["apikey"]))
         except Exception as e:
