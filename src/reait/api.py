@@ -1202,6 +1202,12 @@ def RE_models() -> Response:
     res.raise_for_status()
     return res
 
+def RE_models_v2() -> Response:
+    res: Response = reveng_req(requests.get, "v2/models")
+
+    res.raise_for_status()
+    return res
+
 
 # NOTE: newest API as per documentation still using /v1/ prefix
 def RE_functions_dump(function_ids: list[int]) -> Response:
