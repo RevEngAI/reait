@@ -15,7 +15,7 @@ from pandas import DataFrame
 from requests import request, Response, HTTPError
 from sklearn.metrics.pairwise import cosine_similarity
 
-__version__ = "1.2.4"
+__version__ = "1.2.5"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
@@ -1198,6 +1198,12 @@ def RE_latest_bid(bin_id: str) -> int:
 # NOTE: newest API as per documentation still using /v1/ prefix
 def RE_models() -> Response:
     res: Response = reveng_req(requests.get, "v1/models")
+
+    res.raise_for_status()
+    return res
+
+def RE_models_v2() -> Response:
+    res: Response = reveng_req(requests.get, "v2/models")
 
     res.raise_for_status()
     return res
