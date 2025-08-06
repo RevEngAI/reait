@@ -65,7 +65,7 @@ class BaseTestCase(TestCase):
                 json_data={"sha_256_hash": bin_id}
             ).json()
 
-            if not response["success"]:
+            if not response.get("success", False):
                 testlog.error("Failed to get all previous analysis.\n%s", response)
             else:
                 for binary in response["query_results"]:
