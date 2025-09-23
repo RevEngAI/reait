@@ -15,7 +15,7 @@ from pandas import DataFrame
 from requests import request, Response, HTTPError
 from sklearn.metrics.pairwise import cosine_similarity
 
-__version__ = "1.2.5"
+__version__ = "1.2.6"
 
 re_conf = {
     "apikey": environ.get("REAI_API_KEY", ""),
@@ -226,6 +226,16 @@ def RE_delete(fpath: str, binary_id: int = 0) -> Response:
             bin_id,
             res.status_code,
         )
+
+    res.raise_for_status()
+    return res
+
+def RE_auto_unstrip(analysis_id, min_similarity: float = 0.9, apply: bool = False) -> Response:
+    data = {
+        "min_similarity": min_similarity,
+        "apply": apply
+    }
+    res: Response = reveng_req(requests.post, f"/v2/analyses/{analysis_id}/functions/auto-unstrip",  json_data=data)
 
     res.raise_for_status()
     return res
